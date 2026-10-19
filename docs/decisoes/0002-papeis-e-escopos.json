@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "matrix_version": "1.0.0",
+  "decision": "SIGAB-004",
+  "status": "approved_baseline",
+  "approved_on": "2026-10-19",
+  "default_effect": "deny",
+  "role_inheritance": false,
+  "scopes": {
+    "global": "Somente recursos do plano de controle; não inclui dados de negócio de organizações.",
+    "organization": "A organização indicada e suas unidades, apenas para as permissões concedidas.",
+    "unit": "A unidade indicada e os recursos inequivocamente vinculados a ela."
+  },
+  "permissions": [
+    "platform.organization.manage",
+    "platform.telemetry.view",
+    "identity.manage",
+    "item.view",
+    "person.view_minimal",
+    "catalog.manage",
+    "item.create",
+    "movement.checkout",
+    "movement.return",
+    "inventory.adjust.request",
+    "inventory.adjust.approve",
+    "item.retire.request",
+    "item.retire.approve",
+    "restriction.view_decision",
+    "restriction.manage",
+    "restriction.exception.approve",
+    "audit.view",
+    "audit.export",
+    "support.diagnose",
+    "support.session.request",
+    "support.session.approve",
+    "support.session.read"
+  ],
+  "acceptance_coverage": {
+    "leitura": ["item.view", "person.view_minimal", "restriction.view_decision"],
+    "cadastro": ["platform.organization.manage", "identity.manage", "catalog.manage", "item.create"],
+    "saida": ["movement.checkout"],
+    "devolucao": ["movement.return"],
+    "ajuste": ["inventory.adjust.request", "inventory.adjust.approve"],
+    "baixa": ["item.retire.request", "item.retire.approve"],
+    "restricao": ["restriction.view_decision", "restriction.manage", "restriction.exception.approve"],
+    "auditoria": ["audit.view", "audit.export"],
+    "suporte": ["support.diagnose", "support.session.request", "support.session.approve", "support.session.read"]
+  },
+  "roles": [
+    {
+      "key": "platform_administrator",
+      "name": "Administrador da plataforma",
+      "allowed_scopes": ["global"],
+      "permissions": ["platform.organization.manage", "platform.telemetry.view"]
+    },
+    {
+      "key": "support_analyst",
+      "name": "Analista de suporte",
+      "allowed_scopes": ["global"],
+      "permissions": ["platform.telemetry.view", "support.diagnose", "support.session.request"]
+    },
+    {
+      "key": "organization_access_administrator",
+      "name": "Administrador de acesso",
+      "allowed_scopes": ["organization"],
+      "permissions": ["identity.manage", "person.view_minimal", "audit.view", "support.session.approve"]
+    },
+    {
+      "key": "organization_inventory_manager",
+      "name": "Gestor de acervo",
+      "allowed_scopes": ["organization"],
+      "permissions": [
+        "item.view",
+        "person.view_minimal",
+        "catalog.manage",
+        "item.create",
+        "inventory.adjust.approve",
+        "item.retire.approve",
+        "restriction.view_decision",
+        "restriction.exception.approve",
+        "audit.view"
+      ]
+    },
+    {
+      "key": "organization_restriction_manager",
+      "name": "Gestor de restrições",
+      "allowed_scopes": ["organization"],
+      "permissions": ["person.view_minimal", "restriction.view_decision", "restriction.manage", "audit.view"]
+    },
+    {
+      "key": "auditor",
+      "name": "Auditor",
+      "allowed_scopes": ["organization", "unit"],
+      "permissions": ["item.view", "person.view_minimal", "restriction.view_decision", "audit.view", "audit.export"]
+    },
+    {
+      "key": "unit_reserve_operator",
+      "name": "Operador de reserva",
+      "allowed_scopes": ["unit"],
+      "permissions": [
+        "item.view",
+        "person.view_minimal",
+        "item.create",
+        "movement.checkout",
+        "movement.return",
+        "inventory.adjust.request",
+        "item.retire.request",
+        "restriction.view_decision",
+        "audit.view"
+      ]
+    },
+    {
+      "key": "unit_inventory_approver",
+      "name": "Aprovador de acervo",
+      "allowed_scopes": ["unit"],
+      "permissions": [
+        "item.view",
+        "person.view_minimal",
+        "inventory.adjust.approve",
+        "item.retire.approve",
+        "restriction.view_decision",
+        "restriction.exception.approve",
+        "audit.view"
+      ]
+    },
+    {
+      "key": "unit_reader",
+      "name": "Leitor",
+      "allowed_scopes": ["unit"],
+      "permissions": ["item.view"]
+    }
+  ],
+  "separation_of_duties": [
+    {
+      "key": "adjustment_four_eyes",
+      "type": "different_actor_same_case",
+      "permissions": ["inventory.adjust.request", "inventory.adjust.approve"]
+    },
+    {
+      "key": "retirement_four_eyes",
+      "type": "different_actor_same_case",
+      "permissions": ["item.retire.request", "item.retire.approve"]
+    },
+    {
+      "key": "restriction_exception_independence",
+      "type": "different_actor_same_case",
+      "permissions": ["restriction.manage", "restriction.exception.approve", "movement.checkout"]
+    },
+    {
+      "key": "independent_auditor",
+      "type": "mutually_exclusive_role_in_overlapping_scope",
+      "roles": [
+        "auditor",
+        "organization_access_administrator",
+        "organization_inventory_manager",
+        "organization_restriction_manager",
+        "unit_reserve_operator",
+        "unit_inventory_approver"
+      ]
+    },
+    {
+      "key": "no_self_grant",
+      "type": "actor_must_differ_from_subject",
+      "permissions": ["identity.manage"]
+    },
+    {
+      "key": "support_request_approval",
+      "type": "different_actor_same_case",
+      "permissions": ["support.session.request", "support.session.approve"]
+    },
+    {
+      "key": "global_control_plane_separation",
+      "type": "mutually_exclusive_role",
+      "roles": ["platform_administrator", "support_analyst"]
+    }
+  ],
+  "support_session_policy": {
+    "standing_tenant_access": false,
+    "maximum_duration_minutes": 60,
+    "read_only": true,
+    "personal_data_masked_by_default": true,
+    "requires_ticket": true,
+    "requires_reason": true,
+    "requires_organization_approval": true,
+    "emergency_requires_distinct_global_actors": 2,
+    "audit_required": true
+  },
+  "invariants": [
+    "O tenant e o escopo são derivados no servidor.",
+    "Escopo mais amplo não acrescenta permissões ausentes.",
+    "Concessões inativas, revogadas, futuras ou expiradas são ignoradas.",
+    "Restrição ativa sem exceção válida impede a saída.",
+    "Auditoria e movimentos confirmados não podem ser atualizados ou excluídos.",
+    "Ajuste, baixa e correção preservam os fatos anteriores."
+  ]
+}

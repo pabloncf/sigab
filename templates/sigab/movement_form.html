@@ -1,0 +1,2 @@
+{% extends "base.html" %}{% block content %}<p><a href="{% url 'item-detail' item.id %}">← Voltar</a></p><h1>{{ title }}</h1><div class="card"><p><b>Item:</b> {{ item.equipment_type.name }} · {{ item.display_identifier }}</p><p><b>Situação atual:</b> {{ item.get_availability_display }} / {{ item.get_condition_display }}</p><form method="post">{% csrf_token %}{{ form.as_p }}<button>{{ title }}</button></form></div>{% endblock %}
+

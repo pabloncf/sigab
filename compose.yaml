@@ -1,0 +1,12 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: sigab
+      POSTGRES_USER: sigab
+      POSTGRES_PASSWORD: local-only
+    ports: ["5432:5432"]
+    volumes: ["sigab-postgres:/var/lib/postgresql/data"]
+
+volumes:
+  sigab-postgres:

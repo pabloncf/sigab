@@ -1,0 +1,9 @@
+.venv/
+.claude/
+.codex/
+.ruff_cache/
+.pytest_cache/
+**/__pycache__/
+graphify-out/
+.DS_Store
+

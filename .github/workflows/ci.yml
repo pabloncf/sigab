@@ -1,0 +1,32 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: sigab_test
+          POSTGRES_USER: sigab
+          POSTGRES_PASSWORD: sigab_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sigab -d sigab_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://sigab:sigab_test@127.0.0.1:5432/sigab_test
+      DJANGO_SECRET_KEY: ci-only-key
+      DJANGO_DEBUG: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked --dev
+      - run: uv run ruff format --check config sigab manage.py
+      - run: uv run ruff check config sigab manage.py
+      - run: uv run python manage.py makemigrations --check --dry-run
+      - run: uv run pytest -q
+

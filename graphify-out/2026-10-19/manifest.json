@@ -1,0 +1,237 @@
+{
+  "config/__init__.py": {
+    "mtime": 1792086071.5990727,
+    "ast_hash": "68b329da9893e34099c7d8ad5cb9c940",
+    "semantic_hash": "68b329da9893e34099c7d8ad5cb9c940"
+  },
+  "config/settings.py": {
+    "mtime": 1792086232.1425166,
+    "ast_hash": "90daeb3b7919a28af687a2ddd6df8fe0",
+    "semantic_hash": "90daeb3b7919a28af687a2ddd6df8fe0"
+  },
+  "config/urls.py": {
+    "mtime": 1792086232.1428947,
+    "ast_hash": "1181c536008396d25b5fb1fde91374d6",
+    "semantic_hash": "1181c536008396d25b5fb1fde91374d6"
+  },
+  "config/wsgi.py": {
+    "mtime": 1792086240.5257936,
+    "ast_hash": "5622ea7ed58201979237b6dd5bbaf651",
+    "semantic_hash": "5622ea7ed58201979237b6dd5bbaf651"
+  },
+  "manage.py": {
+    "mtime": 1792086232.1407323,
+    "ast_hash": "47e2468ee92bc721b01d90057a8ecbc4",
+    "semantic_hash": "47e2468ee92bc721b01d90057a8ecbc4"
+  },
+  "pyproject.toml": {
+    "mtime": 1792086240.50962,
+    "ast_hash": "ca5bee8c69eaaefad62d07ec7a1b9fb3",
+    "semantic_hash": "ca5bee8c69eaaefad62d07ec7a1b9fb3"
+  },
+  "sigab/__init__.py": {
+    "mtime": 1792086071.674564,
+    "ast_hash": "68b329da9893e34099c7d8ad5cb9c940",
+    "semantic_hash": "68b329da9893e34099c7d8ad5cb9c940"
+  },
+  "sigab/admin.py": {
+    "mtime": 1792086526.8586607,
+    "ast_hash": "6b85342a1ea1ba780889627ec3902903",
+    "semantic_hash": "6b85342a1ea1ba780889627ec3902903"
+  },
+  "sigab/apps.py": {
+    "mtime": 1792086232.1408167,
+    "ast_hash": "719c3c8b700121680f8dcd6b7432eede",
+    "semantic_hash": "719c3c8b700121680f8dcd6b7432eede"
+  },
+  "sigab/forms.py": {
+    "mtime": 1792086232.1411567,
+    "ast_hash": "72b6ddb15be63a80b57bd54b32648dba",
+    "semantic_hash": "72b6ddb15be63a80b57bd54b32648dba"
+  },
+  "sigab/management/__init__.py": {
+    "mtime": 1792086148.7189164,
+    "ast_hash": "68b329da9893e34099c7d8ad5cb9c940",
+    "semantic_hash": "68b329da9893e34099c7d8ad5cb9c940"
+  },
+  "sigab/management/commands/__init__.py": {
+    "mtime": 1792086148.7517045,
+    "ast_hash": "68b329da9893e34099c7d8ad5cb9c940",
+    "semantic_hash": "68b329da9893e34099c7d8ad5cb9c940"
+  },
+  "sigab/management/commands/bootstrap_sigab.py": {
+    "mtime": 1792086555.1662247,
+    "ast_hash": "09df1d0711e4ca139f5fe5ce0a4cc8b0",
+    "semantic_hash": "09df1d0711e4ca139f5fe5ce0a4cc8b0"
+  },
+  "sigab/management/commands/create_sigab_account.py": {
+    "mtime": 1792086542.1373146,
+    "ast_hash": "2c65e3aa49b15ff74549e6c7801daa33",
+    "semantic_hash": "2c65e3aa49b15ff74549e6c7801daa33"
+  },
+  "sigab/middleware.py": {
+    "mtime": 1792086232.1399393,
+    "ast_hash": "df521d2f786352b9cf4ae571a124e030",
+    "semantic_hash": "df521d2f786352b9cf4ae571a124e030"
+  },
+  "sigab/migrations/0001_initial.py": {
+    "mtime": 1792086232.1406476,
+    "ast_hash": "9a674ad10a99ff3533ba794e78a185f7",
+    "semantic_hash": "9a674ad10a99ff3533ba794e78a185f7"
+  },
+  "sigab/migrations/__init__.py": {
+    "mtime": 1792086189.904351,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "sigab/models.py": {
+    "mtime": 1792086330.658296,
+    "ast_hash": "420231ea7426ee67872681c2a3ff4bb8",
+    "semantic_hash": "420231ea7426ee67872681c2a3ff4bb8"
+  },
+  "sigab/permissions.py": {
+    "mtime": 1792086232.1429505,
+    "ast_hash": "9ac5d5a31cfb080dd496972fc8dd3715",
+    "semantic_hash": "9ac5d5a31cfb080dd496972fc8dd3715"
+  },
+  "sigab/services.py": {
+    "mtime": 1792086307.9655323,
+    "ast_hash": "08748a0b622a15b4ea0c34f20d867e94",
+    "semantic_hash": "08748a0b622a15b4ea0c34f20d867e94"
+  },
+  "sigab/tests/__init__.py": {
+    "mtime": 1792086226.8835828,
+    "ast_hash": "68b329da9893e34099c7d8ad5cb9c940",
+    "semantic_hash": "68b329da9893e34099c7d8ad5cb9c940"
+  },
+  "sigab/tests/test_flow.py": {
+    "mtime": 1792086587.4471388,
+    "ast_hash": "a1574d4c670d8f6b71d81920cfd84669",
+    "semantic_hash": "a1574d4c670d8f6b71d81920cfd84669"
+  },
+  "sigab/urls.py": {
+    "mtime": 1792086232.141147,
+    "ast_hash": "236103508909c261433bf46a3ed0148f",
+    "semantic_hash": "236103508909c261433bf46a3ed0148f"
+  },
+  "sigab/views.py": {
+    "mtime": 1792086307.9983933,
+    "ast_hash": "351e05a7de214b93876f1cde1e6efca4",
+    "semantic_hash": "351e05a7de214b93876f1cde1e6efca4"
+  },
+  "scripts/prepare_jira_csv.py": {
+    "mtime": 1792094053.0960026,
+    "ast_hash": "cb7f407749db4e1110a7c85cdb0709fa",
+    "semantic_hash": ""
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1792086330.7027714,
+    "ast_hash": "9ebb08af90d10d5d0889ba49e8c90777",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1792091571.5324662,
+    "ast_hash": "6a47d64fcc136324ca395065a707ef76",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1792094083.45466,
+    "ast_hash": "45a11ff363692c308b5d9d041dd42477",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1792159497.344674,
+    "ast_hash": "a0ec10e2024fabc0ad34fa827e380ddd",
+    "semantic_hash": ""
+  },
+  "compose.yaml": {
+    "mtime": 1792086330.7147949,
+    "ast_hash": "eebf546244dca31774c5e0062171abf6",
+    "semantic_hash": ""
+  },
+  "docs/adr/0001-stack-e-frontend.md": {
+    "mtime": 1792086384.9239733,
+    "ast_hash": "6b8106a186a982277619b6fa986e84dc",
+    "semantic_hash": ""
+  },
+  "docs/adr/0002-tenancy-autorizacao.md": {
+    "mtime": 1792086384.9351547,
+    "ast_hash": "2d0c56985e3cb17cf885f38d4918a4fb",
+    "semantic_hash": ""
+  },
+  "docs/adr/0003-eventos-idempotencia.md": {
+    "mtime": 1792086384.9459352,
+    "ast_hash": "f816ba32e6cc69b7c45d450b2f06ec7d",
+    "semantic_hash": ""
+  },
+  "docs/decisoes-pendentes.md": {
+    "mtime": 1792415001.3474736,
+    "ast_hash": "4b3715ef341f86715709a3cbb4be6922",
+    "semantic_hash": ""
+  },
+  "docs/glossario.md": {
+    "mtime": 1792415111.0167127,
+    "ast_hash": "d71d81f65236cd83f489cf02975d3ce8",
+    "semantic_hash": ""
+  },
+  "docs/modelo-de-dominio.md": {
+    "mtime": 1792414739.5056157,
+    "ast_hash": "0727c2a80e80066ef7e1fb46053a897a",
+    "semantic_hash": ""
+  },
+  "docs/plano-incremental.md": {
+    "mtime": 1792414974.788598,
+    "ast_hash": "58ce2e104594592a32d4bcfead9fc339",
+    "semantic_hash": ""
+  },
+  "docs/requisitos.md": {
+    "mtime": 1792414974.7767842,
+    "ast_hash": "ba7ae2335b923c0726707fbd34358707",
+    "semantic_hash": ""
+  },
+  "docs/seguranca-e-privacidade.md": {
+    "mtime": 1792086384.8893256,
+    "ast_hash": "66dbee24e3e164647b0d0078d1994929",
+    "semantic_hash": ""
+  },
+  "docs/tarefas/IMPORTAR-NO-JIRA.md": {
+    "mtime": 1792094032.3168843,
+    "ast_hash": "9ae66b89e33a279619e56aa9a463f4a0",
+    "semantic_hash": ""
+  },
+  "docs/visao-do-produto.md": {
+    "mtime": 1792414974.7639356,
+    "ast_hash": "f5063d8e349e91bea5c77f1c18adfcc1",
+    "semantic_hash": ""
+  },
+  "templates/base.html": {
+    "mtime": 1792086122.4771523,
+    "ast_hash": "8c4fec79ab179eefecabe461914e54cf",
+    "semantic_hash": ""
+  },
+  "templates/registration/login.html": {
+    "mtime": 1792086122.5099146,
+    "ast_hash": "9963f8c757232eb5c74d1a3226906d28",
+    "semantic_hash": ""
+  },
+  "templates/sigab/dashboard.html": {
+    "mtime": 1792086122.5421526,
+    "ast_hash": "cc7a44b363124e5716eed5db16a07e3c",
+    "semantic_hash": ""
+  },
+  "templates/sigab/item_detail.html": {
+    "mtime": 1792086122.5541496,
+    "ast_hash": "d588f3eba1500d58618da49b35a0dfe4",
+    "semantic_hash": ""
+  },
+  "templates/sigab/movement_form.html": {
+    "mtime": 1792086122.5649831,
+    "ast_hash": "df8186bf7d59aaf02635ab35e5e26ffc",
+    "semantic_hash": ""
+  },
+  "docs/decisoes/0001-segmento-inicial.md": {
+    "mtime": 1792415111.0378857,
+    "ast_hash": "0f53d4568d7aa269283252cc14e02443",
+    "semantic_hash": ""
+  }
+}

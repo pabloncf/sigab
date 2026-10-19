@@ -1,0 +1,888 @@
+Work Type,Status,Summary,Description,Priority,Labels,Labels,Labels,Labels,Component,Work item ID,Parent,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By
+Epic,To Do,SIGAB — Descoberta,Agrupa as tarefas do épico Descoberta do backlog inicial do SIGAB.,Highest,sigab,epic,epic-descoberta,,Descoberta,1001,,,,,,,
+Epic,To Do,SIGAB — Arquitetura,Agrupa as tarefas do épico Arquitetura do backlog inicial do SIGAB.,Highest,sigab,epic,epic-arquitetura,,Arquitetura,1002,,,,,,,
+Epic,To Do,SIGAB — Segurança,Agrupa as tarefas do épico Segurança do backlog inicial do SIGAB.,Highest,sigab,epic,epic-seguranca,,Segurança,1003,,,,,,,
+Epic,To Do,SIGAB — Fundação,Agrupa as tarefas do épico Fundação do backlog inicial do SIGAB.,Highest,sigab,epic,epic-fundacao,,Fundação,1004,,,,,,,
+Epic,To Do,SIGAB — Identidade,Agrupa as tarefas do épico Identidade do backlog inicial do SIGAB.,Highest,sigab,epic,epic-identidade,,Identidade,1005,,,,,,,
+Epic,To Do,SIGAB — Autorização,Agrupa as tarefas do épico Autorização do backlog inicial do SIGAB.,Highest,sigab,epic,epic-autorizacao,,Autorização,1006,,,,,,,
+Epic,To Do,SIGAB — Organizações,Agrupa as tarefas do épico Organizações do backlog inicial do SIGAB.,Highest,sigab,epic,epic-organizacoes,,Organizações,1007,,,,,,,
+Epic,To Do,SIGAB — Qualidade,Agrupa as tarefas do épico Qualidade do backlog inicial do SIGAB.,Highest,sigab,epic,epic-qualidade,,Qualidade,1008,,,,,,,
+Epic,To Do,SIGAB — Acervo,Agrupa as tarefas do épico Acervo do backlog inicial do SIGAB.,Highest,sigab,epic,epic-acervo,,Acervo,1009,,,,,,,
+Epic,To Do,SIGAB — Movimentação,Agrupa as tarefas do épico Movimentação do backlog inicial do SIGAB.,Highest,sigab,epic,epic-movimentacao,,Movimentação,1010,,,,,,,
+Epic,To Do,SIGAB — Auditoria,Agrupa as tarefas do épico Auditoria do backlog inicial do SIGAB.,Highest,sigab,epic,epic-auditoria,,Auditoria,1011,,,,,,,
+Epic,To Do,SIGAB — Consulta,Agrupa as tarefas do épico Consulta do backlog inicial do SIGAB.,Highest,sigab,epic,epic-consulta,,Consulta,1012,,,,,,,
+Epic,To Do,SIGAB — Privacidade,Agrupa as tarefas do épico Privacidade do backlog inicial do SIGAB.,Highest,sigab,epic,epic-privacidade,,Privacidade,1013,,,,,,,
+Epic,To Do,SIGAB — Restrições,Agrupa as tarefas do épico Restrições do backlog inicial do SIGAB.,Highest,sigab,epic,epic-restricoes,,Restrições,1014,,,,,,,
+Epic,To Do,SIGAB — Estoque,Agrupa as tarefas do épico Estoque do backlog inicial do SIGAB.,Highest,sigab,epic,epic-estoque,,Estoque,1015,,,,,,,
+Epic,To Do,SIGAB — Continuidade,Agrupa as tarefas do épico Continuidade do backlog inicial do SIGAB.,Highest,sigab,epic,epic-continuidade,,Continuidade,1016,,,,,,,
+Epic,To Do,SIGAB — Entrega,Agrupa as tarefas do épico Entrega do backlog inicial do SIGAB.,Highest,sigab,epic,epic-entrega,,Entrega,1017,,,,,,,
+Task,To Do,[SIGAB-001] Definir primeiro segmento do produto,"Escolher o segmento atendido primeiro e registrar hipóteses e exclusões.
+
+ID original: SIGAB-001
+
+Tipo original: decisao
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Produto
+
+Entregável: Registro de decisão do segmento inicial
+
+Critério de aceite: Um único segmento inicial está nomeado, com justificativa, público, exclusões e responsável pela validação.
+
+Requisitos relacionados: Seção 1.1; Seção 7
+
+Observações: Não bloqueia a infraestrutura genérica, mas bloqueia o fechamento dos fluxos regulatórios.",Highest,sigab,tipo-decisao,origem-pendente-decisao,sprint-sprint-0,Descoberta,1,1001,,,,,,
+Task,Done,[SIGAB-002] Entrevistar uma organização-alvo,"Mapear o processo atual em papel, papéis, documentos, volumes, exceções e sistemas oficiais utilizados.
+
+ID original: SIGAB-002
+
+Tipo original: pesquisa
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Produto/UX
+
+Entregável: Relatório de entrevista e mapa do processo atual
+
+Critério de aceite: As necessidades foram confirmadas ou rejeitadas por pelo menos um órgão do segmento inicial e cada conclusão possui evidência.
+
+Requisitos relacionados: Seção 1.1; Seção 8
+
+Dependências originais: SIGAB-001
+
+Observações: Não substituir a entrevista pela validação do sistema de referência.",Highest,sigab,tipo-pesquisa,origem-validado,sprint-sprint-0,Descoberta,2,1001,1,,,,,
+Task,Done,[SIGAB-003] Fechar glossário operacional mínimo,"Validar os termos saída, cautela, consignação, posse, custódia, responsável, unidade e reserva.
+
+ID original: SIGAB-003
+
+Tipo original: decisao
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Produto/Domínio
+
+Entregável: Glossário v0.2 aprovado
+
+Critério de aceite: Cada termo crítico possui uma definição sem sinônimos conflitantes e foi validado com usuário-alvo.
+
+Requisitos relacionados: Seção 2; Seção 7
+
+Dependências originais: SIGAB-001;SIGAB-002
+
+Observações: Usar os termos do segmento escolhido.",Highest,sigab,tipo-decisao,origem-validado,sprint-sprint-0,Descoberta,3,1001,1,2,,,,
+Task,Done,[SIGAB-004] Definir papéis e escopos,"Separar papéis globais, da organização e da unidade; definir ações permitidas e separação de funções.
+
+ID original: SIGAB-004
+
+Tipo original: decisao
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Produto/Segurança
+
+Entregável: Matriz de autorização aprovada
+
+Critério de aceite: A matriz cobre leitura, cadastro, saída, devolução, ajuste, baixa, restrição, auditoria e suporte; conflitos estão resolvidos.
+
+Requisitos relacionados: Seção 3; RF-04; RF-60
+
+Dependências originais: SIGAB-002;SIGAB-003
+
+Observações: Não modelar como simples hierarquia de herança.",Highest,sigab,tipo-decisao,origem-validado,sprint-sprint-0,Descoberta,4,1001,2,3,,,,
+Task,To Do,[SIGAB-005] Levantar obrigações regulatórias do segmento inicial,"Identificar sistemas oficiais, registros, documentos, retenção e integrações aplicáveis.
+
+ID original: SIGAB-005
+
+Tipo original: pesquisa
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Jurídico/Produto
+
+Entregável: Parecer ou nota regulatória versionada
+
+Critério de aceite: Cada obrigação aplicável tem fonte oficial, responsável, impacto no produto e data da verificação.
+
+Requisitos relacionados: Seção 7
+
+Dependências originais: SIGAB-001
+
+Observações: Não tratar pesquisa preliminar como parecer jurídico.",Highest,sigab,tipo-pesquisa,origem-pendente,sprint-sprint-0,Descoberta,5,1001,1,,,,,
+Task,Done,[SIGAB-006] Definir estratégia de conectividade e contingência,"Decidir se o MVP será online, local ou híbrido e documentar queda, contingência e reconciliação.
+
+ID original: SIGAB-006
+
+Tipo original: decisao
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Arquitetura/Produto
+
+Entregável: ADR de conectividade
+
+Critério de aceite: Fonte de verdade, limites offline, prevenção de dupla entrega, RTO, RPO e procedimento de contingência estão definidos.
+
+Requisitos relacionados: RNF-01; RNF-02
+
+Dependências originais: SIGAB-002
+
+Observações: Bloqueia qualquer implementação offline.",Highest,sigab,tipo-decisao,origem-pendente-decisao,sprint-sprint-0,Descoberta,6,1001,2,,,,,
+Task,To Do,[SIGAB-007] Obter formulário de armamento temporário,"Conseguir modelo em branco e mapear campos, assinaturas, autorizações e responsabilidades.
+
+ID original: SIGAB-007
+
+Tipo original: pesquisa
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Produto
+
+Entregável: Formulário analisado e regras documentadas
+
+Critério de aceite: Cada campo relevante possui finalidade, obrigatoriedade, emissor, receptor e regra de retenção.
+
+Requisitos relacionados: RF-25
+
+Dependências originais: SIGAB-002
+
+Observações: Bloqueia retirada por terceiro.",High,sigab,tipo-pesquisa,origem-pendente,sprint-sprint-0,Descoberta,7,1001,2,,,,,
+Task,To Do,[SIGAB-008] Definir modelo de estoque e munição,"Decidir controle por calibre, lote, fabricante, validade, unidade de medida, consumo e devolução parcial.
+
+ID original: SIGAB-008
+
+Tipo original: decisao
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Produto/Domínio
+
+Entregável: Modelo de estoque validado
+
+Critério de aceite: O modelo explica entrada, saldo, saída, consumo, devolução, ajuste, lote e prevenção de saldo negativo.
+
+Requisitos relacionados: RF-13; RF-24; RN-04
+
+Dependências originais: SIGAB-002;SIGAB-005
+
+Observações: Bloqueia estoque quantitativo.",Highest,sigab,tipo-decisao,origem-pendente-decisao,sprint-sprint-0,Descoberta,8,1001,2,5,,,,
+Task,Done,[SIGAB-009] Definir ciclo de vida do item individual,"Separar condição física, disponibilidade, localização e situação administrativa.
+
+ID original: SIGAB-009
+
+Tipo original: decisao
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Produto/Domínio
+
+Entregável: Máquina de estados validada
+
+Critério de aceite: Todos os estados e transições têm origem, destino, ator, pré-condição, efeito e possibilidade de reversão.
+
+Requisitos relacionados: RF-14; RF-22; RN-08
+
+Dependências originais: SIGAB-002;SIGAB-003
+
+Observações: Prever manutenção, sinistro, transferência e baixa mesmo se fora do MVP.",Highest,sigab,tipo-decisao,origem-pendente,sprint-sprint-0,Descoberta,9,1001,2,3,,,,
+Task,Done,[SIGAB-010] Definir stack Django e escolher frontend,"Usar obrigatoriamente Python com Django no backend; escolher o frontend considerado mais adequado e registrar banco, testes e implantação.
+
+ID original: SIGAB-010
+
+Tipo original: decisao
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Tech Lead
+
+Entregável: ADR da stack
+
+Critério de aceite: O ADR confirma Django no backend, justifica a escolha do frontend, compara alternativas e documenta banco, testes, implantação, comandos locais e consequências.
+
+Requisitos relacionados: Todos
+
+Observações: O frontend é livre; evitar componentes distribuídos ou complexidade sem necessidade comprovada.",Highest,sigab,tipo-decisao,origem-pronto,sprint-sprint-0,Arquitetura,10,1002,,,,,,
+Task,Done,[SIGAB-011] Modelar domínio inicial,"Desenhar organização, unidade, pessoa, vínculo, conta, papel, tipo, item, movimentação e auditoria.
+
+ID original: SIGAB-011
+
+Tipo original: design
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Tech Lead/Backend
+
+Entregável: Diagrama e dicionário de dados
+
+Critério de aceite: Entidades, identificadores, cardinalidades, invariantes e limites de organização estão documentados.
+
+Requisitos relacionados: RF-01; RF-03; RF-10; RF-12; RF-60
+
+Dependências originais: SIGAB-003;SIGAB-004;SIGAB-009;SIGAB-010
+
+Observações: Pessoa e conta precisam ser entidades separadas.",Highest,sigab,tipo-design,origem-pronto,sprint-sprint-0,Arquitetura,11,1002,3,4,9,10,,
+Task,Done,[SIGAB-012] Definir padrão de eventos e estornos,"Especificar eventos de domínio, metadados de auditoria e correções compensatórias.
+
+ID original: SIGAB-012
+
+Tipo original: design
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Tech Lead/Backend
+
+Entregável: ADR de eventos e auditoria
+
+Critério de aceite: Não existe atualização destrutiva de movimentação; todo estorno referencia o evento original e exige motivo.
+
+Requisitos relacionados: RF-60; RF-62; RN-05; RN-09
+
+Dependências originais: SIGAB-011
+
+Observações: O feed de atividade não substitui o log de auditoria.",Highest,sigab,tipo-design,origem-pronto,sprint-sprint-0,Arquitetura,12,1002,11,,,,,
+Task,Done,[SIGAB-013] Produzir modelo de ameaças inicial,"Identificar abuso interno, acesso entre organizações, furto de credencial, adulteração de auditoria e vazamento de exportação.
+
+ID original: SIGAB-013
+
+Tipo original: design
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Segurança/Tech Lead
+
+Entregável: Modelo de ameaças e controles
+
+Critério de aceite: Cada ameaça P0 possui controle preventivo ou detectivo, responsável e teste previsto.
+
+Requisitos relacionados: RNF-03; RNF-04; RNF-05
+
+Dependências originais: SIGAB-004;SIGAB-010;SIGAB-011
+
+Observações: Revisar antes de biometria, anexos ou operação offline.",Highest,sigab,tipo-design,origem-pronto,sprint-sprint-0,Segurança,13,1003,4,10,11,,,
+Task,Done,[SIGAB-014] Definir convenções de API e erros,"Padronizar autenticação, autorização, paginação, idempotência, validação e respostas de erro.
+
+ID original: SIGAB-014
+
+Tipo original: design
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Backend
+
+Entregável: Especificação de API inicial
+
+Critério de aceite: Operações de escrita têm validação, erros previsíveis e estratégia de idempotência documentada.
+
+Requisitos relacionados: RF-20; RF-21; RF-60
+
+Dependências originais: SIGAB-010;SIGAB-013
+
+Observações: Não revelar existência de dados de outra organização em mensagens de erro.",High,sigab,tipo-design,origem-pronto,sprint-sprint-0,Arquitetura,14,1002,10,13,,,,
+Task,Done,[SIGAB-015] Criar esqueleto da aplicação,"Configurar módulos, dependências, ambiente local e comandos de desenvolvimento conforme ADR.
+
+ID original: SIGAB-015
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Full-stack/DevOps
+
+Entregável: Aplicação mínima executável
+
+Critério de aceite: Uma pessoa nova consegue instalar dependências, iniciar a aplicação e executar testes seguindo o README.
+
+Requisitos relacionados: Todos
+
+Dependências originais: SIGAB-010
+
+Observações: Não implementar funcionalidades não planejadas.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-0,Fundação,15,1004,10,,,,,
+Task,Done,[SIGAB-016] Configurar banco e migrações,"Criar banco local, ferramenta de migração, convenções e primeira migração reversível.
+
+ID original: SIGAB-016
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Backend/DevOps
+
+Entregável: Banco versionado por migrações
+
+Critério de aceite: Banco vazio chega à versão atual automaticamente e a migração é testada em ambiente descartável.
+
+Requisitos relacionados: RF-01; RNF-05
+
+Dependências originais: SIGAB-010;SIGAB-011;SIGAB-015
+
+Observações: Toda tabela de domínio deve ter vínculo explícito com organização quando aplicável.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-0,Fundação,16,1004,10,11,15,,,
+Task,Done,[SIGAB-017] Configurar integração contínua,"Executar testes, análise estática, formatação e validação de migrações em cada mudança.
+
+ID original: SIGAB-017
+
+Tipo original: infraestrutura
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: DevOps
+
+Entregável: Pipeline de CI
+
+Critério de aceite: Uma alteração inválida falha automaticamente e uma alteração válida produz execução reproduzível.
+
+Requisitos relacionados: Todos
+
+Dependências originais: SIGAB-015;SIGAB-016
+
+Observações: Não incluir segredos no pipeline.",Highest,sigab,tipo-infraestrutura,origem-pronto,sprint-sprint-0,Fundação,17,1004,15,16,,,,
+Task,Done,[SIGAB-018] Configurar observabilidade mínima,"Adicionar logs estruturados, identificador de requisição e tratamento centralizado de erros.
+
+ID original: SIGAB-018
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Backend/DevOps
+
+Entregável: Logs e erros padronizados
+
+Critério de aceite: Requisições podem ser correlacionadas sem registrar senha, CPF completo ou conteúdo sensível.
+
+Requisitos relacionados: RF-60; RNF-04
+
+Dependências originais: SIGAB-013;SIGAB-015
+
+Observações: Auditoria de negócio e log técnico são mecanismos distintos.",High,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-0,Fundação,18,1004,13,15,,,,
+Task,Done,[SIGAB-019] Implementar pessoa e vínculo organizacional,"Cadastrar pessoa e seu vínculo com matrícula, unidade e situação sem criar login automaticamente.
+
+ID original: SIGAB-019
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 1
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Cadastro de pessoa e vínculo
+
+Critério de aceite: É possível criar pessoa sem conta; matrícula duplicada na mesma organização segue regra validada; desativação preserva histórico.
+
+Requisitos relacionados: RF-03; RN-01
+
+Dependências originais: SIGAB-004;SIGAB-011;SIGAB-016
+
+Observações: CPF deve ter acesso e exibição restritos.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-1,Identidade,19,1005,4,11,16,,,
+Task,Done,[SIGAB-020] Implementar conta de acesso,"Criar, ativar, suspender e revogar conta associada a uma pessoa.
+
+ID original: SIGAB-020
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 1
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Gestão de conta
+
+Critério de aceite: Suspender a conta impede login sem alterar pessoa, vínculo ou histórico.
+
+Requisitos relacionados: RF-02; RF-04
+
+Dependências originais: SIGAB-013;SIGAB-019
+
+Observações: Conta não deve usar matrícula como chave interna imutável.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-1,Identidade,20,1005,13,19,,,,
+Task,Done,[SIGAB-021] Implementar autenticação segura,"Adicionar login, hash de senha, expiração, revogação e limitação de tentativas.
+
+ID original: SIGAB-021
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 1
+
+Responsável sugerido: Backend/Segurança
+
+Entregável: Fluxo de autenticação
+
+Critério de aceite: Senha nunca é armazenada ou registrada em claro; sessão expira e pode ser revogada; testes de falha passam.
+
+Requisitos relacionados: RF-02; RNF-04
+
+Dependências originais: SIGAB-013;SIGAB-020
+
+Observações: MFA administrativo pode ser tarefa posterior se a stack ainda não suportar.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-1,Identidade,21,1005,13,20,,,,
+Task,To Do,[SIGAB-022] Implementar papéis e permissões com escopo,"Aplicar autorização no servidor por organização e unidade, com negação por padrão.
+
+ID original: SIGAB-022
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 1
+
+Responsável sugerido: Backend/Segurança
+
+Entregável: Camada de autorização
+
+Critério de aceite: Usuário sem permissão recebe negação; papel de uma organização não concede acesso a outra; testes cobrem todos os casos P0.
+
+Requisitos relacionados: Seção 3; RNF-05
+
+Dependências originais: SIGAB-004;SIGAB-021
+
+Observações: Bloqueado até matriz mínima de autorização.",Highest,sigab,tipo-desenvolvimento,origem-bloqueado,sprint-sprint-1,Autorização,22,1006,4,21,,,,
+Task,Done,[SIGAB-023] Implementar organizações,"Criar organização, situação operacional e primeiro administrador por fluxo controlado.
+
+ID original: SIGAB-023
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 1
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Gestão básica de organização
+
+Critério de aceite: Organização é criada com identificador próprio e administrador inicial; dados não aparecem em outro tenant.
+
+Requisitos relacionados: RF-01; RF-06
+
+Dependências originais: SIGAB-016;SIGAB-022
+
+Observações: Bloqueio por inadimplência fica fora deste incremento.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-1,Organizações,23,1007,16,22,,,,
+Task,Done,[SIGAB-024] Implementar unidades e locais de guarda,"Cadastrar unidades e preparar relação com localizações físicas.
+
+ID original: SIGAB-024
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 1
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Gestão de unidades
+
+Critério de aceite: Unidades pertencem a uma única organização, podem ser desativadas e não podem ser consultadas por outra organização.
+
+Requisitos relacionados: RF-03; RF-12; Seção 4.8
+
+Dependências originais: SIGAB-023
+
+Observações: Não implementar transferência ainda.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-1,Organizações,24,1007,23,,,,,
+Task,Done,[SIGAB-025] Automatizar testes de isolamento entre organizações,"Cobrir leitura, busca, alteração e referências cruzadas indevidas.
+
+ID original: SIGAB-025
+
+Tipo original: teste
+
+Sprint sugerida: Sprint 1
+
+Responsável sugerido: QA/Backend
+
+Entregável: Suíte de isolamento multi-tenant
+
+Critério de aceite: Tentativas de acesso cruzado falham sem revelar dados; criação com referência de outro tenant também falha.
+
+Requisitos relacionados: RF-01; RNF-05
+
+Dependências originais: SIGAB-022;SIGAB-023;SIGAB-024
+
+Observações: Critério obrigatório para liberar cada módulo novo.",Highest,sigab,tipo-teste,origem-pronto,sprint-sprint-1,Qualidade,25,1008,22,23,24,,,
+Task,Done,[SIGAB-026] Implementar catálogo de tipos,"Cadastrar e desativar tipo de equipamento com classificação individual ou estoque.
+
+ID original: SIGAB-026
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 2
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Cadastro de tipo
+
+Critério de aceite: Classificação não pode ser alterada após uso; desativação não apaga histórico; isolamento é aplicado.
+
+Requisitos relacionados: RF-10; RF-16; RN-03
+
+Dependências originais: SIGAB-011;SIGAB-022;SIGAB-023
+
+Observações: Base pré-carregada fica fora.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-2,Acervo,26,1009,11,22,23,,,
+Task,Done,[SIGAB-027] Implementar item individual,"Cadastrar item com ID interno, tipo, unidade e identificadores de negócio.
+
+ID original: SIGAB-027
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 2
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Cadastro de item individual
+
+Critério de aceite: Item recebe ID imutável; duplicidades seguem regra documentada; criação gera auditoria; item começa no estado derivado correto.
+
+Requisitos relacionados: RF-12; RF-14; RN-02
+
+Dependências originais: SIGAB-009;SIGAB-024;SIGAB-026
+
+Observações: Não usar número de série como chave primária.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-2,Acervo,27,1009,9,24,26,,,
+Task,Done,[SIGAB-028] Implementar detalhe e histórico do item,"Exibir dados atuais e linha do tempo de eventos autorizados.
+
+ID original: SIGAB-028
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 2
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Tela ou endpoint de detalhe
+
+Critério de aceite: Estado apresentado corresponde aos eventos confirmados; histórico é cronológico, paginado e não editável.
+
+Requisitos relacionados: RF-15; RF-53
+
+Dependências originais: SIGAB-012;SIGAB-027
+
+Observações: Valores sensíveis devem respeitar autorização.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-2,Acervo,28,1009,12,27,,,,
+Task,Done,[SIGAB-029] Especificar contrato da saída individual,"Definir comando, pré-condições, confirmação, idempotência e dados mínimos do primeiro fluxo.
+
+ID original: SIGAB-029
+
+Tipo original: design
+
+Sprint sugerida: Sprint 2
+
+Responsável sugerido: Backend/Produto
+
+Entregável: Especificação e critérios de aceite da saída
+
+Critério de aceite: Contrato define operador, usuário, item, organização, unidade, instante e tratamento de repetição e concorrência.
+
+Requisitos relacionados: RF-20; RF-21; RN-10
+
+Dependências originais: SIGAB-003;SIGAB-009;SIGAB-012;SIGAB-014
+
+Observações: Retirada por terceiro fica fora.",Highest,sigab,tipo-design,origem-pronto,sprint-sprint-2,Movimentação,29,1010,3,9,12,14,,
+Task,Done,[SIGAB-030] Implementar saída de item individual,"Confirmar entrega de item disponível para pessoa permitida e registrar eventos.
+
+ID original: SIGAB-030
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 2
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Fluxo de saída
+
+Critério de aceite: Somente item disponível pode sair; confirmação é explícita; evento contém ator e instante; histórico e posse são atualizados atomicamente.
+
+Requisitos relacionados: RF-20; RF-21; RF-51; RF-60
+
+Dependências originais: SIGAB-022;SIGAB-027;SIGAB-029
+
+Observações: Restrição pessoal entra depois de sua política ser validada.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-2,Movimentação,30,1010,22,27,29,,,
+Task,Done,[SIGAB-031] Testar concorrência da saída,"Simular duas confirmações simultâneas para o mesmo item.
+
+ID original: SIGAB-031
+
+Tipo original: teste
+
+Sprint sugerida: Sprint 2
+
+Responsável sugerido: QA/Backend
+
+Entregável: Teste automatizado de concorrência
+
+Critério de aceite: Exatamente uma saída é confirmada, a outra falha de modo controlado e nenhum histórico inconsistente é criado.
+
+Requisitos relacionados: RF-20; RNF-03
+
+Dependências originais: SIGAB-030
+
+Observações: Teste deve usar o mecanismo real de transação do banco.",Highest,sigab,tipo-teste,origem-pronto,sprint-sprint-2,Movimentação,31,1010,30,,,,,
+Task,Done,[SIGAB-032] Especificar contrato da devolução individual,"Definir conferência, condição do item, confirmação e vínculo com a saída aberta.
+
+ID original: SIGAB-032
+
+Tipo original: design
+
+Sprint sugerida: Sprint 2
+
+Responsável sugerido: Backend/Produto
+
+Entregável: Especificação e critérios de aceite da devolução
+
+Critério de aceite: Contrato impede devolução duplicada, identifica a saída e define resultado operacional do item.
+
+Requisitos relacionados: RF-21; RF-22; RF-23
+
+Dependências originais: SIGAB-009;SIGAB-029
+
+Observações: A marcação inapto depende da máquina de estados validada.",Highest,sigab,tipo-design,origem-pronto,sprint-sprint-2,Movimentação,32,1010,9,29,,,,
+Task,Done,[SIGAB-033] Implementar devolução de item individual,"Registrar devolução confirmada e disponibilizar o item conforme sua condição.
+
+ID original: SIGAB-033
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 2
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Fluxo de devolução
+
+Critério de aceite: Devolução encerra a posse correta, gera evento e auditoria; item apto volta a disponível; repetição não duplica efeitos.
+
+Requisitos relacionados: RF-22; RF-23; RF-60
+
+Dependências originais: SIGAB-030;SIGAB-032
+
+Observações: A meta de propagação entre terminais deve ser definida separadamente.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-2,Movimentação,33,1010,30,32,,,,
+Task,Done,[SIGAB-034] Implementar estorno com motivo,"Corrigir saída ou devolução por evento compensatório autorizado.
+
+ID original: SIGAB-034
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 3
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Fluxo de estorno
+
+Critério de aceite: Original permanece visível; estorno referencia original, exige permissão e motivo e restaura invariantes sem edição destrutiva.
+
+Requisitos relacionados: RN-05; RN-09; RF-62
+
+Dependências originais: SIGAB-012;SIGAB-030;SIGAB-033
+
+Observações: Pode exigir dupla aprovação após validação.",High,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-3,Movimentação,34,1010,12,30,33,,,
+Task,Done,[SIGAB-035] Implementar trilha de auditoria append-only,"Registrar ator, ação, objeto, instante, organização, correlação e alterações permitidas.
+
+ID original: SIGAB-035
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 1
+
+Responsável sugerido: Backend/Segurança
+
+Entregável: Serviço de auditoria
+
+Critério de aceite: Eventos não possuem operação comum de update/delete; toda operação P0 gera registro; testes verificam integridade e isolamento.
+
+Requisitos relacionados: RF-60; RF-62; RNF-03
+
+Dependências originais: SIGAB-012;SIGAB-016
+
+Observações: Definir retenção com jurídico.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-1,Auditoria,35,1011,12,16,,,,
+Task,To Do,[SIGAB-036] Implementar feed de atividade,"Criar projeção consultável dos eventos sem substituir a auditoria técnica.
+
+ID original: SIGAB-036
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 3
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Feed filtrável
+
+Critério de aceite: Feed é paginado, filtrável por pessoa, item e ação e respeita permissões e isolamento.
+
+Requisitos relacionados: RF-61
+
+Dependências originais: SIGAB-035
+
+Observações: Pode ser adiado sem comprometer o fluxo principal.",Medium,sigab,tipo-desenvolvimento,origem-backlog,sprint-sprint-3,Auditoria,36,1011,35,,,,,
+Task,Done,[SIGAB-037] Implementar posse atual da pessoa,"Consultar itens atualmente vinculados à pessoa dentro do escopo autorizado.
+
+ID original: SIGAB-037
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 3
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Consulta de posse
+
+Critério de aceite: A consulta deriva apenas movimentações confirmadas, não mostra dados de outro tenant e corresponde ao histórico.
+
+Requisitos relacionados: RF-51
+
+Dependências originais: SIGAB-030;SIGAB-033
+
+Observações: Preparar paginação.",High,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-3,Consulta,37,1012,30,33,,,,
+Task,Done,[SIGAB-038] Implementar busca inicial,"Buscar pessoa, matrícula, número do item e tipo com filtros básicos.
+
+ID original: SIGAB-038
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 3
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Busca paginada
+
+Critério de aceite: Resultados respeitam organização, unidade e permissão; tempo de resposta é medido com volume de teste documentado.
+
+Requisitos relacionados: RF-50
+
+Dependências originais: SIGAB-019;SIGAB-026;SIGAB-027;SIGAB-028
+
+Observações: Não indexar dados sensíveis em serviço externo sem decisão explícita.",High,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-3,Consulta,38,1012,19,26,27,28,,
+Task,To Do,[SIGAB-039] Definir política de dados pessoais,"Classificar dados, bases de tratamento, acessos, retenção, descarte, exportação e papéis de controlador/operador.
+
+ID original: SIGAB-039
+
+Tipo original: design
+
+Sprint sugerida: Sprint 0
+
+Responsável sugerido: Jurídico/Segurança/Produto
+
+Entregável: Política e matriz de dados
+
+Critério de aceite: Cada dado pessoal possui finalidade, acesso, retenção, descarte e responsável documentados.
+
+Requisitos relacionados: RNF-04
+
+Dependências originais: SIGAB-001;SIGAB-005;SIGAB-013
+
+Observações: Bloqueia biometria, saúde e anexos sensíveis.",Highest,sigab,tipo-design,origem-pendente,sprint-sprint-0,Privacidade,39,1013,1,5,13,,,
+Task,To Do,[SIGAB-040] Especificar restrição operacional da pessoa,"Definir categoria, vigência, escopo por material, fonte, autoridade, privacidade e possibilidade de exceção.
+
+ID original: SIGAB-040
+
+Tipo original: design
+
+Sprint sugerida: Futuro
+
+Responsável sugerido: Produto/Jurídico
+
+Entregável: Especificação de restrições
+
+Critério de aceite: O armeiro recebe somente informação necessária; regras temporais, encerramento, exceção e auditoria estão claras.
+
+Requisitos relacionados: RF-30; RF-31; RF-32; RN-06
+
+Dependências originais: SIGAB-002;SIGAB-004;SIGAB-039
+
+Observações: Não armazenar laudo médico por padrão.",High,sigab,tipo-design,origem-bloqueado,sprint-futuro,Restrições,40,1014,2,4,39,,,
+Task,To Do,[SIGAB-041] Implementar livro de estoque quantitativo,"Registrar entrada inicial, saída, devolução, consumo, ajuste e estorno por eventos.
+
+ID original: SIGAB-041
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Futuro
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Ledger de estoque
+
+Critério de aceite: Saldo é derivado dos eventos, nunca fica negativo e toda alteração possui origem, ator e motivo quando exigido.
+
+Requisitos relacionados: RF-13; RF-24; RN-04
+
+Dependências originais: SIGAB-008;SIGAB-012;SIGAB-025
+
+Observações: Não iniciar antes da decisão sobre lotes e unidades de medida.",High,sigab,tipo-desenvolvimento,origem-bloqueado,sprint-futuro,Estoque,41,1015,8,12,25,,,
+Task,To Do,[SIGAB-042] Implementar backup e teste de restauração,"Criar rotina protegida de cópia e verificar restauração periodicamente.
+
+ID original: SIGAB-042
+
+Tipo original: infraestrutura
+
+Sprint sugerida: Sprint 2
+
+Responsável sugerido: DevOps/Segurança
+
+Entregável: Backup automatizado e relatório de restauração
+
+Critério de aceite: Backup é criptografado, acesso é restrito e uma restauração completa atinge RPO e RTO definidos.
+
+Requisitos relacionados: RNF-07
+
+Dependências originais: SIGAB-005;SIGAB-010;SIGAB-016;SIGAB-039
+
+Observações: Frequência depende da decisão de continuidade.",Highest,sigab,tipo-infraestrutura,origem-pendente,sprint-sprint-2,Continuidade,42,1016,5,10,16,39,,
+Task,Done,[SIGAB-043] Criar testes end-to-end do fluxo vertical,"Cobrir cadastro, saída, bloqueio de dupla saída, devolução, histórico e autorização.
+
+ID original: SIGAB-043
+
+Tipo original: teste
+
+Sprint sugerida: Sprint 3
+
+Responsável sugerido: QA/Full-stack
+
+Entregável: Suíte end-to-end
+
+Critério de aceite: Fluxo feliz e falhas críticas passam em ambiente limpo e reproduzível no CI.
+
+Requisitos relacionados: RF-01; RF-12; RF-20; RF-22; RF-53; RF-60
+
+Dependências originais: SIGAB-025;SIGAB-027;SIGAB-030;SIGAB-031;SIGAB-033;SIGAB-035
+
+Observações: Usar dados sintéticos.",Highest,sigab,tipo-teste,origem-pronto,sprint-sprint-3,Qualidade,43,1008,25,27,30,31,33,35
+Task,Done,[SIGAB-044] Documentar operação da primeira entrega,"Registrar instalação, configuração, migrações, papéis, fluxo, limitações e decisões abertas.
+
+ID original: SIGAB-044
+
+Tipo original: documentacao
+
+Sprint sugerida: Sprint 3
+
+Responsável sugerido: Tech Lead/Produto
+
+Entregável: README técnico e notas da versão
+
+Critério de aceite: Outro dev executa e testa o sistema somente com a documentação; limitações não aparecem como funcionalidades prontas.
+
+Requisitos relacionados: Todos
+
+Dependências originais: SIGAB-043
+
+Observações: Incluir vínculo entre tarefas, requisitos e testes.",Highest,sigab,tipo-documentacao,origem-pronto,sprint-sprint-3,Entrega,44,1017,43,,,,,
+Task,To Do,[SIGAB-045] Realizar demonstração com usuário-alvo,"Demonstrar o fluxo vertical e registrar aceites, rejeições e mudanças solicitadas.
+
+ID original: SIGAB-045
+
+Tipo original: validacao
+
+Sprint sugerida: Após Sprint 3
+
+Responsável sugerido: Produto/Equipe
+
+Entregável: Ata de validação e backlog revisado
+
+Critério de aceite: Feedback está ligado às tarefas e requisitos; itens rejeitados não são tratados como validados.
+
+Requisitos relacionados: Seção 1.2
+
+Dependências originais: SIGAB-002;SIGAB-043;SIGAB-044
+
+Observações: A demonstração não substitui observação do processo real.",Highest,sigab,tipo-validacao,origem-bloqueado,sprint-apos-sprint-3,Entrega,45,1017,2,43,44,,,
+Task,To Do,[SIGAB-046] Registrar movimentação de contingência,"Registrar no sistema as saídas e devoluções ocorridas em papel durante a contingência, preservando o instante do fato, a referência ao documento e a rastreabilidade.
+
+ID original: SIGAB-046
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Sprint 3
+
+Responsável sugerido: Backend/Produto
+
+Entregável: Lançamento de movimentação de contingência com testes e documentação
+
+Critério de aceite: Movimento de contingência guarda origem, instante declarado do fato separado do instante do registro, referência da folha/linha e operador do lançamento; aplica as mesmas regras de estado, permissão, tenant e idempotência da saída e devolução; conflito com o estado atual é rejeitado como divergência sem forçar o registro; gera evento de auditoria específico; há teste negativo de acesso cruzado.
+
+Requisitos relacionados: RNF-01; RNF-02; RF-20 a RF-23; RF-60
+
+Dependências originais: SIGAB-006;SIGAB-012;SIGAB-030;SIGAB-033;SIGAB-035
+
+Observações: Bloqueia o uso com acervo real (ADR 0004). Não implementa operação offline nem sincronização.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-3,Movimentação,46,1010,6,12,30,33,35,
