@@ -111,10 +111,24 @@ class OrganizationAdmin(AuditedAdmin):
 
 @admin.register(Item)
 class ItemAdmin(AuditedAdmin):
+    # Lifecycle state changes only through services (decision 0004).
+    state_fields = ["administrative_status", "availability", "current_holder"]
+    condition_fields = ["condition", "condition_reason"]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj is None:
+            return self.state_fields
+        return self.state_fields + self.condition_fields
+
     def save_model(self, request, obj, form, change):
         if change:
             super().save_model(request, obj, form, change)
             return
+        obj.availability = (
+            Item.Availability.AVAILABLE
+            if obj.condition == Item.Condition.FIT
+            else Item.Availability.UNAVAILABLE
+        )
         admin.ModelAdmin.save_model(self, request, obj, form, change)
         record_incorporation(
             CommandContext(

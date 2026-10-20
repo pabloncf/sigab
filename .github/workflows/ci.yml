@@ -2,8 +2,11 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  test:
+  backend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     services:
       postgres:
         image: postgres:17
@@ -27,6 +30,19 @@ jobs:
       - run: uv sync --locked --dev
       - run: uv run ruff format --check config sigab manage.py
       - run: uv run ruff check config sigab manage.py
+      - run: uv run python manage.py check
       - run: uv run python manage.py makemigrations --check --dry-run
       - run: uv run pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run build
 

@@ -7,4 +7,5 @@ urlpatterns = [
     path("itens/<uuid:pk>/", views.item_detail, name="item-detail"),
     path("itens/<uuid:pk>/saida/", views.checkout, name="checkout"),
     path("itens/<uuid:pk>/devolucao/", views.checkin, name="checkin"),
+    path("itens/<uuid:pk>/condicao/", views.change_condition, name="change-condition"),
 ]

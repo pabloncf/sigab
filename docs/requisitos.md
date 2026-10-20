@@ -13,3 +13,12 @@ Os demais requisitos permanecem fora do escopo. O status do backlog indica plane
 
 A [nota regulatória 0001](notas-regulatorias/0001-guardas-municipais.md) registra a pesquisa preliminar da Seção 7 para o segmento inicial. Ela não certifica conformidade: requisitos locais, retenção, integrações e habilitação do fluxo real de armas dependem do Município, de validação jurídica e dos instrumentos vigentes com os órgãos competentes.
 
+## Estado individual: ciclo de vida do item
+
+Registrado na SIGAB-009 ([decisão 0004](decisoes/0004-ciclo-de-vida-do-item-individual.md), seção 11).
+
+| Requisito | Estado | Evidência |
+|---|---|---|
+| RF-14 | validado | DOC-0011, reunião REU-0001 com o armeiro (2026-09-29) |
+| RF-22 | validado | idem |
+| RN-08 | validado | idem |

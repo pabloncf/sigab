@@ -5,7 +5,7 @@
 - Estado: aprovada para a linha de base
 - Responsáveis pela decisão: Produto/Segurança
 - Dependências: SIGAB-002 e SIGAB-003 concluídas
-- Matriz canônica: [`0002-papeis-e-escopos.json`](0002-papeis-e-escopos.json)
+- Matriz canônica: [`0002-papeis-e-escopos.json`](0002-papeis-e-escopos.json), versão 1.1.0
 
 ## Decisão
 
@@ -151,3 +151,21 @@ serem aprovadas e implementadas.
 
 Com essa cobertura e a matriz JSON versionada, a SIGAB-004 satisfaz seu critério
 de aceite. Mudanças futuras exigem nova versão da matriz e registro da decisão.
+
+## Revisão 1.1.0 — SIGAB-009
+
+Data: 2026-10-19. A [decisão 0004](0004-ciclo-de-vida-do-item-individual.md)
+acrescenta a permissão atômica `item.condition.set`, que permite declarar o
+item inapto (com motivo) ou liberá-lo como apto enquanto ele está na reserva.
+
+| Papel | `item.condition.set` |
+|---|---|
+| Operador de reserva | sim, na unidade |
+| Gestor de acervo | sim, na organização |
+| demais papéis | não |
+
+A base é a seção 3 do [DOC-0011](../fontes/DOC-0011-analise-de-requisitos-v0.1.md),
+que dá a ação “Marcar item como inapto ou apto” ao Armeiro e ao Adm. A
+permissão não tem separação de funções: quem declara inapto pode liberar,
+e a auditoria registra o ator de cada ato. Mudar a condição durante a posse
+operacional continua sendo papel da devolução (`movement.return`).

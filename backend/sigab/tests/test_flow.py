@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.management import call_command
-from django.db import close_old_connections, connection, connections
+from django.db import IntegrityError, close_old_connections, connection, connections, transaction
 
 from sigab.models import (
     Account,
@@ -20,13 +20,14 @@ from sigab.models import (
     StorageLocation,
     Unit,
 )
-from sigab.permissions import MOVE_ITEM, VIEW_ITEM
+from sigab.permissions import MOVE_ITEM, SET_ITEM_CONDITION, VIEW_ITEM
 from sigab.services import (
     CommandContext,
     ConflictError,
     checkout_item,
     record_incorporation,
     return_item,
+    set_item_condition,
 )
 
 
@@ -77,7 +78,9 @@ def world(db):
         username="operador", password="Senha-forte-123", organization=org
     )
     role = Role.objects.create(
-        organization=org, name="Operador", permissions=[MOVE_ITEM, VIEW_ITEM]
+        organization=org,
+        name="Operador",
+        permissions=[MOVE_ITEM, SET_ITEM_CONDITION, VIEW_ITEM],
     )
     Grant.objects.create(
         organization=org,
@@ -227,6 +230,7 @@ def test_checkout_is_idempotent_and_prevents_second_checkout(world):
     ],
 )
 def test_return_closes_custody_and_derives_availability(world, condition, expected):
+    reason = "Cano danificado" if condition == Item.Condition.UNFIT else ""
     checkout_item(
         world["ctx"],
         item_id=world["item"].id,
@@ -239,6 +243,7 @@ def test_return_closes_custody_and_derives_availability(world, condition, expect
         world["ctx"],
         item_id=world["item"].id,
         condition=condition,
+        reason=reason,
         idempotency_key=key,
         confirmed=True,
     )
@@ -246,12 +251,14 @@ def test_return_closes_custody_and_derives_availability(world, condition, expect
         world["ctx"],
         item_id=world["item"].id,
         condition=condition,
+        reason=reason,
         idempotency_key=key,
         confirmed=True,
     )
     world["item"].refresh_from_db()
     assert created and not repeated_created and first.id == repeated.id
     assert world["item"].availability == expected and world["item"].current_holder is None
+    assert world["item"].condition_reason == reason and first.condition_reason == reason
     assert list(world["item"].events.values_list("event_type", flat=True)) == [
         "item.incorporated",
         "item.checked_out",
@@ -324,3 +331,203 @@ def test_concurrent_checkout_accepts_exactly_one(world):
     with ThreadPoolExecutor(max_workers=2) as pool:
         outcomes = list(pool.map(attempt, [uuid.uuid4(), uuid.uuid4()]))
     assert sorted(outcomes) == ["accepted", "conflict"]
+
+
+def _checkout(world, item=None):
+    return checkout_item(
+        world["ctx"],
+        item_id=(item or world["item"]).id,
+        recipient_id=world["person"].id,
+        idempotency_key=uuid.uuid4(),
+        confirmed=True,
+    )
+
+
+def _set_condition(world, condition, reason="Conferência sintética", ctx=None, key=None):
+    return set_item_condition(
+        ctx or world["ctx"],
+        item_id=world["item"].id,
+        condition=condition,
+        reason=reason,
+        idempotency_key=key or uuid.uuid4(),
+        confirmed=True,
+    )
+
+
+@pytest.mark.django_db
+def test_checkout_rejects_inactive_item(world):
+    Item.objects.filter(pk=world["item"].pk).update(
+        administrative_status=Item.AdministrativeStatus.INACTIVE
+    )
+    with pytest.raises(ConflictError):
+        _checkout(world)
+    assert not Movement.objects.filter(movement_type=Movement.Type.CHECKOUT).exists()
+
+
+@pytest.mark.django_db
+def test_unfit_return_requires_reason(world):
+    _checkout(world)
+    with pytest.raises(ValidationError):
+        return_item(
+            world["ctx"],
+            item_id=world["item"].id,
+            condition=Item.Condition.UNFIT,
+            reason="  ",
+            idempotency_key=uuid.uuid4(),
+            confirmed=True,
+        )
+    world["item"].refresh_from_db()
+    assert world["item"].availability == Item.Availability.IN_CUSTODY
+
+
+@pytest.mark.django_db
+def test_unfit_item_without_reason_is_rejected_by_database(world):
+    with pytest.raises(IntegrityError), transaction.atomic():
+        Item.objects.filter(pk=world["item"].pk).update(condition=Item.Condition.UNFIT)
+
+
+@pytest.mark.django_db
+def test_unfit_item_can_be_released_and_checked_out_again(world):
+    unfit, created = _set_condition(world, Item.Condition.UNFIT, "Aguardando manutenção")
+    world["item"].refresh_from_db()
+    assert created and unfit.movement_type == Movement.Type.CONDITION_CHANGE
+    assert world["item"].availability == Item.Availability.UNAVAILABLE
+    assert world["item"].condition_reason == "Aguardando manutenção"
+    with pytest.raises(ConflictError):
+        _checkout(world)
+
+    key = uuid.uuid4()
+    released, created = _set_condition(world, Item.Condition.FIT, "Inspeção 42", key=key)
+    repeated, repeated_created = _set_condition(world, Item.Condition.FIT, "Inspeção 42", key=key)
+    world["item"].refresh_from_db()
+    assert created and not repeated_created and released.id == repeated.id
+    assert world["item"].condition == Item.Condition.FIT
+    assert world["item"].condition_reason == ""
+    assert world["item"].availability == Item.Availability.AVAILABLE
+    _checkout(world)
+
+    events = list(world["item"].events.values_list("event_type", "metadata"))
+    assert events[1:3] == [
+        (
+            "item.condition_changed",
+            {
+                "previous_condition": "fit",
+                "condition": "unfit",
+                "schema": "item.condition_changed.v1",
+            },
+        ),
+        (
+            "item.condition_changed",
+            {
+                "previous_condition": "unfit",
+                "condition": "fit",
+                "schema": "item.condition_changed.v1",
+            },
+        ),
+    ]
+    audit = AuditEvent.objects.get(action="item.condition_change", object_id=str(released.id))
+    assert audit.reason == "Inspeção 42"
+    assert audit.changes["condition"] == {"from": "unfit", "to": "fit"}
+
+
+@pytest.mark.django_db
+def test_returned_unfit_item_can_be_released(world):
+    _checkout(world)
+    return_item(
+        world["ctx"],
+        item_id=world["item"].id,
+        condition=Item.Condition.UNFIT,
+        reason="Gatilho travando",
+        idempotency_key=uuid.uuid4(),
+        confirmed=True,
+    )
+    _set_condition(world, Item.Condition.FIT, "Reparo concluído")
+    world["item"].refresh_from_db()
+    assert world["item"].availability == Item.Availability.AVAILABLE
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "condition,reason",
+    [(Item.Condition.UNFIT, ""), (Item.Condition.FIT, " "), ("broken", "Motivo")],
+)
+def test_condition_change_validates_input(world, condition, reason):
+    if condition == Item.Condition.FIT:
+        _set_condition(world, Item.Condition.UNFIT)
+    with pytest.raises(ValidationError):
+        _set_condition(world, condition, reason)
+
+
+@pytest.mark.django_db
+def test_condition_change_requires_confirmation(world):
+    with pytest.raises(ValidationError):
+        set_item_condition(
+            world["ctx"],
+            item_id=world["item"].id,
+            condition=Item.Condition.UNFIT,
+            reason="Motivo",
+            idempotency_key=uuid.uuid4(),
+            confirmed=False,
+        )
+
+
+@pytest.mark.django_db
+def test_condition_change_requires_permission(world):
+    account = Account.objects.create_user(
+        username="so-saida", password="Senha-forte-123", organization=world["org"]
+    )
+    role = Role.objects.create(
+        organization=world["org"], name="Só saída", permissions=[MOVE_ITEM, VIEW_ITEM]
+    )
+    Grant.objects.create(
+        organization=world["org"],
+        account=account,
+        role=role,
+        scope_type=Grant.Scope.ORGANIZATION,
+        granted_by=world["account"],
+    )
+    ctx = CommandContext(account, world["org"], "denied")
+    with pytest.raises(PermissionDenied):
+        _set_condition(world, Item.Condition.UNFIT, ctx=ctx)
+
+
+@pytest.mark.django_db
+def test_condition_change_hides_cross_tenant_item(world):
+    other = Organization.objects.create(name="B")
+    other_account = Account.objects.create_user(
+        username="outro", password="Senha-forte-123", organization=other
+    )
+    ctx = CommandContext(other_account, other, "cross")
+    with pytest.raises(ValidationError, match="Item inválido"):
+        _set_condition(world, Item.Condition.UNFIT, ctx=ctx)
+
+
+@pytest.mark.django_db
+def test_condition_change_rejects_item_in_custody_inactive_or_same_condition(world):
+    with pytest.raises(ConflictError):
+        _set_condition(world, Item.Condition.FIT)
+    _checkout(world)
+    with pytest.raises(ConflictError):
+        _set_condition(world, Item.Condition.UNFIT)
+    Item.objects.filter(pk=world["item"].pk).update(
+        availability=Item.Availability.AVAILABLE,
+        current_holder=None,
+        administrative_status=Item.AdministrativeStatus.INACTIVE,
+    )
+    with pytest.raises(ConflictError):
+        _set_condition(world, Item.Condition.UNFIT)
+
+
+@pytest.mark.django_db
+def test_condition_change_http_flow(client, world):
+    client.force_login(world["account"])
+    url = f"/itens/{world['item'].id}/condicao/"
+    assert b"Declarar item inapto" in client.get(url).content
+    response = client.post(
+        url,
+        {"reason": "Mira desalinhada", "confirmed": "on", "idempotency_key": str(uuid.uuid4())},
+    )
+    assert response.status_code == 302
+    world["item"].refresh_from_db()
+    assert world["item"].condition == Item.Condition.UNFIT
+    assert b"Mira desalinhada" in client.get(f"/itens/{world['item'].id}/").content

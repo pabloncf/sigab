@@ -222,6 +222,7 @@ class Item(TimestampedModel):
         max_length=16, choices=AdministrativeStatus, default=AdministrativeStatus.ACTIVE
     )
     condition = models.CharField(max_length=16, choices=Condition, default=Condition.FIT)
+    condition_reason = models.CharField(max_length=200, blank=True)
     availability = models.CharField(
         max_length=16, choices=Availability, default=Availability.AVAILABLE
     )
@@ -241,6 +242,11 @@ class Item(TimestampedModel):
                 condition=~Q(asset_number=""),
                 name="uniq_item_asset_org",
             ),
+            models.CheckConstraint(
+                condition=(Q(condition="fit") & Q(condition_reason=""))
+                | (Q(condition="unfit") & ~Q(condition_reason="")),
+                name="item_unfit_requires_reason",
+            ),
         ]
 
     def clean(self):
@@ -257,6 +263,10 @@ class Item(TimestampedModel):
             raise ValidationError("O local de guarda deve pertencer à unidade informada.")
         if self.equipment_type.classification != EquipmentType.Classification.INDIVIDUAL:
             raise ValidationError("Este fluxo aceita somente tipo individual.")
+        if self.condition == self.Condition.UNFIT and not self.condition_reason.strip():
+            raise ValidationError("Item inapto exige motivo.")
+        if self.condition == self.Condition.FIT and self.condition_reason:
+            raise ValidationError("Motivo de inapto só se aplica a item inapto.")
 
     @property
     def display_identifier(self):
@@ -268,6 +278,7 @@ class Movement(TimestampedModel):
         INCORPORATION = "incorporation", "Incorporação"
         CHECKOUT = "checkout", "Saída"
         RETURN = "return", "Devolução"
+        CONDITION_CHANGE = "condition_change", "Alteração de condição"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(
@@ -287,6 +298,8 @@ class Movement(TimestampedModel):
     idempotency_key = models.UUIDField()
     confirmed_at = models.DateTimeField()
     condition_on_return = models.CharField(max_length=16, choices=Item.Condition, blank=True)
+    new_condition = models.CharField(max_length=16, choices=Item.Condition, blank=True)
+    condition_reason = models.CharField(max_length=200, blank=True)
 
     class Meta:
         constraints = [

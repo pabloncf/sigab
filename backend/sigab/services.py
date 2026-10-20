@@ -6,7 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from .models import AuditEvent, Item, Movement, MovementEvent, Organization, Person
-from .permissions import MOVE_ITEM, has_permission
+from .permissions import MOVE_ITEM, SET_ITEM_CONDITION, has_permission
 
 
 class ConflictError(ValidationError):
@@ -20,7 +20,7 @@ class CommandContext:
     correlation_id: str
 
 
-def audit(ctx, action, instance, changes=None, result="success"):
+def audit(ctx, action, instance, changes=None, result="success", reason=""):
     return AuditEvent.objects.create(
         organization=ctx.organization,
         actor=ctx.actor,
@@ -31,6 +31,7 @@ def audit(ctx, action, instance, changes=None, result="success"):
         correlation_id=ctx.correlation_id,
         result=result,
         changes=changes or {},
+        reason=reason,
     )
 
 
@@ -92,7 +93,11 @@ def checkout_item(
         raise PermissionDenied
     if not recipient.memberships.filter(organization=ctx.organization, is_active=True).exists():
         raise ValidationError("O destinatário não possui vínculo ativo.")
-    if item.availability != Item.Availability.AVAILABLE or item.condition != Item.Condition.FIT:
+    if (
+        item.administrative_status != Item.AdministrativeStatus.ACTIVE
+        or item.availability != Item.Availability.AVAILABLE
+        or item.condition != Item.Condition.FIT
+    ):
         raise ConflictError("O item não está disponível para saída.")
     now = timezone.now()
     movement = Movement.objects.create(
@@ -104,9 +109,11 @@ def checkout_item(
         idempotency_key=idempotency_key,
         confirmed_at=now,
     )
-    updated = Item.objects.filter(pk=item.pk, availability=Item.Availability.AVAILABLE).update(
-        availability=Item.Availability.IN_CUSTODY, current_holder=recipient, updated_at=now
-    )
+    updated = Item.objects.filter(
+        pk=item.pk,
+        administrative_status=Item.AdministrativeStatus.ACTIVE,
+        availability=Item.Availability.AVAILABLE,
+    ).update(availability=Item.Availability.IN_CUSTODY, current_holder=recipient, updated_at=now)
     if updated != 1:
         raise ConflictError("O item foi movimentado por outra operação.")
     MovementEvent.objects.create(
@@ -124,8 +131,27 @@ def checkout_item(
     return movement, True
 
 
+def _condition_reason(condition, reason):
+    if condition not in Item.Condition.values:
+        raise ValidationError("Condição inválida.")
+    reason = (reason or "").strip()
+    if condition == Item.Condition.UNFIT and not reason:
+        raise ValidationError("Informe o motivo de inapto.")
+    if len(reason) > 200:
+        raise ValidationError("O motivo deve ter no máximo 200 caracteres.")
+    return reason
+
+
 @transaction.atomic
-def return_item(ctx, *, item_id: UUID, condition: str, idempotency_key: UUID, confirmed: bool):
+def return_item(
+    ctx,
+    *,
+    item_id: UUID,
+    condition: str,
+    idempotency_key: UUID,
+    confirmed: bool,
+    reason: str = "",
+):
     if not confirmed:
         raise ValidationError("A confirmação explícita é obrigatória.")
     existing = _existing(ctx, idempotency_key, Movement.Type.RETURN)
@@ -153,8 +179,8 @@ def return_item(ctx, *, item_id: UUID, condition: str, idempotency_key: UUID, co
     )
     if item.availability != Item.Availability.IN_CUSTODY or not checkout:
         raise ConflictError("O item não possui saída aberta.")
-    if condition not in Item.Condition.values:
-        raise ValidationError("Condição de retorno inválida.")
+    reason = _condition_reason(condition, reason)
+    item_reason = reason if condition == Item.Condition.UNFIT else ""
     now = timezone.now()
     movement = Movement.objects.create(
         organization=ctx.organization,
@@ -166,6 +192,7 @@ def return_item(ctx, *, item_id: UUID, condition: str, idempotency_key: UUID, co
         idempotency_key=idempotency_key,
         confirmed_at=now,
         condition_on_return=condition,
+        condition_reason=reason,
     )
     availability = (
         Item.Availability.AVAILABLE
@@ -173,7 +200,11 @@ def return_item(ctx, *, item_id: UUID, condition: str, idempotency_key: UUID, co
         else Item.Availability.UNAVAILABLE
     )
     Item.objects.filter(pk=item.pk, availability=Item.Availability.IN_CUSTODY).update(
-        availability=availability, condition=condition, current_holder=None, updated_at=now
+        availability=availability,
+        condition=condition,
+        condition_reason=item_reason,
+        current_holder=None,
+        updated_at=now,
     )
     MovementEvent.objects.create(
         organization=ctx.organization,
@@ -184,5 +215,89 @@ def return_item(ctx, *, item_id: UUID, condition: str, idempotency_key: UUID, co
         occurred_at=now,
         metadata={"condition": condition, "schema": "item.returned.v1"},
     )
-    audit(ctx, "item.return", movement, {"item_id": str(item.id), "condition": condition})
+    audit(
+        ctx,
+        "item.return",
+        movement,
+        {"item_id": str(item.id), "condition": condition},
+        reason=reason,
+    )
+    return movement, True
+
+
+@transaction.atomic
+def set_item_condition(
+    ctx, *, item_id: UUID, condition: str, reason: str, idempotency_key: UUID, confirmed: bool
+):
+    """Declare an item in the reserve unfit (T05) or release it as fit (T06)."""
+    if not confirmed:
+        raise ValidationError("A confirmação explícita é obrigatória.")
+    existing = _existing(ctx, idempotency_key, Movement.Type.CONDITION_CHANGE)
+    if existing:
+        return existing, False
+    item = (
+        Item.objects.select_for_update().filter(id=item_id, organization=ctx.organization).first()
+    )
+    existing = _existing(ctx, idempotency_key, Movement.Type.CONDITION_CHANGE)
+    if existing:
+        return existing, False
+    if not item:
+        raise ValidationError("Item inválido.")
+    if not has_permission(ctx.actor, SET_ITEM_CONDITION, ctx.organization, item.unit):
+        raise PermissionDenied
+    reason = _condition_reason(condition, reason)
+    if not reason:
+        raise ValidationError("Informe a referência da conferência que libera o item.")
+    if item.administrative_status != Item.AdministrativeStatus.ACTIVE:
+        raise ConflictError("O item não está ativo.")
+    if item.availability == Item.Availability.IN_CUSTODY:
+        raise ConflictError("A condição de item em posse é registrada na devolução.")
+    if item.condition == condition:
+        raise ConflictError("O item já está nessa condição.")
+    now = timezone.now()
+    previous = item.condition
+    movement = Movement.objects.create(
+        organization=ctx.organization,
+        movement_type=Movement.Type.CONDITION_CHANGE,
+        item=item,
+        operator=ctx.actor,
+        idempotency_key=idempotency_key,
+        confirmed_at=now,
+        new_condition=condition,
+        condition_reason=reason,
+    )
+    fit = condition == Item.Condition.FIT
+    updated = Item.objects.filter(
+        pk=item.pk,
+        administrative_status=Item.AdministrativeStatus.ACTIVE,
+        condition=previous,
+        availability__in=[Item.Availability.AVAILABLE, Item.Availability.UNAVAILABLE],
+    ).update(
+        condition=condition,
+        condition_reason="" if fit else reason,
+        availability=Item.Availability.AVAILABLE if fit else Item.Availability.UNAVAILABLE,
+        updated_at=now,
+    )
+    if updated != 1:
+        raise ConflictError("O item foi movimentado por outra operação.")
+    MovementEvent.objects.create(
+        organization=ctx.organization,
+        movement=movement,
+        item=item,
+        event_type="item.condition_changed",
+        actor=ctx.actor,
+        occurred_at=now,
+        metadata={
+            "previous_condition": previous,
+            "condition": condition,
+            "schema": "item.condition_changed.v1",
+        },
+    )
+    audit(
+        ctx,
+        "item.condition_change",
+        movement,
+        {"item_id": str(item.id), "condition": {"from": previous, "to": condition}},
+        reason=reason,
+    )
     return movement, True

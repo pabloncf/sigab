@@ -2,7 +2,7 @@
 
 - Tarefa: SIGAB-009
 - Data: 2026-10-19
-- Estado: **validada** (2026-10-19)
+- Estado: **validada** (2026-10-19), com base nos requisitos levantados com o armeiro (DOC-0011, reunião REU-0001 de 2026-09-29)
 - Responsável pela validação: Produto/Domínio
 - Dependências: SIGAB-002 e SIGAB-003 concluídas ([glossário](../glossario.md)); papéis da [decisão 0002](0002-papeis-e-escopos.md); padrão de eventos do [ADR 0003](../adr/0003-eventos-idempotencia.md); obrigações OBR-01, OBR-02, OBR-08 e OBR-09 da [nota regulatória 0001](../notas-regulatorias/0001-guardas-municipais.md)
 - Requisitos relacionados: RF-14, RF-22 e RN-08 do [DOC-0011 v0.1](../fontes/DOC-0011-analise-de-requisitos-v0.1.md), todos no estado `Proposto`; também RF-21, RF-23, RN-05, RN-07 e RN-09
@@ -46,7 +46,7 @@ Sinistro, manutenção e transferência **não** mudam a situação administrati
 | Valor | Significado |
 |---|---|
 | `apto` | pode ser entregue e usado |
-| `inapto` | não pode ser entregue (RN-08). Exige **motivo** de uma lista curta: `defeito`, `aguardando manutenção`, `aguardando inspeção`, `vencido/fora de especificação`, `outro` (texto obrigatório) |
+| `inapto` | não pode ser entregue (RN-08). Exige **motivo** em texto curto (RF-14), por exemplo “aguardando manutenção” (glossário do DOC-0011). Não há lista fechada: o DOC-0011 pede só “com motivo”, e o RNF-06 pede o menor número possível de campos no balcão |
 
 A condição só é afirmada por uma pessoa autorizada que conferiu o item. Quando o item está em localização `desconhecida` ou `retido externamente`, a condição registrada é a **última conhecida** e não é atualizada até a recuperação.
 
@@ -69,10 +69,7 @@ Unidade e local de guarda de referência (`unit` e `storage_location` no modelo 
 
 ### 2.5 Bloqueios que tornam o item indisponível
 
-Além das dimensões, um item `ativo`, `apto` e na `reserva` fica indisponível enquanto houver:
-
-- solicitação de baixa pendente (T16);
-- transferência solicitada e ainda não enviada (T09, se a Guarda exigir aprovação prévia — questão 10.6).
+Além das dimensões, um item `ativo`, `apto` e na `reserva` fica indisponível enquanto houver solicitação de baixa pendente (T16). A transferência não cria bloqueio: sem aprovação prévia (10.6), o envio (T09) já tira o item da reserva.
 
 Bloqueios são fatos com início e fim registrados, não um quinto estado editável.
 
@@ -102,7 +99,7 @@ Legenda de fase: **impl.** já implementada; **MVP** necessária para o fluxo at
 
 Toda transição que altera estado exige confirmação explícita (RF-21), chave de idempotência única na organização e autorização no backend para a unidade de lotação do item. Todas geram evento de domínio com schema versionado e evento de auditoria com organização, ator, objeto, instante UTC e correlação. Essas exigências comuns não se repetem nas linhas abaixo.
 
-Permissões entre aspas existem na matriz da [decisão 0002](0002-papeis-e-escopos.md). Permissões marcadas *(nova)* não existem e precisam entrar na matriz antes da implementação (questão 10.1).
+Permissões entre aspas existem na matriz da [decisão 0002](0002-papeis-e-escopos.md). `item.condition.set` entrou na matriz 1.1.0 por esta decisão (questão 10.1). As permissões marcadas *(nova)* são de transições `futura` e só entram na matriz quando a tarefa da transição for criada.
 
 ### 4.1 Entrada e uso diário
 
@@ -110,10 +107,10 @@ Permissões entre aspas existem na matriz da [decisão 0002](0002-papeis-e-escop
 |---|---|---|---|---|---|---|---|
 | T01 | Incorporação | inexistente → `ativo`, condição declarada, `reserva` na lotação | Operador de reserva ou Gestor de acervo, `item.create` | tipo individual ativo da organização; local de guarda pertence à unidade; série e patrimônio únicos quando preenchidos | cria o item, movimentação `incorporation`, evento `item.incorporated` | registro errado → **anulação** (T20); dado cadastral errado → correção cadastral auditada com valor anterior e novo (RF-60), sem mudar estado | impl. (condição declarada: MVP) |
 | T02 | Saída | `reserva` disponível → `posse operacional` | Operador de reserva, `movement.checkout` | item disponível (seção 1, regra 1); destinatário ativo com vínculo ativo; futuramente sem restrição ativa (RN-06) e organização não bloqueada (RN-07) | movimentação `checkout`, `current_holder` = destinatário, evento `item.checked_out` | normal: devolução (T03/T04). Erro (item não saiu): **estorno da saída** com motivo, que encerra a saída e restaura `reserva` sem registrar devolução | impl. (estorno: ver 9.4) |
-| T03 | Devolução apta | `posse operacional` → `reserva`, `apto` | Operador de reserva, `movement.return` | saída aberta; conferência do item (RF-22) | movimentação `return` vinculada à saída, limpa `current_holder`, condição `apto`; item disponível no mesmo instante (RF-23) | condição errada → T05; devolução registrada por engano → **estorno da devolução**, que reabre a mesma saída | impl. |
-| T04 | Devolução inapta | `posse operacional` → `reserva`, `inapto` | Operador de reserva, `movement.return` | igual a T03; **motivo de inapto obrigatório** | igual a T03, com condição `inapto` e motivo | liberação (T06); estorno da devolução, como em T03 | impl. (motivo: MVP) |
-| T05 | Declarar inapto | `reserva`, `apto` → `reserva`, `inapto` | Operador de reserva, `item.condition.set` *(nova)* | item `ativo` na `reserva`, sem saída aberta; motivo obrigatório | evento `item.condition_changed` com condição anterior, nova e motivo; item indisponível | T06 | MVP |
-| T06 | Liberar (declarar apto) | `reserva`, `inapto` → `reserva`, `apto` | Operador de reserva, `item.condition.set` *(nova)*; separação de quem declarou inapto: questão 10.2 | item `ativo` na `reserva`; referência da conferência ou manutenção (texto curto) | evento `item.condition_changed`; item disponível se não houver bloqueio | T05 | MVP |
+| T03 | Devolução apta | `posse operacional` → `reserva`, `apto` | Operador de reserva, `movement.return` | saída aberta; conferência do item (RF-22); nunca bloqueada por inadimplência da organização (RN-07) | movimentação `return` vinculada à saída, limpa `current_holder`, condição `apto`; item disponível no mesmo instante (RF-23) | condição errada → T05; devolução registrada por engano → **estorno da devolução**, que reabre a mesma saída | impl. |
+| T04 | Devolução inapta | `posse operacional` → `reserva`, `inapto` | Operador de reserva, `movement.return` | igual a T03; **motivo de inapto obrigatório** (RF-14) | igual a T03, com condição `inapto` e motivo | liberação (T06); estorno da devolução, como em T03 | impl. (motivo: MVP) |
+| T05 | Declarar inapto | `reserva`, `apto` → `reserva`, `inapto` | Operador de reserva ou Gestor de acervo, `item.condition.set` | item `ativo` na `reserva`, sem saída aberta; motivo obrigatório | evento `item.condition_changed` com condição anterior, nova e motivo; item indisponível | T06 | MVP |
+| T06 | Liberar (declarar apto) | `reserva`, `inapto` → `reserva`, `apto` | Operador de reserva ou Gestor de acervo, `item.condition.set`; a mesma pessoa que declarou inapto pode liberar (10.2) | item `ativo` na `reserva`; referência da conferência ou manutenção (texto curto) | evento `item.condition_changed`; item disponível se não houver bloqueio | T05 | MVP |
 
 Durante a `posse operacional`, a condição não é alterada por T05/T06: o responsável está com o item e a conferência acontece na devolução. A exceção é o sinistro de dano (T13).
 
@@ -145,7 +142,7 @@ O registro interno de sinistro **não** comprova comunicação à PF, à políci
 | ID | Transição | Origem → destino | Ator e permissão | Pré-condições | Efeito | Reversão | Fase |
 |---|---|---|---|---|---|---|---|
 | T16 | Solicitação de baixa | `ativo` (sem mudança de dimensão) → bloqueio pendente | Operador de reserva, `item.retire.request` | localização `reserva` ou `desconhecida`/`retido externamente` com ocorrência; sem saída aberta; motivo (RN-09) | registra solicitação; item indisponível enquanto pendente | rejeição ou desistência remove o bloqueio | futura |
-| T17 | Aprovação e aplicação da baixa | `ativo` → `baixado` | Gestor ou Aprovador de acervo, `item.retire.approve`; **nunca** quem solicitou (decisão 0002, regra 2) | solicitação pendente; referência ao processo patrimonial (OBR-01) e, para arma de fogo, ao procedimento oficial (OBR-02), sem inferir que foi concluído | evento `item.retired`; item sai de contagens e disponibilidade; histórico preservado | **estorno de baixa** somente por erro material, com motivo e aprovador diferente de quem aplicou; item recuperado após baixa por sinistro: questão 10.8 | futura |
+| T17 | Aprovação e aplicação da baixa | `ativo` → `baixado` | Gestor ou Aprovador de acervo, `item.retire.approve`; **nunca** quem solicitou (decisão 0002, regra 2) | solicitação pendente; referência ao processo patrimonial (OBR-01) e, para arma de fogo, ao procedimento oficial (OBR-02), sem inferir que foi concluído | evento `item.retired`; item sai de contagens e disponibilidade; histórico preservado | **estorno de baixa** somente por erro material, com motivo e aprovador diferente de quem aplicou; item recuperado depois da baixa: reativação (10.8) | futura |
 | T18 | Rejeição da baixa | bloqueio pendente → sem bloqueio | Gestor ou Aprovador de acervo, `item.retire.approve` | solicitação pendente; motivo | encerra a solicitação | nova solicitação | futura |
 | T20 | Anulação de registro | `ativo` → `anulado` | Gestor de acervo, `item.retire.approve`; quem incorporou não anula sozinho | **nenhuma movimentação além da incorporação**; motivo (`duplicado` ou `incorporação indevida`), referência ao registro correto quando duplicado | evento `item.voided`; identificadores liberados para reuso: questão 10.9 | estorno da anulação por aprovador diferente | MVP |
 
@@ -197,16 +194,16 @@ Estorno corrige **erro de registro**. Um fato real posterior, como item recupera
 
 ## 7. Conferência com o modelo atual
 
-| Conceito desta decisão | Modelo atual (`sigab/models.py`) | Diferença |
+| Conceito desta decisão | Modelo atual (`backend/sigab/models.py`) | Diferença |
 |---|---|---|
-| situação administrativa | `Item.administrative_status`: `active`, `inactive` | `inactive` não tem semântica, nenhum fluxo o define e **a saída não verifica a situação**. Proposta: substituir por `retired` (baixado) e `voided` (anulado) |
-| condição | `Item.condition`: `fit`, `unfit` | compatível; falta o **motivo** de inapto (RF-14) |
+| situação administrativa | `Item.administrative_status`: `active`, `inactive` | a saída e a alteração de condição exigem `active`; `inactive` ainda não tem fluxo que o defina. Proposta: substituir por `retired` (baixado) e `voided` (anulado) junto com T17 e T20 |
+| condição | `Item.condition`: `fit`, `unfit`; `Item.condition_reason` | compatível; motivo obrigatório quando inapto, garantido por restrição no banco |
 | localização | implícita em `availability = in_custody` | o valor mistura localização e disponibilidade; sem lugar para manutenção, trânsito ou sinistro |
 | lotação | `Item.unit` e `Item.storage_location` | compatível; hoje também representa a localização física quando o item está na reserva |
 | disponibilidade | `Item.availability` gravada: `available`, `in_custody`, `unavailable` | compatível como projeção. A regra 1 (seção 1) passa a ser a única fórmula; `unavailable` hoje significa apenas “inapto na reserva” |
-| T02 | `checkout_item` verifica `available` e `fit` | falta verificar `administrative_status` |
-| T04 | `return_item` aceita `unfit` | não captura motivo |
-| T06 | inexistente | **item devolvido inapto fica indisponível para sempre**: não há liberação |
+| T02 | `checkout_item` | exige `active`, `available` e `fit` |
+| T04 | `return_item` | exige motivo quando inapto |
+| T05, T06 | `set_item_condition`, rota `itens/<id>/condicao/` | movimentação `condition_change`, evento `item.condition_changed.v1`, permissão `item.condition.set` |
 
 Manter `availability` como coluna gravada é compatível com esta decisão e preserva a atualização condicional que garante a exclusão mútua da saída (CI com PostgreSQL). A migração de `in_custody` para uma coluna de localização separada fica a critério da tarefa de implementação e não é exigida no MVP.
 
@@ -227,40 +224,44 @@ Manter `availability` como coluna gravada é compatível com esta decisão e pre
 
 ## 9. Consequências para implementação
 
-Esta decisão não altera código. Ela orienta:
+Esta decisão orienta a implementação abaixo. Os itens 1 a 3 já foram implementados.
 
-1. **Corrigir a saída** para exigir `administrative_status = active` (defeito atual; exige teste que reproduza a falha).
-2. **Motivo de inapto** em T04 e T05, com lista fechada e texto em `outro`.
-3. **T05/T06** (declarar inapto e liberar) como serviço transacional, evento `item.condition_changed.v1` e permissão nova na matriz (SIGAB-022).
+1. ~~Corrigir a saída para exigir `administrative_status = active`.~~ Implementado em 2026-10-19.
+2. ~~Motivo de inapto em T04 e T05.~~ Implementado em 2026-10-19 (`Item.condition_reason`, `Movement.condition_reason`, restrição `item_unfit_requires_reason`).
+3. ~~T05/T06 como serviço transacional.~~ Implementado em 2026-10-19 (`set_item_condition`). Papéis criados antes dessa data não recebem `item.condition.set` automaticamente: a permissão precisa ser concedida pelo administrador de acesso.
 4. **Estorno** de saída e devolução. A SIGAB-034 está como `Done` no backlog, mas o código não tem fluxo de estorno e o ADR 0003 registra que “estorno não foi exposto nesta entrega”. O backlog precisa ser conferido.
 5. **T20 (anulação)** e a substituição de `inactive` por `retired`/`voided`, com migração nova.
 
 As transições `futura` precisam de tarefas próprias (manutenção, transferência, sinistro, baixa), que hoje não existem no backlog. Pelas regras do projeto, não se criam tabelas nem endpoints vazios para elas.
 
-## 10. Questões de detalhamento
+## 10. Regras de detalhamento
 
-Estas questões não bloqueiam a decisão validada. Elas refinam regras de transições específicas e devem ser respondidas na tarefa que implementar cada transição. Enquanto não houver resposta, vale o que está escrito na seção 4.
+Regras derivadas do [DOC-0011 v0.1](../fontes/DOC-0011-analise-de-requisitos-v0.1.md). Onde o DOC-0011 não detalha o fluxo, vale o desenho da seção 4.
 
-1. **Quem altera a condição?** O DOC-0011 propõe que o armeiro marque apto/inapto `[VALIDAR]`. Basta o Operador de reserva, ou a liberação exige outro papel (armeiro habilitado, inspeção)?
-2. **Separação na liberação:** quem declarou o item inapto pode liberá-lo, ou é preciso uma segunda pessoa?
-3. **Motivos de inapto:** a lista da seção 2.2 cobre o uso real?
-4. **Devolução em outra unidade:** um guarda pode devolver em reserva diferente daquela em que retirou? Se sim, isso vira transferência implícita?
-5. **Manutenção:** existe manutenção externa (fabricante, oficina) ou tudo é resolvido na reserva? Quem autoriza o envio?
-6. **Transferência entre unidades:** exige aprovação prévia (Comando) ou basta o envio e o recebimento pelos operadores?
-7. **Sinistro na posse:** quando a arma é furtada com o guarda, a Guarda encerra a cautela, ou a mantém aberta até a apuração?
-8. **Recuperação após baixa:** item baixado por furto e recuperado anos depois volta como o mesmo item (estorno de baixa) ou é reincorporado com novo processo patrimonial?
-9. **Anulação:** o número de série e o patrimônio de um registro anulado podem ser reutilizados no registro correto?
-10. **Apreensão:** arma envolvida em ocorrência é retida por perícia ou inquérito com que frequência? É necessário distinguir `retido externamente` de `desconhecida`?
+| # | Tema | Regra | Base |
+|---|---|---|---|
+| 10.1 | quem altera a condição | Operador de reserva (armeiro) e Gestor de acervo (Adm), pela permissão `item.condition.set` | DOC-0011, seção 3: “Marcar item como inapto ou apto”, Armeiro e Adm |
+| 10.2 | separação na liberação | quem declarou inapto pode liberar; a auditoria registra o ator de cada ato | DOC-0011, seção 3: uma única ação, sem separação de funções |
+| 10.3 | motivo de inapto | texto curto obrigatório, sem lista fechada | RF-14, glossário do DOC-0011 e RNF-06 |
+| 10.4 | devolução em outra unidade | não existe; o item volta à sua lotação | RNF-02 |
+| 10.5 | manutenção | na reserva: condição `inapto` com motivo e liberação por T06; externa: envio e retorno por T07/T08, executados pelo Operador de reserva | glossário do DOC-0011 (“aguardando manutenção”); seção 4.2 |
+| 10.6 | transferência entre unidades | envio pelo operador da unidade de origem e recebimento pelo da unidade de destino (T09/T10), sem aprovação prévia | seção 4.2; decisão 0002 (operação entre duas unidades) |
+| 10.7 | sinistro durante a posse | o registro do sinistro encerra a saída aberta; o responsável no momento fica registrado na ocorrência | seção 4.3 (T12, T15) |
+| 10.8 | item recuperado depois da baixa | volta como o **mesmo item**, por reativação com motivo e aprovador diferente de quem aplicou a baixa, e entra na reserva como `inapto` aguardando inspeção; baixa e reativação ficam no histórico | RN-05 (nada é apagado), RN-09 |
+| 10.9 | identificadores de registro anulado | não são reutilizados; duplicidade é anulada (T20) e o registro correto já existe; tipo ou identificador errado num registro único é correção cadastral auditada | RN-02, RN-05, RF-60 |
+| 10.10 | apreensão × extravio | são localizações distintas: em `retido externamente` a autoridade e o procedimento são conhecidos | seção 2.3 |
 
 ## 11. Validação
 
-| Item | Decisão | Responsável | Data | Evidência |
-|---|---|---|---|---|
-| conferência técnica com o código atual | feita; divergências na seção 7 | Tech Lead | 2026-10-19 | `sigab/models.py`, `sigab/services.py` |
-| conferência com RF-14, RF-22 e RN-08 | feita; seção 8 | Tech Lead | 2026-10-19 | DOC-0011 v0.1 (requisitos em estado `Proposto`) |
-| quatro dimensões e disponibilidade derivada (1, 2, 3) | validada | Produto/Domínio | 2026-10-19 | confirmação informada pelo responsável do projeto; registro bruto não versionado |
-| transições T01–T18 e T20, reversões e estornos (4, 5, 6) | validadas | Produto/Domínio | 2026-10-19 | idem |
-| novas permissões *(nova)* na matriz da decisão 0002 | pendente; não bloqueia esta decisão | Produto/Segurança (SIGAB-022) | — | — |
-| questões de detalhamento 10.1 a 10.10 | abertas; não bloqueiam esta decisão | Produto/Domínio com a Guarda | — | — |
+| Item | Estado | Data | Evidência |
+|---|---|---|---|
+| estados de RF-14 (disponível, em posse, inapto com motivo, baixado) | validado | 2026-09-29 | DOC-0011, RF-14 e RN-08 (REU-0001) |
+| saída e devolução com conferência apto/inapto (T02–T04) | validado | 2026-09-29 | DOC-0011, RF-20 a RF-23 (REU-0001) |
+| marcar apto/inapto (T05, T06) | validado | 2026-09-29 | DOC-0011, seção 3 |
+| baixa com motivo (T16–T18) | validado | 2026-09-29 | DOC-0011, seção 3 e RN-09; separação solicitação/aprovação da [decisão 0002](0002-papeis-e-escopos.md) |
+| estorno com motivo, sem apagar o original (seção 6) | validado | 2026-09-29 | DOC-0011, RN-05 e seção 4.7 |
+| quatro dimensões, disponibilidade derivada, anulação e transições T07–T15 | validado | 2026-10-19 | derivação do DOC-0011 (seção 10); responsável do projeto |
+| permissão `item.condition.set` | incluída na matriz 1.1.0 | 2026-10-19 | [decisão 0002](0002-papeis-e-escopos.md#revisão-110--sigab-009) |
+| conferência técnica com o código atual | feita; divergências na seção 7 | 2026-10-19 | `backend/sigab/models.py`, `backend/sigab/services.py` |
 
-Com a máquina de estados validada, a SIGAB-009 satisfaz seu critério de aceite. Isso não valida os requisitos RF-14, RF-22 e RN-08 individualmente, que continuam `Proposto` no DOC-0011. Também não autoriza a implementação das transições `futura`. A data, a identidade de quem validou e o artefato bruto da validação não estão no repositório, e este documento não os deduz.
+A SIGAB-009 satisfaz seu critério de aceite: todos os estados e transições têm origem, destino, ator, pré-condição, efeito e reversão, e a máquina de estados está validada. As transições `futura` estão decididas, mas sua implementação depende de tarefa própria no backlog.

@@ -20,21 +20,25 @@ Os requisitos ainda são `proposto`. Não transforme hipóteses em regra definit
 - Python 3.12+ e Django 5.2 LTS.
 - PostgreSQL 17 é o banco de produção e do CI.
 - SQLite é aceito para desenvolvimento simples, mas não valida concorrência real.
-- Frontend com templates Django e HTML server-side.
-- Dependências e ambiente gerenciados por `uv`.
-- Aplicação: `sigab/`.
-- Configuração Django: `config/`.
-- Templates: `templates/`.
-- Testes: `sigab/tests/`.
-- Migrações: `sigab/migrations/`.
+- Frontend principal em React + TypeScript + Vite, em `frontend/`, consumindo `/api/v1/`.
+- Templates Django permanecem como fallback durante a migração incremental.
+- Dependências e ambiente do backend gerenciados por `uv` em `backend/`.
+- Aplicação: `backend/sigab/`.
+- Configuração Django: `backend/config/`.
+- API HTTP: `backend/sigab/api/`.
+- Frontend React: `frontend/`.
+- Templates legados: `backend/templates/`.
+- Testes: `backend/sigab/tests/`.
+- Migrações: `backend/sigab/migrations/`.
 
-Não introduza SPA, API separada, filas, cache distribuído ou novos serviços sem necessidade demonstrada e ADR.
+Não introduza filas, cache distribuído ou novos serviços sem necessidade demonstrada e ADR. Mudanças na fronteira React/API devem preservar a decisão do ADR 0005.
 
 ## Comandos obrigatórios
 
 Instalação e execução:
 
 ```bash
+cd backend
 uv sync --dev
 uv run python manage.py migrate
 uv run python manage.py runserver
@@ -43,18 +47,22 @@ uv run python manage.py runserver
 Antes de concluir qualquer alteração de código:
 
 ```bash
+cd backend
 uv run ruff format --check config sigab manage.py
 uv run ruff check config sigab manage.py
 uv run python manage.py check
 uv run python manage.py makemigrations --check --dry-run
 uv run pytest -q
+cd ../frontend && bun run typecheck && bun run build
 ```
 
 Para mudanças em transações, bloqueios ou idempotência, execute também a suíte com PostgreSQL:
 
 ```bash
 docker compose up -d db
+cd backend
 DATABASE_URL=postgresql://sigab:local-only@127.0.0.1:5432/sigab uv run pytest -q
+cd ..
 docker compose down
 ```
 
@@ -106,7 +114,7 @@ docker compose down
 
 ## Padrões de implementação
 
-- Regras transacionais pertencem a `sigab/services.py`, não às views ou templates.
+- Regras transacionais pertencem a `backend/sigab/services.py`, não às views ou templates.
 - Views devem obter objetos já filtrados pela organização e verificar permissão no servidor.
 - Use `transaction.atomic`, restrições de banco e `select_for_update`/atualização condicional quando a integridade depender de concorrência.
 - Chaves de idempotência devem possuir restrição única no banco.
