@@ -1,6 +1,6 @@
 # ADR 0001 — Monólito Django e templates server-side
 
-Status: aceito para a primeira base, 2026-10-15.
+Status: aceito para a primeira base, 2026-10-15. Decisão de frontend principal substituída pelo [ADR 0005](0005-api-django-e-frontend-react.md), que é o ADR da stack.
 
 Usaremos Python 3.12+ e Django 5.2 LTS, PostgreSQL em produção/CI e SQLite apenas no desenvolvimento simples. A interface operacional usa templates Django e HTML progressivo. Foram consideradas SPA separada e HTMX; ambas adicionariam pipeline, contratos e/ou dependência sem benefício comprovado nesta fatia.
 
