@@ -183,6 +183,8 @@ Condição física (muda na reserva ou por T04/T13/T14):
 
 ## 6. Estornos
 
+Modelo de dados e regras de serviço do estorno: [ADR 0006](../adr/0006-eventos-auditoria-e-estornos.md#4-estorno).
+
 Cada transição confirmada pode ser estornada **uma vez**, por evento compensatório com motivo, referência ao fato original, ator e instante (RN-05, RN-09, ADR 0003). O estorno:
 
 - só é aceito se o item ainda estiver no estado produzido pelo fato estornado. Se houve fato posterior, estorna-se primeiro o mais recente;

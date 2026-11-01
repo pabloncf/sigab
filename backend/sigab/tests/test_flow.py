@@ -14,6 +14,7 @@ from sigab.models import (
     Item,
     Membership,
     Movement,
+    MovementEvent,
     Organization,
     Person,
     Role,
@@ -280,6 +281,16 @@ def test_events_are_immutable(world):
     movement = Movement.objects.first()
     with pytest.raises(ValidationError):
         movement.delete()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("model", [Movement, MovementEvent, AuditEvent])
+def test_bulk_update_and_delete_are_blocked(world, model):
+    with pytest.raises(ValidationError):
+        model.objects.filter(organization=world["org"]).update(organization=world["org"])
+    with pytest.raises(ValidationError):
+        model.objects.filter(organization=world["org"]).delete()
+    assert model.objects.filter(organization=world["org"]).exists()
 
 
 @pytest.mark.django_db

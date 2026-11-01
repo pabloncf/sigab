@@ -261,7 +261,7 @@ Operação confirmada sobre um item. Imutável depois de gravada.
 | `changes` | JSON | sim | valor anterior e novo, minimizado |
 | `reason` | texto | não | motivo, quando exigido |
 
-`MovementEvent` e `AuditEvent` são imutáveis (`ImmutableModel`): `save` sobre registro existente e `delete` falham. O log técnico não é tabela de domínio.
+`MovementEvent` e `AuditEvent` são imutáveis (`ImmutableModel`): `save` sobre registro existente, `delete` e `update`/`delete` em lote falham. Contratos de evento e auditoria: [ADR 0006](adr/0006-eventos-auditoria-e-estornos.md). O log técnico não é tabela de domínio.
 
 ## 5. Identificadores
 
@@ -298,7 +298,7 @@ Identificadores de registro anulado não são reutilizados (decisão 0004, 10.9)
 | I-12 | saída exige item `active`, `fit`, `available` e destinatário ativo com vínculo ativo | `checkout_item` |
 | I-13 | confirmações concorrentes da mesma saída aceitam exatamente uma | atualização condicional em `availability` (validada no PostgreSQL) |
 | I-14 | chave de idempotência única por organização | restrição `uniq_movement_idempotency_org` |
-| I-15 | movimentação e eventos confirmados não são editados nem apagados | `Movement.save/delete`, `ImmutableModel` (camada de aplicação) |
+| I-15 | movimentação e eventos confirmados não são editados nem apagados, nem em lote | `Movement.save/delete`, `ImmutableModel`, `AppendOnlyQuerySet` (camada de aplicação; [ADR 0006](adr/0006-eventos-auditoria-e-estornos.md#5-imutabilidade)) |
 | I-16 | movimentação, evento de domínio, auditoria e projeção do item são gravados na mesma transação | `transaction.atomic` nos serviços |
 | I-17 | nenhuma exclusão física em cascata | `on_delete=PROTECT` |
 

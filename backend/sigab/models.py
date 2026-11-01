@@ -273,6 +273,16 @@ class Item(TimestampedModel):
         return self.serial_number or self.asset_number or str(self.id)
 
 
+class AppendOnlyQuerySet(models.QuerySet):
+    """Block bulk writes that bypass the per-instance immutability guards."""
+
+    def update(self, **kwargs):
+        raise ValidationError("Registros confirmados são imutáveis.")
+
+    def delete(self):
+        raise ValidationError("Registros confirmados não podem ser apagados.")
+
+
 class Movement(TimestampedModel):
     class Type(models.TextChoices):
         INCORPORATION = "incorporation", "Incorporação"
@@ -301,6 +311,8 @@ class Movement(TimestampedModel):
     new_condition = models.CharField(max_length=16, choices=Item.Condition, blank=True)
     condition_reason = models.CharField(max_length=200, blank=True)
 
+    objects = AppendOnlyQuerySet.as_manager()
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -318,6 +330,8 @@ class Movement(TimestampedModel):
 
 
 class ImmutableModel(models.Model):
+    objects = AppendOnlyQuerySet.as_manager()
+
     class Meta:
         abstract = True
 

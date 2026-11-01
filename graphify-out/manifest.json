@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1792443996.5205748,
-    "ast_hash": "2479dbef0a1aea219e16f27795fa1253",
+    "mtime": 1792444070.6287558,
+    "ast_hash": "e66e352b8052ca3a8d65903460cafbbc",
     "semantic_hash": ""
   },
   "compose.yaml": {
@@ -30,8 +30,8 @@
     "semantic_hash": ""
   },
   "docs/adr/0001-stack-e-frontend.md": {
-    "mtime": 1792416377.2255383,
-    "ast_hash": "13db8ccf20eb39738697aca91aca8b98",
+    "mtime": 1793500895.1429362,
+    "ast_hash": "9d755c9856146cd4ccc0676b59319a58",
     "semantic_hash": ""
   },
   "docs/adr/0002-tenancy-autorizacao.md": {
@@ -40,13 +40,13 @@
     "semantic_hash": ""
   },
   "docs/adr/0003-eventos-idempotencia.md": {
-    "mtime": 1792086384.9459352,
-    "ast_hash": "f816ba32e6cc69b7c45d450b2f06ec7d",
+    "mtime": 1793501102.6672232,
+    "ast_hash": "3326be9b2e8de813dded969a9149c144",
     "semantic_hash": ""
   },
   "docs/decisoes-pendentes.md": {
-    "mtime": 1792439501.711074,
-    "ast_hash": "3ca87709e08f4b37e26a0006bcec5035",
+    "mtime": 1793501102.668404,
+    "ast_hash": "44a9a249f9365eb321d0df504e0409b0",
     "semantic_hash": ""
   },
   "docs/glossario.md": {
@@ -55,8 +55,8 @@
     "semantic_hash": ""
   },
   "docs/modelo-de-dominio.md": {
-    "mtime": 1792437205.8466146,
-    "ast_hash": "368c5c4172a3ec00fb5f9ece5cc73382",
+    "mtime": 1793501102.6681616,
+    "ast_hash": "66f1af05773e8e565ebcbd1e0ef2b54d",
     "semantic_hash": ""
   },
   "docs/plano-incremental.md": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/decisoes/0004-ciclo-de-vida-do-item-individual.md": {
-    "mtime": 1792443996.5881097,
-    "ast_hash": "fd87a84e0c5977e17694b5cbd4dd44f1",
+    "mtime": 1793501102.6675813,
+    "ast_hash": "1d33b233fc5152707a0d03f900714f07",
     "semantic_hash": ""
   },
   "docs/fontes/DOC-0011-analise-de-requisitos-v0.1.md": {
@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "docs/adr/0005-api-django-e-frontend-react.md": {
-    "mtime": 1792443996.5758557,
-    "ast_hash": "7f12f921d51423251da73a26ffade17e",
+    "mtime": 1793500895.1432567,
+    "ast_hash": "2841e18ea27502b891888c1ce4a703d3",
     "semantic_hash": ""
   },
   "frontend/README.md": {
@@ -325,8 +325,8 @@
     "semantic_hash": ""
   },
   "backend/sigab/models.py": {
-    "mtime": 1792439385.1954699,
-    "ast_hash": "227d9ecbf77b6ef1fc85bc3e3e630207",
+    "mtime": 1793501008.0338867,
+    "ast_hash": "a633d852e811419998fe5507ba47a3c2",
     "semantic_hash": ""
   },
   "backend/sigab/permissions.py": {
@@ -350,8 +350,8 @@
     "semantic_hash": ""
   },
   "backend/sigab/tests/test_flow.py": {
-    "mtime": 1792439476.9110253,
-    "ast_hash": "a99953c5a9c6ac02ca4e06a3fa5bd70d",
+    "mtime": 1793500991.704927,
+    "ast_hash": "ed8d8a9a21e3b279a6b619b95d57a95c",
     "semantic_hash": ""
   },
   "backend/sigab/urls.py": {
@@ -387,6 +387,11 @@
   "backend/templates/sigab/movement_form.html": {
     "mtime": 1792086122.5649831,
     "ast_hash": "df8186bf7d59aaf02635ab35e5e26ffc",
+    "semantic_hash": ""
+  },
+  "docs/adr/0006-eventos-auditoria-e-estornos.md": {
+    "mtime": 1793501087.6146686,
+    "ast_hash": "aaf705cde6ddd6f9ffb3a01eefc9a1c9",
     "semantic_hash": ""
   }
 }

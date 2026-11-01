@@ -1,37 +1,37 @@
-# Graph Report - sigab  (2026-10-19)
+# Graph Report - sigab  (2026-10-31)
 
 ## Corpus Check
-- 70 files · ~34,576 words
+- 71 files · ~40,192 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 518 nodes · 997 edges · 40 communities (33 shown, 7 thin omitted)
-- Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 139 edges (avg confidence: 0.53)
+- 563 nodes · 1060 edges · 41 communities (35 shown, 6 thin omitted)
+- Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 141 edges (avg confidence: 0.53)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2a45690a`
+- Built from commit: `98e33e93`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - test_flow.py
-- sigab/views.py
+- services.py
 - Item
 - 2. Matriz de obrigações aplicáveis
 - Decisão de domínio 0004 — Ciclo de vida do item individual
 - CLAUDE.md — SIGAB
-- 0004-ciclo-de-vida-do-item-individual.md
+- decisoes-pendentes.md
 - convert
 - SIGAB — Análise de requisitos v0.1
 - Importação do backlog no Jira Cloud
 - AGENTS.md
 - Decisão de domínio 0003 — Modelo de estoque quantitativo e munição
 - SigabConfig
-- test_api.py
+- 4. Dicionário de dados
 - 0002_item_condition_reason.py
 - sigab
-- 0002-tenancy-autorizacao.md
+- ADR 0006 — Eventos de domínio, auditoria e estornos
 - Termos críticos
 - Pesquisa 0001 — Formulário de armamento temporário
 - plano-incremental.md
@@ -44,6 +44,7 @@
 - ADR 0005 — API Django e frontend React separados
 - Frontend React do SIGAB
 - tsconfig.json
+- Decisão de produto 0001 — Segmento inicial
 
 ## God Nodes (most connected - your core abstractions)
 1. `Item` - 28 edges
@@ -72,19 +73,19 @@
 ## Import Cycles
 - None detected.
 
-## Communities (40 total, 7 thin omitted)
+## Communities (41 total, 6 thin omitted)
 
 ### Community 0 - "test_flow.py"
 Cohesion: 0.13
-Nodes (32): _checkout(), django_db, fixture, _set_condition(), test_checkout_is_idempotent_and_prevents_second_checkout(), test_checkout_rejects_inactive_item(), test_checkout_requires_confirmation(), test_checkout_requires_permission() (+24 more)
+Nodes (33): _checkout(), django_db, fixture, _set_condition(), test_bulk_update_and_delete_are_blocked(), test_checkout_is_idempotent_and_prevents_second_checkout(), test_checkout_rejects_inactive_item(), test_checkout_requires_confirmation() (+25 more)
 
-### Community 1 - "sigab/views.py"
-Cohesion: 0.21
-Nodes (11): CheckoutForm, ConditionForm, ReturnForm, change_condition(), checkin(), checkout(), dashboard(), _item() (+3 more)
+### Community 1 - "services.py"
+Cohesion: 0.12
+Nodes (26): CheckoutForm, ConditionForm, ReturnForm, CorrelationIdMiddleware, Migration, has_permission(), audit(), checkout_item() (+18 more)
 
 ### Community 2 - "Item"
-Cohesion: 0.09
-Nodes (39): AbstractUser, AccountAdmin, AuditedAdmin, AuditEventAdmin, ItemAdmin, MovementAdmin, MovementEventAdmin, OrganizationAdmin (+31 more)
+Cohesion: 0.08
+Nodes (49): AbstractUser, AccountAdmin, AuditedAdmin, AuditEventAdmin, ItemAdmin, MovementAdmin, MovementEventAdmin, OrganizationAdmin (+41 more)
 
 ### Community 3 - "2. Matriz de obrigações aplicáveis"
 Cohesion: 0.08
@@ -98,9 +99,9 @@ Nodes (22): 10. Regras de detalhamento, 11. Validação, 1. Decisão, 2.1 Situa�
 Cohesion: 0.12
 Nodes (15): Acervo e movimentações, Auditoria, Autorização, CLAUDE.md — SIGAB, Comandos obrigatórios, Documentação e entrega, Fora do escopo sem autorização explícita, graphify (+7 more)
 
-### Community 6 - "0004-ciclo-de-vida-do-item-individual.md"
-Cohesion: 0.06
-Nodes (30): ADR 0001 — Monólito Django e templates server-side, ADR 0003 — Eventos, projeção atual e idempotência, ADR 0004 — Conectividade online, contingência em papel e reconciliação, Consequências, Contexto, Decisão, Prevenção de dupla entrega, Procedimento de contingência (+22 more)
+### Community 6 - "decisoes-pendentes.md"
+Cohesion: 0.09
+Nodes (22): ADR 0001 — Monólito Django e templates server-side, ADR 0002 — Tenancy compartilhada e autorização explícita, ADR 0003 — Eventos, projeção atual e idempotência, ADR 0004 — Conectividade online, contingência em papel e reconciliação, Consequências, Contexto, Decisão, Prevenção de dupla entrega (+14 more)
 
 ### Community 7 - "convert"
 Cohesion: 0.39
@@ -118,9 +119,13 @@ Nodes (3): Importação do backlog no Jira Cloud, Mapeamento, Regeneração
 Cohesion: 0.11
 Nodes (18): 10. Divergências entre a proposta e o DOC-0011, 11. Conformidade com os requisitos relacionados, 12. Questões para validar com a Guarda participante, 13. Validação, 1. Decisão proposta, 2.1 Onde fica cada atributo, 2. Conceitos, 3. Posições de saldo (+10 more)
 
-### Community 13 - "test_api.py"
-Cohesion: 0.33
-Nodes (10): api_world(), _post_json(), django_db, fixture, test_api_checkout_is_validated_and_idempotent(), test_api_lists_only_authorized_tenant_items(), test_api_rejects_missing_explicit_confirmation(), test_api_requires_authentication() (+2 more)
+### Community 13 - "4. Dicionário de dados"
+Cohesion: 0.09
+Nodes (22): 1. Diagrama, 2. Limites de organização, 3. Cardinalidades, 4.10 Item — item individual (RF-12), 4.11 Movement — movimentação, 4.12 MovementEvent — evento de domínio, 4.13 AuditEvent — evento de auditoria (RF-60), 4.1 Organization — organização cliente (+14 more)
+
+### Community 23 - "ADR 0006 — Eventos de domínio, auditoria e estornos"
+Cohesion: 0.18
+Nodes (11): 1. Três registros, três finalidades, 2. Evento de domínio, 3. Evento de auditoria, 4. Estorno, 5. Imutabilidade, ADR 0006 — Eventos de domínio, auditoria e estornos, Alternativas consideradas, Consequências (+3 more)
 
 ### Community 24 - "Termos críticos"
 Cohesion: 0.14
@@ -139,8 +144,8 @@ Cohesion: 0.16
 Nodes (21): ApiEnvelope, ApiError, apiRequest(), getCookie(), postJson(), ItemDetail, ItemSummary, MovementResult (+13 more)
 
 ### Community 30 - "api/views.py"
-Cohesion: 0.09
-Nodes (38): Versioned HTTP API consumed by the React frontend., api_view(), _context(), _item(), item_checkout(), item_condition(), item_detail(), item_list() (+30 more)
+Cohesion: 0.11
+Nodes (25): Versioned HTTP API consumed by the React frontend., api_view(), _context(), _item(), item_checkout(), item_condition(), item_detail(), item_list() (+17 more)
 
 ### Community 31 - "package.json"
 Cohesion: 0.08
@@ -155,27 +160,31 @@ Cohesion: 0.20
 Nodes (9): compilerOptions, allowImportingTsExtensions, composite, module, moduleResolution, noEmit, skipLibCheck, include (+1 more)
 
 ### Community 35 - "ADR 0005 — API Django e frontend React separados"
-Cohesion: 0.40
-Nodes (4): ADR 0005 — API Django e frontend React separados, Consequências, Contexto, Decisão
+Cohesion: 0.20
+Nodes (10): ADR 0005 — API Django e frontend React separados, Alternativas de frontend, Banco de dados, Comandos locais, Consequências, Contexto, Decisão, Implantação (+2 more)
 
 ### Community 36 - "Frontend React do SIGAB"
 Cohesion: 0.50
 Nodes (3): Desenvolvimento, Frontend React do SIGAB, Produção
 
+### Community 38 - "Decisão de produto 0001 — Segmento inicial"
+Cohesion: 0.22
+Nodes (9): Consequências, Decisão, Decisão de produto 0001 — Segmento inicial, Escopo e exclusões iniciais, Justificativa, Premissas validadas no levantamento inicial, Problema inicial, Público inicial (+1 more)
+
 ## Knowledge Gaps
-- **206 isolated node(s):** `sigab`, `Migration`, `Migration`, `Scope`, `Classification` (+201 more)
+- **241 isolated node(s):** `sigab`, `Migration`, `Migration`, `Scope`, `Classification` (+236 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Nota regulatória 0001 — Guardas Municipais com acervo de armamentos e equipamentos` connect `2. Matriz de obrigações aplicáveis` to `0004-ciclo-de-vida-do-item-individual.md`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Why does `Decisão de domínio 0004 — Ciclo de vida do item individual` connect `Decisão de domínio 0004 — Ciclo de vida do item individual` to `0004-ciclo-de-vida-do-item-individual.md`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
-- **Why does `SIGAB — Análise de requisitos v0.1` connect `SIGAB — Análise de requisitos v0.1` to `0004-ciclo-de-vida-do-item-individual.md`?**
-  _High betweenness centrality (0.022) - this node is a cross-community bridge._
+- **Why does `Nota regulatória 0001 — Guardas Municipais com acervo de armamentos e equipamentos` connect `2. Matriz de obrigações aplicáveis` to `decisoes-pendentes.md`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+- **Why does `Decisão de domínio 0004 — Ciclo de vida do item individual` connect `Decisão de domínio 0004 — Ciclo de vida do item individual` to `decisoes-pendentes.md`?**
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+- **Why does `Modelo de domínio` connect `4. Dicionário de dados` to `decisoes-pendentes.md`?**
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
 - **Are the 12 inferred relationships involving `Item` (e.g. with `AccountAdmin` and `AuditedAdmin`) actually correct?**
   _`Item` has 12 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 13 inferred relationships involving `CommandContext` (e.g. with `AccountAdmin` and `AuditedAdmin`) actually correct?**
