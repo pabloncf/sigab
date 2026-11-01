@@ -317,7 +317,7 @@ A imutabilidade (I-15) vale na camada de aplicação; operações SQL diretas e 
 | D-07 | `Grant` com escopo `organization` e `unit` preenchida não é rejeitado | — | dado ambíguo; hoje a unidade é ignorada |
 | D-08 | `official_identifier` sem restrição única | — | depende da regra do registro oficial (SIGAB-005) |
 | D-09 | “uma devolução por saída” garantida só no serviço | — | candidata a restrição única parcial em `related_movement` |
-| D-10 | `Account.session_version` não é usado | invariante “suspender conta encerra acesso” | suspensão depende só de `is_active`, verificado a cada requisição; sessões não são invalidadas por troca de senha feita fora do fluxo do Django |
+| D-10 | `Account.session_version` não é usado | invariante “suspender conta encerra acesso” | suspensão depende de `is_active`, verificado a cada requisição; troca de senha já invalida sessões pelo hash de sessão do Django; o campo não tem uso e pode ser removido ou adotado para revogação explícita |
 | D-11 | auditoria do Django Admin grava só os nomes dos campos alterados (`changes.fields`) | RF-60: valor anterior e novo | cadastros feitos pelo Admin não têm valor anterior e novo; valores pessoais precisam de minimização antes de serem incluídos |
 
 ## 8. Rastreabilidade

@@ -6,14 +6,6 @@ O CPF é opcional e não aparece em telas operacionais, eventos ou logs. Não h�
 
 Limite conhecido: “append-only” é garantido na aplicação, não contra administrador do banco. Políticas de banco, segregação operacional, retenção e verificação criptográfica exigem desenho posterior. Administradores Django têm finalidade de implantação controlada e não devem ser concedidos a operadores comuns.
 
-## Modelo de ameaças inicial
+## Modelo de ameaças
 
-| Ameaça P0 | Controle | Evidência |
-|---|---|---|
-| acesso entre organizações | FKs validadas, filtros por tenant, 404 e testes negativos | `test_flow.py` |
-| dupla saída | transação, `select_for_update`, atualização condicional | teste concorrente PostgreSQL |
-| repetição de rede | chave única por organização | testes de idempotência |
-| operador sem permissão | concessão explícita e escopo por unidade | testes de negação |
-| adulteração por UI | eventos/movimentos sem update/delete no admin | teste de imutabilidade |
-| exposição de dados pessoais | minimização; CPF ausente de eventos/UI | inspeção e política |
-
+Ameaças, controles, responsáveis e testes previstos estão no [modelo de ameaças](modelo-de-ameacas.md) (SIGAB-013).
