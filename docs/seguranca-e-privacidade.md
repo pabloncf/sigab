@@ -1,6 +1,6 @@
 # Segurança e privacidade
 
-Controles presentes: hash de senha do Django, sessão HTTP-only expiráveis, CSRF, escaping de templates, negação por padrão, escopo no servidor, UUIDs não sequenciais, transações, bloqueio pessimista e atualização condicional, idempotência, auditoria minimizada e correlação de requisição. Eventos não têm rotas de escrita e são somente leitura no admin.
+Controles presentes: hash de senha do Django, sessão HTTP-only expiráveis, CSRF, escaping de templates, negação por padrão, escopo no servidor, UUIDs não sequenciais, transações, bloqueio pessimista e atualização condicional, idempotência, auditoria minimizada, correlação de requisição e log técnico estruturado com mascaramento de CPF e segredos ([observabilidade](observabilidade.md)). Eventos não têm rotas de escrita e são somente leitura no admin.
 
 O CPF é opcional e não aparece em telas operacionais, eventos ou logs. Não há biometria, laudo, anexo ou exportação. Nunca habilite `DEBUG` em produção. TLS, gestão de segredos, rate limiting no proxy/IdP, criptografia de disco/backup, retenção, resposta a incidentes e revisão de infraestrutura são responsabilidades de implantação ainda abertas.
 

@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { ApiError, apiRequest } from "../api/client";
+import { ApiError, apiPage } from "../api/client";
 import type { ItemSummary, Session } from "../api/types";
 import { ErrorState, LoadingState } from "../components/Feedback";
 import { StatusBadge } from "../components/StatusBadge";
 
+const PAGE_LIMIT = 500;
+
 export function ItemsPage({ session }: { session: Session }) {
   const [items, setItems] = useState<ItemSummary[]>([]);
+  const [total, setTotal] = useState(0);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -14,7 +17,9 @@ export function ItemsPage({ session }: { session: Session }) {
     setLoading(true);
     setError("");
     try {
-      setItems(await apiRequest<ItemSummary[]>("/items/"));
+      const page = await apiPage<ItemSummary>(`/items/?limit=${PAGE_LIMIT}`);
+      setItems(page.rows);
+      setTotal(page.count);
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : "Erro inesperado.");
     } finally {
@@ -50,6 +55,7 @@ export function ItemsPage({ session }: { session: Session }) {
       {loading ? <LoadingState /> : error ? <ErrorState message={error} onRetry={() => void loadItems()} /> : (
         <section className="list-panel" aria-label="Itens do acervo">
           <div className="list-summary"><strong>{filteredItems.length}</strong> {filteredItems.length === 1 ? "item encontrado" : "itens encontrados"}</div>
+          {total > items.length && <div className="feedback warning" role="status">Exibindo os primeiros {items.length} de {total} itens. Refine a busca para localizar os demais.</div>}
           {filteredItems.length === 0 ? (
             <div className="empty-state">
               <h2>Nenhum item encontrado</h2>

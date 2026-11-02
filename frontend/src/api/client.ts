@@ -1,3 +1,5 @@
+import type { Page } from "./types";
+
 interface ApiEnvelope<T> {
   success: boolean;
   data?: T;
@@ -53,14 +55,29 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   }
 
   if (!response.ok || !payload.success) {
-    throw new ApiError(payload.error ?? "Não foi possível concluir a solicitação.", response.status, payload.details);
+    const fieldMessages = Object.values(payload.details ?? {}).flat();
+    const message = [payload.error ?? "Não foi possível concluir a solicitação.", ...fieldMessages].join(" ");
+    throw new ApiError(message, response.status, payload.details);
   }
   return payload.data as T;
 }
 
+export async function apiPage<T>(path: string): Promise<Page<T>> {
+  const response = await fetch(`/api/v1${path}`, { credentials: "same-origin" });
+  const payload = (await response.json().catch(() => ({ success: false }))) as ApiEnvelope<T[]> & { meta?: { count: number } };
+  if (!response.ok || !payload.success) {
+    throw new ApiError(payload.error ?? "Não foi possível concluir a solicitação.", response.status, payload.details);
+  }
+  return { rows: payload.data ?? [], count: payload.meta?.count ?? 0 };
+}
+
 export function postJson<T>(path: string, body?: unknown): Promise<T> {
+  return sendJson<T>("POST", path, body);
+}
+
+export function sendJson<T>(method: "POST" | "PATCH", path: string, body?: unknown): Promise<T> {
   return apiRequest<T>(path, {
-    method: "POST",
+    method,
     body: JSON.stringify(body ?? {})
   });
 }

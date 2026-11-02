@@ -5,9 +5,23 @@ import { AppShell } from "./components/AppShell";
 import { ErrorState, LoadingState } from "./components/Feedback";
 import { ItemDetailPage } from "./pages/ItemDetailPage";
 import { ItemsPage } from "./pages/ItemsPage";
+import { PeoplePage } from "./pages/PeoplePage";
+import { PersonDetailPage } from "./pages/PersonDetailPage";
 
-function currentItemId(): string | null {
-  return window.location.pathname.match(/^\/items\/([0-9a-f-]+)\/?$/i)?.[1] ?? null;
+function routeId(prefix: string): string | null {
+  return window.location.pathname.match(new RegExp(`^/${prefix}/([0-9a-f-]+)/?$`, "i"))?.[1] ?? null;
+}
+
+function Page({ session }: { session: Session }) {
+  const path = window.location.pathname;
+  const itemId = routeId("items");
+  if (itemId) return <ItemDetailPage itemId={itemId} />;
+  if (session.permissions.can_manage_identity) {
+    const personId = routeId("pessoas");
+    if (personId) return <PersonDetailPage personId={personId} />;
+    if (/^\/pessoas\/?$/.test(path)) return <PeoplePage />;
+  }
+  return <ItemsPage session={session} />;
 }
 
 export default function App() {
@@ -32,6 +46,5 @@ export default function App() {
   if (error) return <main className="content standalone"><ErrorState message={error} onRetry={() => void loadSession()} /></main>;
   if (!session) return <main className="content standalone"><LoadingState label="Carregando sessão" /></main>;
 
-  const itemId = currentItemId();
-  return <AppShell session={session}>{itemId ? <ItemDetailPage itemId={itemId} /> : <ItemsPage session={session} />}</AppShell>;
+  return <AppShell session={session}><Page session={session} /></AppShell>;
 }

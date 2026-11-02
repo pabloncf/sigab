@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
+handler500 = "sigab.api.views.server_error"
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/", include("sigab.api.urls")),

@@ -1,7 +1,7 @@
 # Modelo de domínio
 
 - Tarefa: SIGAB-011
-- Revisão: 2026-10-31, conferida com `backend/sigab/models.py` (migrações `0001` e `0002`)
+- Revisão: 2026-11-02, conferida com `backend/sigab/models.py` (migrações `0001` a `0003`)
 - Requisitos: RF-01, RF-03, RF-10, RF-12 e RF-60 do [DOC-0011 v0.1](fontes/DOC-0011-analise-de-requisitos-v0.1.md)
 - Base: [glossário](glossario.md), [decisão 0002 — papéis e escopos](decisoes/0002-papeis-e-escopos.md), [decisão 0004 — ciclo de vida do item](decisoes/0004-ciclo-de-vida-do-item-individual.md), [ADR 0002](adr/0002-tenancy-autorizacao.md), [ADR 0003](adr/0003-eventos-idempotencia.md), [ADR 0005](adr/0005-api-django-e-frontend-react.md)
 
@@ -27,7 +27,7 @@ erDiagram
     Unit ||--o{ StorageLocation : "contém"
     Person ||--o{ Membership : "tem vínculos"
     Unit ||--o{ Membership : "unidade principal"
-    Person |o--o| Account : "tem no máximo uma conta"
+    Person |o--o{ Account : "uma conta não revogada; revogadas no histórico"
     Account ||--o{ Grant : "recebe"
     Role ||--o{ Grant : "concedido em"
     Unit |o--o{ Grant : "escopo de unidade"
@@ -52,7 +52,7 @@ Leitura em blocos:
 
 ```text
 Estrutura:     Organization ─ Unit ─ StorageLocation
-Identidade:    Person ─ Membership          Account (opcional, 0..1 por pessoa)
+Identidade:    Person ─ Membership          Account (opcional; no máximo 1 não revogada por pessoa)
 Acesso:        Account ─ Grant ─ Role(permissions)   escopo: organização ou unidade
 Acervo:        EquipmentType ─ Item (lotação: Unit + StorageLocation; posse: Person)
 Fatos:         Item ─ Movement ─ MovementEvent        AuditEvent (independente)
@@ -79,7 +79,7 @@ Regra (RF-01): todo dado de negócio pertence a exatamente uma organização, e 
 | Unit → StorageLocation | 1 : 0..N | local pertence a uma única unidade |
 | Person → Membership | 1 : 0..N | pessoa pode existir sem vínculo; vários vínculos são permitidos (por exemplo, histórico de matrícula) |
 | Membership → Unit (principal) | N : 1 | |
-| Person → Account | 1 : 0..1 | pessoa sem conta é o caso comum; conta sem pessoa é admitida (conta técnica ou de plataforma) |
+| Person → Account | 1 : 0..N, no máximo 1 não revogada | pessoa sem conta é o caso comum; contas revogadas ficam no histórico; conta sem pessoa é admitida (conta técnica ou de plataforma) |
 | Account → Grant | 1 : 0..N | sem concessão ativa, a conta não tem permissão alguma |
 | Role → Grant | 1 : 0..N | |
 | Grant → Unit | N : 0..1 | obrigatório quando `scope_type = unit` |
@@ -136,7 +136,7 @@ Representa o ser humano, independentemente de acesso ao sistema.
 | `organization` | FK | sim | |
 | `name` | texto 180 | sim | |
 | `functional_name` | texto 120 | não | nome de guerra; exibido no lugar do nome quando preenchido |
-| `cpf` | 11 dígitos | não | opcional; fora das telas operacionais comuns; nunca em log, evento ou mensagem de erro; sem restrição única |
+| `cpf` | 11 dígitos | não | opcional; dígitos verificadores validados; único na org. quando preenchido (`uniq_person_cpf_org`, RN-01); somente escrita na API, exibido mascarado; nunca em log, evento, auditoria ou mensagem de erro |
 | `phone` | texto 24 | não | celular (RF-03) |
 | `is_active` | booleano | sim | pessoa inativa não recebe saída |
 
@@ -162,10 +162,13 @@ Credencial de autenticação. Estende `AbstractUser` do Django (usuário, senha 
 | Campo | Tipo | Obrig. | Regra |
 |---|---|---|---|
 | `organization` | FK | não | nula só para conta de plataforma; é a fonte de autoridade do tenant |
-| `person` | FK Person, única | não | no máximo uma conta por pessoa; mesma organização (`clean`) |
+| `person` | FK Person | não | no máximo uma conta **não revogada** por pessoa (`uniq_open_account_per_person`); mesma organização (`clean`) |
 | `session_version` | inteiro | sim | previsto para invalidar sessões abertas; hoje nenhum código o lê nem o incrementa (D-10) |
+| `revoked_at` | instante | não | preenchido na revogação; conta revogada é sempre inativa (`revoked_account_is_inactive`) |
 
-Ciclos de vida independentes: suspender a conta (`is_active = false`) não altera a pessoa, o vínculo nem o histórico; desativar a pessoa não apaga a conta.
+Situação derivada (`Account.status`): `active` (ativa), `suspended` (`is_active = false`, reversível) e `revoked` (`revoked_at` preenchido, definitiva). A revogação torna a senha inutilizável e revoga as concessões ativas. O `id` UUID é a chave interna; `username` é só identificador de login e pode ser a matrícula, sem ser chave.
+
+Ciclos de vida independentes: suspender ou revogar a conta não altera a pessoa, o vínculo nem o histórico; desativar a pessoa não suspende a conta. Gestão pela API de identidade ([convenções da API](api.md#7-recursos-atuais)), com `identity.manage`.
 
 ### 4.7 Role — papel
 
@@ -270,8 +273,8 @@ Operação confirmada sobre um item. Imutável depois de gravada.
 | `id` (UUID) | todas | global | chave interna, estável, sem significado |
 | `code` | Unit, StorageLocation | na org. | código legível para operação |
 | `registration` (matrícula) | Membership | na org. | identificação funcional da pessoa |
-| `cpf` | Person | nenhuma | dado pessoal opcional, não usado como chave |
-| `username` | Account | global (Django) | login |
+| `cpf` | Person | na org., quando preenchido | dado pessoal opcional, não usado como chave |
+| `username` | Account | global (Django) | login; pode coincidir com a matrícula, sem ser chave (ver D-12) |
 | `name` | EquipmentType, Role | na org. | |
 | `serial_number`, `asset_number` | Item | na org., quando preenchidos | identificação física e patrimonial |
 | `official_identifier` | Item | nenhuma | registro em órgão externo |
@@ -288,8 +291,8 @@ Identificadores de registro anulado não são reutilizados (decisão 0004, 10.9)
 | I-02 | a organização da requisição vem da conta autenticada | `has_permission`, views e serviços |
 | I-03 | sem concessão explícita, nenhuma permissão; papéis não herdam entre si | `has_permission` |
 | I-04 | concessão de unidade tem unidade | `Grant.clean` |
-| I-05 | pessoa, vínculo e conta têm ciclos independentes; no máximo uma conta por pessoa | modelo (`OneToOneField`) |
-| I-06 | matrícula, códigos, nome de tipo/papel, série e patrimônio únicos na org. | restrições do banco |
+| I-05 | pessoa, vínculo e conta têm ciclos independentes; no máximo uma conta não revogada por pessoa; revogação é definitiva | restrições `uniq_open_account_per_person` e `revoked_account_is_inactive`; serviços de conta |
+| I-06 | matrícula, CPF (quando preenchido), códigos, nome de tipo/papel, série e patrimônio únicos na org. | restrições do banco |
 | I-07 | classificação de tipo em uso não muda | `EquipmentType.save` |
 | I-08 | item usa somente tipo individual | `Item.clean` |
 | I-09 | local de guarda do item pertence à unidade do item | `Item.clean` |
@@ -319,6 +322,7 @@ A imutabilidade (I-15) vale na camada de aplicação; operações SQL diretas e 
 | D-09 | “uma devolução por saída” garantida só no serviço | — | candidata a restrição única parcial em `related_movement` |
 | D-10 | `Account.session_version` não é usado | invariante “suspender conta encerra acesso” | suspensão depende de `is_active`, verificado a cada requisição; troca de senha já invalida sessões pelo hash de sessão do Django; o campo não tem uso e pode ser removido ou adotado para revogação explícita |
 | D-11 | auditoria do Django Admin grava só os nomes dos campos alterados (`changes.fields`) | RF-60: valor anterior e novo | cadastros feitos pelo Admin não têm valor anterior e novo; valores pessoais precisam de minimização antes de serem incluídos |
+| D-12 | `username` é único em todo o sistema; matrícula é única só na organização | RF-02: acesso por matrícula e senha | usar a matrícula como login colide entre organizações, e a mensagem de indisponibilidade sinaliza que o nome existe em algum lugar; definir identificador de login por organização |
 
 ## 8. Rastreabilidade
 

@@ -17,6 +17,8 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [action, setAction] = useState<Action | null>(null);
+  // One key per opened dialog: resubmitting after a network failure replays, never duplicates.
+  const [idempotencyKey, setIdempotencyKey] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,6 +49,7 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
         return;
       }
     }
+    setIdempotencyKey(crypto.randomUUID());
     setAction(nextAction);
   }
 
@@ -57,7 +60,7 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
     setError("");
     const form = new FormData(event.currentTarget);
     const body: Record<string, unknown> = {
-      idempotency_key: crypto.randomUUID(),
+      idempotency_key: idempotencyKey,
       confirmed: form.get("confirmed") === "on"
     };
     if (action === "checkout") body.recipient_id = form.get("recipient_id");

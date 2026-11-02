@@ -1,7 +1,7 @@
 # Modelo de ameaças inicial
 
 - Tarefa: SIGAB-013
-- Revisão: 2026-10-31, conferida com o código em `backend/` (commit `b113b85`)
+- Revisão: 2026-11-02, conferida com o código em `backend/` (SIGAB-014 a 020)
 - Requisitos: RNF-03 (integridade da auditoria), RNF-04 (dados pessoais) e RNF-05 (isolamento entre organizações) do [DOC-0011 v0.1](fontes/DOC-0011-analise-de-requisitos-v0.1.md)
 - Base: [decisão 0002 — papéis e escopos](decisoes/0002-papeis-e-escopos.md), [ADR 0005 — stack](adr/0005-api-django-e-frontend-react.md), [ADR 0006 — eventos e auditoria](adr/0006-eventos-auditoria-e-estornos.md), [modelo de domínio](modelo-de-dominio.md)
 
@@ -69,7 +69,7 @@ Responsáveis por papel: **Backend** (Tech Lead/Backend), **Implantação** (que
 | ID | P | Ameaça | Preventivo | Detectivo | Estado | Resp. | Teste |
 |---|---|---|---|---|---|---|---|
 | I-01 | P0 | operador registra devolução de item que não voltou, ou saída para pessoa diferente da que retirou | confirmação explícita com resumo; destinatário ativo com vínculo ativo; papel restrito à unidade | auditoria com ator, instante e correlação; conferência física periódica (inventário, futura) | parcial: sem conferência periódica nem assinatura do responsável | Produto, Backend | `test_checkout_requires_confirmation`, `test_api_rejects_missing_explicit_confirmation`; previsto: teste de que toda saída e devolução gera `AuditEvent` com ator e correlação |
-| I-02 | P0 | operador age fora da unidade da sua concessão | concessão com escopo de unidade avaliada no servidor | auditoria | parcial: escopo implementado, sem teste dedicado | Backend | previsto: `test_unit_grant_does_not_reach_other_unit` |
+| I-02 | P0 | operador age fora da unidade da sua concessão | concessão com escopo de unidade avaliada no servidor | auditoria | impl. | Backend | `test_unit_grant_does_not_reach_other_unit` |
 | I-03 | P0 | conta sem a permissão executa saída, devolução ou alteração de condição | negação por padrão; concessão explícita | auditoria | impl. | Backend | `test_checkout_requires_permission`, `test_condition_change_requires_permission` |
 | I-04 | P0 | dupla saída do mesmo item por confirmações concorrentes | `select_for_update` e atualização condicional | — | impl. | Backend | `test_concurrent_checkout_accepts_exactly_one` (PostgreSQL) |
 | I-05 | P1 | repetição da mesma requisição gera duas movimentações | chave de idempotência única por organização | — | impl. | Backend | `test_checkout_is_idempotent_and_prevents_second_checkout`, `test_api_checkout_is_validated_and_idempotent` |
@@ -85,7 +85,7 @@ Responsáveis por papel: **Backend** (Tech Lead/Backend), **Implantação** (que
 | C-01 | P0 | força bruta ou *credential stuffing* em `/entrar/` e `/admin/` | limite de taxa no proxy e bloqueio progressivo por conta e IP na aplicação; validadores de senha do Django | auditoria de falhas de login com alerta por volume | **ausente** (há só os validadores de senha) | Implantação, Backend | previsto: `test_login_is_throttled_after_repeated_failures`, `test_failed_login_is_audited_without_password` |
 | C-02 | P0 | sessão capturada por tráfego sem TLS | `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, HSTS e redirecionamento HTTPS fora de `DEBUG`; TLS no proxy | — | **parcial**: `HttpOnly`, `SameSite=Lax` e expiração de 8 h existem; `Secure` e HSTS não | Backend, Implantação | previsto: `manage.py check --deploy` sem alertas no CI com configuração de produção |
 | C-03 | P0 | implantação sem `DJANGO_SECRET_KEY` ou sem `DJANGO_DEBUG=false` sobe com chave pública e páginas de depuração | `DEBUG` falso por padrão; inicialização falha sem chave quando `DEBUG` é falso | — | **ausente**: padrões atuais são `unsafe-development-key` e `DEBUG=true` | Backend | previsto: teste de configuração que falha sem chave em modo produção |
-| C-04 | P0 | conta de servidor desligado continua ativa | suspensão imediata (`is_active`), verificada a cada requisição; troca de senha invalida sessões (hash de sessão do Django) | revisão periódica de contas ativas × vínculos ativos | parcial: sem revisão periódica | Produto, Backend | `test_suspended_account_cannot_login`; previsto: sessão aberta deixa de valer após suspensão |
+| C-04 | P0 | conta de servidor desligado continua ativa | suspensão imediata (`is_active`), verificada a cada requisição; troca de senha invalida sessões (hash de sessão do Django) | revisão periódica de contas ativas × vínculos ativos | parcial: suspensão e revogação pela aplicação; sem revisão periódica | Produto, Backend | `test_suspended_account_cannot_login`, `test_suspension_blocks_login_without_touching_person_or_history`, `test_revocation_is_final_and_allows_new_account` |
 | C-05 | P0 | requisição forjada a partir de outro site (CSRF) | CSRF do Django em toda escrita; mesma origem; sem CORS | — | impl. | Backend | `test_api_state_change_requires_csrf`, `test_session_endpoint_sets_csrf_cookie` |
 | C-06 | P1 | conta administrativa sem segundo fator | MFA para superusuário e gestor de acesso | auditoria de login administrativo | ausente | Segurança | previsto com a escolha de MFA |
 | C-07 | P1 | XSS rouba ação da sessão | escaping de templates e do React; `HttpOnly`; `X-Frame-Options: DENY`; `nosniff` | — | parcial: sem *Content-Security-Policy* | Backend | previsto: cabeçalho CSP presente nas respostas |
@@ -98,14 +98,14 @@ Responsáveis por papel: **Backend** (Tech Lead/Backend), **Implantação** (que
 | T-02 | P0 | alterar ou apagar registros por SQL direto ou pelo administrador do banco | papel da aplicação sem `UPDATE`/`DELETE` nessas tabelas; acesso ao banco restrito e nominal | backup fora do host comparável com a base; encadeamento por hash (a decidir) | **ausente** | Implantação, Segurança | previsto: teste de integração no PostgreSQL de que o papel da aplicação recebe erro em `UPDATE` |
 | T-03 | P0 | ação crítica executada sem registro de auditoria | movimentação, evento e auditoria na mesma transação (`transaction.atomic`) | — | parcial: sem teste que exija auditoria em cada fluxo | Backend | previsto: teste parametrizado de que incorporação, saída, devolução e alteração de condição criam `AuditEvent` com ator, organização e correlação |
 | T-04 | P1 | tentativa negada ou em conflito não deixa rastro | auditar `denied` e `conflict` (ADR 0006) | alerta por volume de negações | ausente | Backend | previsto: tentativa sem permissão gera `AuditEvent` com `result=denied` |
-| T-05 | P2 | injeção de conteúdo no log por `X-Request-ID` | truncamento em 64 caracteres | — | parcial: sem restrição de caracteres | Backend | previsto: `X-Request-ID` com quebra de linha é substituído |
+| T-05 | P2 | injeção de conteúdo no log por `X-Request-ID` | aceita só `[A-Za-z0-9._-]{1,64}`; caso contrário gera UUID | — | impl. | Backend | `test_unsafe_request_id_is_replaced` |
 
 ### 3.5 Vazamento de dados e exportação (RNF-04)
 
 | ID | P | Ameaça | Preventivo | Detectivo | Estado | Resp. | Teste |
 |---|---|---|---|---|---|---|---|
 | V-01 | P0 | exportação em massa de pessoas, posse ou auditoria (RF-56, RN-07) | **hoje não existe rota de exportação**; quando existir: permissão própria (`audit.export`), filtro por tenant, limite de volume, sem CPF, uma auditoria por exportação com filtros usados | auditoria de exportação com alerta por volume | preventivo impl. pela ausência; controles da futura exportação previstos | Produto, Backend | previsto na tarefa de exportação: negação sem permissão, isolamento por tenant, ausência de CPF e auditoria da exportação |
-| V-02 | P0 | CPF, senha ou token em log, evento, auditoria ou mensagem de erro | minimização; CPF fora de telas operacionais e eventos; formato de `changes` do ADR 0006 | — | parcial: sem teste automatizado | Backend | previsto: teste de que nenhum `AuditEvent`, `MovementEvent` ou resposta da API contém o CPF de uma pessoa sintética |
+| V-02 | P0 | CPF, senha ou token em log, evento, auditoria ou mensagem de erro | minimização; CPF somente escrita e mascarado na API; formato de `changes` do ADR 0006; `redact()` no log técnico | — | parcial: falta teste sobre `MovementEvent` | Backend | `test_person_is_created_without_account`, `test_invalid_cpf_is_rejected_without_echo`, `test_formatter_redacts_traceback`, `test_login_does_not_log_password` |
 | V-03 | P0 | página de depuração expõe configuração e dados | `DEBUG` falso em produção | — | ausente (ver C-03) | Backend | coberto por C-03 |
 | V-04 | P1 | backup do banco vazado | criptografia do backup e armazenamento restrito fora do host | restauração periódica controlada | ausente (ADR 0004: retenção e criptografia abertas) | Implantação | previsto no roteiro de backup |
 | V-05 | P1 | resposta da API expõe campos além do necessário | contratos JSON explícitos, sem serializar modelos (ADR 0005) | — | impl. | Backend | previsto: teste de contrato da listagem de destinatários sem CPF e telefone |
@@ -119,7 +119,7 @@ Ameaças P0 cujo controle está ausente ou parcial, em ordem sugerida:
 | 1 | C-03, V-03, C-02 | configuração de produção segura por padrão: `DEBUG` falso, falha sem chave, cookies `Secure`, HSTS; `check --deploy` no CI | Backend |
 | 2 | A-04 | remover o atalho de superusuário em `has_permission` e restringi-lo ao plano de controle | Backend |
 | 3 | C-01 | limite de tentativas de login e auditoria de sucesso e falha | Backend, Implantação |
-| 4 | T-03, V-02, I-02, A-03 | testes previstos para controles já existentes | Backend |
+| 4 | T-03, V-02, A-03 | testes previstos para controles já existentes | Backend |
 | 5 | T-02 | papel de banco sem `UPDATE`/`DELETE`, junto com a decisão de implantação | Implantação |
 | 6 | A-02 | chaves estrangeiras compostas ou verificação no banco para referências entre organizações | Backend |
 | 7 | I-01, C-04 | conferência física periódica e revisão de contas: processos de produto | Produto |

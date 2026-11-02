@@ -87,3 +87,26 @@ SESSION_COOKIE_AGE = 8 * 60 * 60
 CSRF_COOKIE_SAMESITE = "Lax"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
+CSRF_FAILURE_VIEW = "sigab.api.views.csrf_failure"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"correlation": {"()": "sigab.observability.CorrelationIdFilter"}},
+    "formatters": {"json": {"()": "sigab.observability.JsonFormatter"}},
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "filters": ["correlation"],
+            "formatter": "json",
+        },
+        "null": {"class": "logging.NullHandler"},
+    },
+    "root": {"handlers": ["console"], "level": os.getenv("DJANGO_LOG_LEVEL", "INFO")},
+    "loggers": {
+        # Replace Django's plain-text default handlers so every line is JSON.
+        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        # The request middleware already logs one line per request.
+        "django.server": {"handlers": ["null"], "propagate": False},
+    },
+}

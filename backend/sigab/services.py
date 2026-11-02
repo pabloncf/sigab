@@ -1,16 +1,31 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from .models import AuditEvent, Item, Movement, MovementEvent, Organization, Person
-from .permissions import MOVE_ITEM, SET_ITEM_CONDITION, has_permission
+from .models import (
+    Account,
+    AuditEvent,
+    Item,
+    Membership,
+    Movement,
+    MovementEvent,
+    Organization,
+    Person,
+    Unit,
+)
+from .permissions import MANAGE_IDENTITY, MOVE_ITEM, SET_ITEM_CONDITION, has_permission
 
 
 class ConflictError(ValidationError):
     pass
+
+
+class NotFoundError(Exception):
+    """The object does not exist in the caller's organization (or is not visible)."""
 
 
 @dataclass(frozen=True)
@@ -60,11 +75,19 @@ def record_incorporation(ctx, item):
     return movement
 
 
-def _existing(ctx, idempotency_key, movement_type):
+def _existing(ctx, idempotency_key, movement_type, **expected):
+    """Return the movement already recorded under this key, if it is the same request.
+
+    A key reused for another operation type, item or payload is a conflict, never a replay.
+    """
     existing = Movement.objects.filter(
         organization=ctx.organization, idempotency_key=idempotency_key
     ).first()
-    if existing and existing.movement_type != movement_type:
+    if not existing:
+        return None
+    if existing.movement_type != movement_type or any(
+        getattr(existing, field) != value for field, value in expected.items()
+    ):
         raise ConflictError("A chave de idempotência já foi usada em outra operação.")
     return existing
 
@@ -75,13 +98,17 @@ def checkout_item(
 ):
     if not confirmed:
         raise ValidationError("A confirmação explícita é obrigatória.")
-    existing = _existing(ctx, idempotency_key, Movement.Type.CHECKOUT)
+    existing = _existing(
+        ctx, idempotency_key, Movement.Type.CHECKOUT, item_id=item_id, recipient_id=recipient_id
+    )
     if existing:
         return existing, False
     item = (
         Item.objects.select_for_update().filter(id=item_id, organization=ctx.organization).first()
     )
-    existing = _existing(ctx, idempotency_key, Movement.Type.CHECKOUT)
+    existing = _existing(
+        ctx, idempotency_key, Movement.Type.CHECKOUT, item_id=item_id, recipient_id=recipient_id
+    )
     if existing:
         return existing, False
     recipient = Person.objects.filter(
@@ -154,13 +181,17 @@ def return_item(
 ):
     if not confirmed:
         raise ValidationError("A confirmação explícita é obrigatória.")
-    existing = _existing(ctx, idempotency_key, Movement.Type.RETURN)
+    existing = _existing(
+        ctx, idempotency_key, Movement.Type.RETURN, item_id=item_id, condition_on_return=condition
+    )
     if existing:
         return existing, False
     item = (
         Item.objects.select_for_update().filter(id=item_id, organization=ctx.organization).first()
     )
-    existing = _existing(ctx, idempotency_key, Movement.Type.RETURN)
+    existing = _existing(
+        ctx, idempotency_key, Movement.Type.RETURN, item_id=item_id, condition_on_return=condition
+    )
     if existing:
         return existing, False
     if not item:
@@ -232,13 +263,25 @@ def set_item_condition(
     """Declare an item in the reserve unfit (T05) or release it as fit (T06)."""
     if not confirmed:
         raise ValidationError("A confirmação explícita é obrigatória.")
-    existing = _existing(ctx, idempotency_key, Movement.Type.CONDITION_CHANGE)
+    existing = _existing(
+        ctx,
+        idempotency_key,
+        Movement.Type.CONDITION_CHANGE,
+        item_id=item_id,
+        new_condition=condition,
+    )
     if existing:
         return existing, False
     item = (
         Item.objects.select_for_update().filter(id=item_id, organization=ctx.organization).first()
     )
-    existing = _existing(ctx, idempotency_key, Movement.Type.CONDITION_CHANGE)
+    existing = _existing(
+        ctx,
+        idempotency_key,
+        Movement.Type.CONDITION_CHANGE,
+        item_id=item_id,
+        new_condition=condition,
+    )
     if existing:
         return existing, False
     if not item:
@@ -301,3 +344,249 @@ def set_item_condition(
         reason=reason,
     )
     return movement, True
+
+
+# Identity: Person, Membership and Account have independent lifecycles (SIGAB-019/020).
+
+PERSON_FIELDS = ("name", "functional_name", "cpf", "phone")
+
+
+def _require_identity_manager(ctx):
+    if not has_permission(ctx.actor, MANAGE_IDENTITY, ctx.organization):
+        raise PermissionDenied
+
+
+def _require_confirmation(confirmed):
+    if not confirmed:
+        raise ValidationError("A confirmação explícita é obrigatória.")
+
+
+def normalize_cpf(value):
+    return "".join(character for character in value if character.isdigit())
+
+
+def _person_for_update(ctx, person_id):
+    person = (
+        Person.objects.select_for_update()
+        .filter(id=person_id, organization=ctx.organization)
+        .first()
+    )
+    if not person:
+        raise NotFoundError
+    return person
+
+
+@transaction.atomic
+def create_person(ctx, *, name, functional_name="", cpf="", phone=""):
+    """Register a person without creating any account (SIGAB-019)."""
+    _require_identity_manager(ctx)
+    person = Person(
+        organization=ctx.organization,
+        name=name.strip(),
+        functional_name=functional_name.strip(),
+        cpf=normalize_cpf(cpf),
+        phone=phone.strip(),
+    )
+    person.full_clean()
+    person.save()
+    # Personal values never enter the audit trail; only which fields were filled.
+    audit(
+        ctx, "person.create", person, {"fields": [f for f in PERSON_FIELDS if getattr(person, f)]}
+    )
+    return person
+
+
+@transaction.atomic
+def update_person(ctx, *, person_id, values):
+    _require_identity_manager(ctx)
+    unknown = set(values) - set(PERSON_FIELDS)
+    if unknown:
+        raise ValidationError({field: "Campo não editável." for field in sorted(unknown)})
+    person = _person_for_update(ctx, person_id)
+    changed = []
+    for field, value in values.items():
+        value = normalize_cpf(value) if field == "cpf" else value.strip()
+        if getattr(person, field) != value:
+            setattr(person, field, value)
+            changed.append(field)
+    if not changed:
+        return person
+    person.full_clean()
+    person.save(update_fields=[*changed, "updated_at"])
+    audit(ctx, "person.update", person, {"fields": sorted(changed)})
+    return person
+
+
+@transaction.atomic
+def set_person_active(ctx, *, person_id, is_active, confirmed, reason=""):
+    """Deactivate or reactivate a person; accounts, memberships and history are untouched."""
+    _require_identity_manager(ctx)
+    _require_confirmation(confirmed)
+    person = _person_for_update(ctx, person_id)
+    if person.is_active == is_active:
+        raise ConflictError("A pessoa já está nessa situação.")
+    person.is_active = is_active
+    person.save(update_fields=["is_active", "updated_at"])
+    audit(
+        ctx,
+        "person.activate" if is_active else "person.deactivate",
+        person,
+        {"is_active": {"from": not is_active, "to": is_active}},
+        reason=reason.strip(),
+    )
+    return person
+
+
+@transaction.atomic
+def create_membership(ctx, *, person_id, registration, main_unit_id, rank=""):
+    _require_identity_manager(ctx)
+    person = _person_for_update(ctx, person_id)
+    unit = Unit.objects.filter(
+        id=main_unit_id, organization=ctx.organization, is_active=True
+    ).first()
+    if not unit:
+        raise ValidationError({"main_unit_id": "Unidade inválida."})
+    membership = Membership(
+        organization=ctx.organization,
+        person=person,
+        registration=registration.strip(),
+        main_unit=unit,
+        rank=rank.strip(),
+    )
+    membership.full_clean()
+    membership.save()
+    audit(
+        ctx,
+        "membership.create",
+        membership,
+        {"person_id": str(person.id), "main_unit_id": str(unit.id)},
+    )
+    return membership
+
+
+@transaction.atomic
+def set_membership_active(ctx, *, membership_id, is_active, confirmed, reason=""):
+    _require_identity_manager(ctx)
+    _require_confirmation(confirmed)
+    membership = (
+        Membership.objects.select_for_update()
+        .filter(id=membership_id, organization=ctx.organization)
+        .first()
+    )
+    if not membership:
+        raise NotFoundError
+    if membership.is_active == is_active:
+        raise ConflictError("O vínculo já está nessa situação.")
+    membership.is_active = is_active
+    membership.save(update_fields=["is_active", "updated_at"])
+    audit(
+        ctx,
+        "membership.activate" if is_active else "membership.deactivate",
+        membership,
+        {"is_active": {"from": not is_active, "to": is_active}},
+        reason=reason.strip(),
+    )
+    return membership
+
+
+@transaction.atomic
+def create_account(ctx, *, person_id, username, password, email=""):
+    """Create the access account of an active person (SIGAB-020)."""
+    _require_identity_manager(ctx)
+    person = _person_for_update(ctx, person_id)
+    if not person.is_active:
+        raise ConflictError("Pessoa inativa não recebe conta.")
+    if person.accounts.filter(revoked_at__isnull=True).exists():
+        raise ConflictError("A pessoa já possui conta não revogada.")
+    username = username.strip()
+    account = Account(
+        organization=ctx.organization, person=person, username=username, email=email.strip()
+    )
+    try:
+        account.full_clean(exclude=["password"])
+    except ValidationError as exc:
+        # Usernames are global: keep the message neutral about who holds the name.
+        if (
+            "username" in getattr(exc, "error_dict", {})
+            and Account.objects.filter(username=username).exists()
+        ):
+            raise ValidationError({"username": "Identificador de login indisponível."}) from exc
+        raise
+    try:
+        validate_password(password, account)
+    except ValidationError as exc:
+        raise ValidationError({"password": exc.messages}) from exc
+    account.set_password(password)
+    account.save()
+    audit(ctx, "account.create", account, {"person_id": str(person.id)})
+    return account
+
+
+def _account_for_update(ctx, account_id):
+    account = (
+        Account.objects.select_for_update()
+        .filter(id=account_id, organization=ctx.organization, is_superuser=False)
+        .first()
+    )
+    if not account:
+        raise NotFoundError
+    if account.pk == ctx.actor.pk:
+        raise ConflictError("Não é possível alterar a situação da própria conta.")
+    return account
+
+
+def _audit_account_status(ctx, action, account, previous, reason, extra=None):
+    changes = {"status": {"from": previous, "to": account.status}, **(extra or {})}
+    audit(ctx, action, account, changes, reason=reason.strip())
+
+
+@transaction.atomic
+def suspend_account(ctx, *, account_id, confirmed, reason=""):
+    """Block login immediately; person, memberships, grants and history stay as they are."""
+    _require_identity_manager(ctx)
+    _require_confirmation(confirmed)
+    account = _account_for_update(ctx, account_id)
+    previous = account.status
+    if previous != "active":
+        raise ConflictError("Somente conta ativa pode ser suspensa.")
+    account.is_active = False
+    account.save(update_fields=["is_active"])
+    _audit_account_status(ctx, "account.suspend", account, previous, reason)
+    return account
+
+
+@transaction.atomic
+def reactivate_account(ctx, *, account_id, confirmed, reason=""):
+    _require_identity_manager(ctx)
+    _require_confirmation(confirmed)
+    account = _account_for_update(ctx, account_id)
+    previous = account.status
+    if previous != "suspended":
+        raise ConflictError("Somente conta suspensa pode ser reativada.")
+    account.is_active = True
+    account.save(update_fields=["is_active"])
+    _audit_account_status(ctx, "account.reactivate", account, previous, reason)
+    return account
+
+
+@transaction.atomic
+def revoke_account(ctx, *, account_id, confirmed, reason=""):
+    """End an account permanently: no login, no password, grants revoked; history kept."""
+    _require_identity_manager(ctx)
+    _require_confirmation(confirmed)
+    account = _account_for_update(ctx, account_id)
+    previous = account.status
+    if previous == "revoked":
+        raise ConflictError("A conta já está revogada.")
+    now = timezone.now()
+    account.is_active = False
+    account.revoked_at = now
+    account.set_unusable_password()
+    account.save(update_fields=["is_active", "revoked_at", "password"])
+    revoked_grants = account.grants.filter(is_active=True, revoked_at__isnull=True).update(
+        is_active=False, revoked_at=now, updated_at=now
+    )
+    _audit_account_status(
+        ctx, "account.revoke", account, previous, reason, {"revoked_grants": revoked_grants}
+    )
+    return account

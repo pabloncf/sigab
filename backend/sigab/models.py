@@ -67,6 +67,16 @@ class StorageLocation(TimestampedModel):
         return f"{self.code} — {self.name}"
 
 
+def validate_cpf(value):
+    """Check the 11-digit form and both verification digits; the value is never echoed."""
+    if not (len(value) == 11 and value.isdigit()) or value == value[0] * 11:
+        raise ValidationError({"cpf": "CPF inválido."})
+    for size in (9, 10):
+        total = sum(int(digit) * (size + 1 - index) for index, digit in enumerate(value[:size]))
+        if (total * 10 % 11) % 10 != int(value[size]):
+            raise ValidationError({"cpf": "CPF inválido."})
+
+
 class Person(TimestampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="people")
@@ -75,6 +85,21 @@ class Person(TimestampedModel):
     cpf = models.CharField(max_length=11, blank=True)
     phone = models.CharField(max_length=24, blank=True)
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            # RN-01: one registration per person in each organization, when CPF is known.
+            models.UniqueConstraint(
+                fields=["organization", "cpf"],
+                condition=~Q(cpf=""),
+                name="uniq_person_cpf_org",
+                violation_error_message="Já existe pessoa com este CPF nesta organização.",
+            )
+        ]
+
+    def clean(self):
+        if self.cpf:
+            validate_cpf(self.cpf)
 
     def __str__(self):
         return self.functional_name or self.name
@@ -94,7 +119,9 @@ class Membership(TimestampedModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["organization", "registration"], name="uniq_registration_org"
+                fields=["organization", "registration"],
+                name="uniq_registration_org",
+                violation_error_message="Matrícula já cadastrada nesta organização.",
             )
         ]
 
@@ -109,12 +136,36 @@ class Account(AbstractUser):
     organization = models.ForeignKey(
         Organization, null=True, blank=True, on_delete=models.PROTECT, related_name="accounts"
     )
-    person = models.OneToOneField(
-        Person, null=True, blank=True, on_delete=models.PROTECT, related_name="account"
+    # A person keeps revoked accounts in history and may receive a new one afterwards;
+    # at most one account per person is not revoked.
+    person = models.ForeignKey(
+        Person, null=True, blank=True, on_delete=models.PROTECT, related_name="accounts"
     )
     session_version = models.PositiveIntegerField(default=1)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(AbstractUser.Meta):
+        constraints = [
+            models.UniqueConstraint(
+                fields=["person"],
+                condition=Q(revoked_at__isnull=True),
+                name="uniq_open_account_per_person",
+                violation_error_message="A pessoa já possui conta não revogada.",
+            ),
+            models.CheckConstraint(
+                condition=Q(revoked_at__isnull=True) | Q(is_active=False),
+                name="revoked_account_is_inactive",
+            ),
+        ]
+
+    @property
+    def status(self):
+        if self.revoked_at:
+            return "revoked"
+        return "active" if self.is_active else "suspended"
 
     def clean(self):
+        super().clean()
         if self.person_id and self.organization_id != self.person.organization_id:
             raise ValidationError("Conta e pessoa devem pertencer à mesma organização.")
 

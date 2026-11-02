@@ -1,0 +1,125 @@
+# Convenções da API
+
+- Tarefa: SIGAB-014
+- Revisão: 2026-11-02, conferida com `backend/sigab/api/`
+- Base: [ADR 0005](adr/0005-api-django-e-frontend-react.md) (fronteira React/API), [ADR 0006](adr/0006-eventos-auditoria-e-estornos.md) (eventos e auditoria), [modelo de ameaças](modelo-de-ameacas.md)
+- Requisitos: RF-20, RF-21 e RF-60 do [DOC-0011 v0.1](fontes/DOC-0011-analise-de-requisitos-v0.1.md)
+
+## 1. Base
+
+- Prefixo único e versionado: `/api/v1/`. Mudança incompatível cria `/api/v2/`; a versão anterior continua até o frontend migrar.
+- Corpo de requisição e resposta em JSON UTF-8. Escritas exigem `Content-Type: application/json` e corpo de no máximo 16 KiB.
+- Identificadores são UUID. Instantes são ISO 8601 em UTC.
+- Nomes de campo em inglês (`snake_case`); mensagens ao usuário em português.
+- A API devolve contratos montados à mão; modelos Django nunca são serializados diretamente.
+
+## 2. Autenticação e sessão
+
+- Sessão Django em cookie `HttpOnly` (`SameSite=Lax`, expira em 8 h). Login e logout de formulário em `/entrar/` e `/sair/`; logout da SPA em `POST /api/v1/session/logout/`.
+- `GET /api/v1/session/` devolve a conta, a organização e as permissões de interface (`permissions.can_manage_identity`) e grava o cookie `csrftoken`.
+- Toda escrita (`POST`, `PATCH`) exige o cabeçalho `X-CSRFToken` com o valor do cookie. Sem ele, a resposta é `403` no formato de erro da seção 5.
+- Conta inativa ou revogada é tratada como não autenticada a partir da requisição seguinte.
+- Sem CORS: frontend e API na mesma origem.
+
+## 3. Autorização e organização
+
+- A organização vem sempre de `Account.organization` da sessão. A API não aceita organização no corpo, na URL ou em cabeçalho.
+- Permissões explícitas avaliadas no servidor em cada requisição (`sigab/permissions.py`), no escopo da organização ou da unidade do objeto.
+- **Coleção** sem permissão: `403 Acesso negado.`
+- **Objeto** de outra organização, inexistente ou fora do escopo de unidade: `404 Recurso não encontrado.`, com a mesma mensagem nos três casos. A resposta nunca revela se o registro existe em outra organização.
+- As flags de permissão devolvidas ao frontend (`permissions.*`) servem só para exibir botões; o backend verifica de novo.
+
+## 4. Escritas: validação, confirmação e idempotência
+
+Toda escrita passa por três camadas:
+
+1. **Formato** (`api/views.py`): tipos, tamanhos, UUIDs e campos obrigatórios. Campo desconhecido em `PATCH` é rejeitado.
+2. **Regra de domínio** (`services.py`): tenant, permissão, estado atual, `full_clean()` e restrições do banco, sob `transaction.atomic`.
+3. **Banco**: restrições únicas e de verificação; violação concorrente vira `409`.
+
+Confirmação explícita (RF-21): operações que mudam estado operacional ou situação exigem `"confirmed": true` no corpo. Hoje: saída, devolução, condição do item, situação de pessoa e de vínculo, e suspensão, reativação e revogação de conta.
+
+Estratégia de idempotência por tipo de escrita:
+
+| Escrita | Estratégia | Repetição da mesma requisição | Mesma chave com outro conteúdo |
+|---|---|---|---|
+| saída, devolução, condição do item | `idempotency_key` (UUID) obrigatório, único por organização no banco | `200` com a movimentação original e `"created": false` | `409` |
+| situação de pessoa, vínculo e conta | transição de estado: repetir a mesma transição falha porque o estado já mudou | `409` com mensagem de estado (“já está nessa situação”) | — |
+| cadastro de pessoa | sem chave. A duplicidade é barrada por CPF único na organização, quando informado | pode criar outro registro se o CPF não for informado; o frontend desabilita o botão durante o envio | — |
+| cadastro de vínculo e de conta | chave natural única: matrícula na organização; uma conta não revogada por pessoa | `400` (matrícula) ou `409` (conta) | — |
+
+O cliente gera a `idempotency_key` **ao abrir** a ação e a reutiliza em qualquer reenvio da mesma ação; só uma nova ação gera nova chave.
+
+## 5. Respostas
+
+Sucesso:
+
+```json
+{ "success": true, "data": { }, "meta": { } }
+```
+
+`meta` só aparece em coleções paginadas. Criação devolve `201`; repetição idempotente e demais escritas, `200`.
+
+Erro:
+
+```json
+{
+  "success": false,
+  "error": "Dados inválidos.",
+  "details": { "recipient_id": ["Informe um UUID válido."] },
+  "correlation_id": "4f0c..."
+}
+```
+
+- `details` aparece só em `400` de validação: chave = campo; `non_field_errors` para regras sem campo.
+- `correlation_id` é o mesmo valor do cabeçalho `X-Request-ID` e liga a resposta ao log técnico e à auditoria.
+- Mensagens nunca incluem CPF, senha, token, dado de outra organização nem detalhe técnico.
+
+| Status | Quando | `error` |
+|---|---|---|
+| 400 | formato, validação ou regra sem conflito de estado | `Dados inválidos.`, `JSON inválido.` ou mensagem da regra |
+| 401 | sem sessão ou conta inativa | `Autenticação necessária.` |
+| 403 | sem permissão na coleção, ou CSRF inválido | `Acesso negado.` ou mensagem de segurança expirada |
+| 404 | objeto não visível ou rota inexistente | `Recurso não encontrado.` |
+| 405 | método não suportado (com cabeçalho `Allow`) | `Método não permitido.` |
+| 409 | conflito com o estado atual, chave de idempotência reutilizada ou corrida em restrição única | mensagem do conflito |
+| 500 | erro inesperado; detalhe só no log técnico | `Erro interno. Informe o código de correlação ao suporte.` |
+
+## 6. Paginação
+
+Coleções que crescem com o cadastro (`/items/`, `/people/`) aceitam `limit` (padrão 100, máximo 500) e `offset` (padrão 0). Fora desses limites: `400`.
+
+```json
+{ "success": true, "data": [ ], "meta": { "count": 742, "limit": 100, "offset": 0 } }
+```
+
+`count` é o total visível para a conta, já filtrado por organização e escopo. Listas auxiliares pequenas (`/units/`, `/items/<id>/recipients/`) não são paginadas. `/people/` aceita `q` para busca por nome, nome funcional ou matrícula.
+
+## 7. Recursos atuais
+
+| Método e rota | Permissão | Uso |
+|---|---|---|
+| `GET /session/` | autenticado | conta, organização e permissões de interface |
+| `POST /session/logout/` | autenticado | encerra a sessão |
+| `GET /items/` | `item.view` no escopo | itens visíveis, paginado |
+| `GET /items/<id>/` | `item.view` na unidade | item com histórico de eventos |
+| `GET /items/<id>/recipients/` | `movement.execute` na unidade | pessoas ativas com vínculo ativo |
+| `POST /items/<id>/checkout/` | `movement.execute` | saída (T02) |
+| `POST /items/<id>/return/` | `movement.execute` | devolução (T03/T04) |
+| `POST /items/<id>/condition/` | `item.condition.set` | declarar inapto ou liberar (T05/T06) |
+| `GET`, `POST /people/` | `identity.manage` (organização) | listar e cadastrar pessoa, sem conta |
+| `GET`, `PATCH /people/<id>/` | `identity.manage` | ficha e edição de dados cadastrais |
+| `POST /people/<id>/status/` | `identity.manage` | desativar ou reativar pessoa |
+| `POST /people/<id>/memberships/` | `identity.manage` | novo vínculo |
+| `POST /memberships/<id>/status/` | `identity.manage` | desativar ou reativar vínculo |
+| `POST /people/<id>/account/` | `identity.manage` | criar conta de acesso |
+| `POST /accounts/<id>/suspend/`, `/reactivate/`, `/revoke/` | `identity.manage` | ciclo de vida da conta |
+| `GET /units/` | `identity.manage` | unidades ativas para o cadastro de vínculo |
+
+Códigos de permissão ainda diferem da matriz da decisão 0002 (`movement.execute` × `movement.checkout`/`movement.return`): divergência D-02 do [modelo de domínio](modelo-de-dominio.md).
+
+## 8. Dados pessoais na API
+
+- CPF é **somente escrita**: a resposta traz apenas `cpf_masked` (`***.***.***-09`). Erro de CPF não ecoa o valor enviado.
+- Telefone e CPF só aparecem nos recursos de `/people/`, que exigem `identity.manage`. Listas operacionais (destinatários, responsável do item) trazem só `id` e nome.
+- Senha nunca é devolvida, nem em erro de validação.

@@ -16,6 +16,33 @@ ADMIN_PERMISSIONS = [
 ]
 
 
+ALL_UNITS = object()
+
+
+def permitted_unit_ids(account, permission, organization):
+    """Return ALL_UNITS for organization-wide access, else the set of unit ids granted."""
+    if not account.is_authenticated or not account.is_active:
+        return set()
+    if account.is_superuser:
+        return ALL_UNITS
+    if account.organization_id != organization.id:
+        return set()
+    unit_ids = set()
+    grants = account.grants.filter(
+        organization=organization,
+        is_active=True,
+        revoked_at__isnull=True,
+    ).select_related("role")
+    for grant in grants:
+        if permission not in grant.role.permissions:
+            continue
+        if grant.scope_type == "organization":
+            return ALL_UNITS
+        if grant.unit_id:
+            unit_ids.add(grant.unit_id)
+    return unit_ids
+
+
 def has_permission(account, permission, organization, unit=None):
     if not account.is_authenticated or not account.is_active:
         return False

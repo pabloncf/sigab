@@ -19,7 +19,7 @@ bun install
 bun run dev
 ```
 
-Acesse `http://localhost:5173`. O Vite encaminha `/api`, `/entrar`, `/sair` e `/admin` ao Django em `127.0.0.1:8000`, mantendo sessão e CSRF em mesma origem para o navegador.
+Acesse `http://localhost:5173`. O Vite encaminha `/api`, `/entrar`, `/sair` e `/admin` ao Django em `127.0.0.1:8000` preservando o cabeçalho `Host` (`changeOrigin: false`), o que mantém sessão e verificação de origem do CSRF em mesma origem para o navegador.
 
 ## Produção
 

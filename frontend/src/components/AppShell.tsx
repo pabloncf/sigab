@@ -23,6 +23,12 @@ export function AppShell({ session, children }: AppShellProps) {
             <small>Gestão de acervo</small>
           </span>
         </a>
+        {session.permissions.can_manage_identity && (
+          <nav className="main-nav" aria-label="Áreas">
+            <a href="/" aria-current={window.location.pathname.startsWith("/pessoas") ? undefined : "page"}>Acervo</a>
+            <a href="/pessoas" aria-current={window.location.pathname.startsWith("/pessoas") ? "page" : undefined}>Pessoas</a>
+          </nav>
+        )}
         <div className="account">
           <span>
             <strong>{session.user.username}</strong>

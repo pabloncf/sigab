@@ -1,6 +1,10 @@
 name: CI
 on: [push, pull_request]
 
+# Read-only token: the pipeline needs no write access and holds no secrets.
+permissions:
+  contents: read
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -32,6 +36,12 @@ jobs:
       - run: uv run ruff check config sigab manage.py
       - run: uv run python manage.py check
       - run: uv run python manage.py makemigrations --check --dry-run
+      # Empty database -> current version -> fully reverted -> current version again.
+      - name: Migrations apply and revert on an empty database
+        run: |
+          uv run python manage.py migrate --noinput
+          uv run python manage.py migrate sigab zero --noinput
+          uv run python manage.py migrate --noinput
       - run: uv run pytest -q
 
   frontend:
