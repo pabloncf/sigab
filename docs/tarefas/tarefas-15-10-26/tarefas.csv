@@ -791,7 +791,7 @@ Requisitos relacionados: RF-13; RF-24; RN-04
 Dependências originais: SIGAB-008;SIGAB-012;SIGAB-025
 
 Observações: Não iniciar antes da decisão sobre lotes e unidades de medida.",High,sigab,tipo-desenvolvimento,origem-bloqueado,sprint-futuro,Estoque,41,1015,8,12,25,,,
-Task,To Do,[SIGAB-042] Implementar backup e teste de restauração,"Criar rotina protegida de cópia e verificar restauração periodicamente.
+Task,In Progress,[SIGAB-042] Implementar backup e teste de restauração,"Criar rotina protegida de cópia e verificar restauração periodicamente.
 
 ID original: SIGAB-042
 
@@ -809,7 +809,7 @@ Requisitos relacionados: RNF-07
 
 Dependências originais: SIGAB-005;SIGAB-010;SIGAB-016;SIGAB-039
 
-Observações: Frequência depende da decisão de continuidade.",Highest,sigab,tipo-infraestrutura,origem-pendente,sprint-sprint-2,Continuidade,42,1016,5,10,16,39,,
+Observações: Dump criptografado, timer e ensaio isolado implementados; ver docs/backup-e-restauracao.md. Aceite pendente de WAL/PITR, armazenamento externo, retenção e RPO/RTO de produção.",Highest,sigab,tipo-infraestrutura,origem-pendente,sprint-sprint-2,Continuidade,42,1016,5,10,16,39,,
 Task,Done,[SIGAB-043] Criar testes end-to-end do fluxo vertical,"Cobrir cadastro, saída, bloqueio de dupla saída, devolução, histórico e autorização.
 
 ID original: SIGAB-043
@@ -866,7 +866,7 @@ Requisitos relacionados: Seção 1.2
 
 Dependências originais: SIGAB-002;SIGAB-043;SIGAB-044
 
-Observações: A demonstração não substitui observação do processo real.",Highest,sigab,tipo-validacao,origem-bloqueado,sprint-apos-sprint-3,Entrega,45,1017,2,43,44,,,
+Observações: Roteiro e ata preparados em docs/validacao/tarefas-041-a-045.md; sessão com usuário-alvo ainda não realizada. A demonstração não substitui observação do processo real.",Highest,sigab,tipo-validacao,origem-bloqueado,sprint-apos-sprint-3,Entrega,45,1017,2,43,44,,,
 Task,To Do,[SIGAB-046] Registrar movimentação de contingência,"Registrar no sistema as saídas e devoluções ocorridas em papel durante a contingência, preservando o instante do fato, a referência ao documento e a rastreabilidade.
 
 ID original: SIGAB-046

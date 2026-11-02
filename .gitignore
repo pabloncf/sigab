@@ -13,3 +13,8 @@ frontend/dist/
 frontend/*.tsbuildinfo
 graphify-out/cache/ast/
 graphify-out/
+# Operational backups and private restoration keys
+backups/
+*.dump
+*.dump.age
+*.agekey

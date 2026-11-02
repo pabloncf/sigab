@@ -1,0 +1,49 @@
+name: Backup restoration exercise
+on:
+  push:
+    paths: ["backend/**", "ops/backup/**", ".dockerignore", ".github/workflows/backup-restore.yml"]
+  pull_request:
+    paths: ["backend/**", "ops/backup/**", ".dockerignore", ".github/workflows/backup-restore.yml"]
+  schedule:
+    - cron: "0 5 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: sigab_test
+          POSTGRES_USER: sigab
+          POSTGRES_PASSWORD: synthetic-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sigab -d sigab_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f ops/backup/Dockerfile -t sigab-backup-test .
+      - name: Restore synthetic snapshot and reject damaged backups
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "5432"
+          PGUSER: sigab
+          PGPASSWORD: synthetic-only
+        run: |
+          mkdir -p reports
+          docker run --rm --network host \
+            -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD \
+            -e EXERCISE_REPORT_PATH=/reports/restore.json \
+            -v "$PWD/reports:/reports" \
+            sigab-backup-test /app/ops/backup/test-backup.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-restore-report
+          path: reports/restore.json
+          if-no-files-found: error

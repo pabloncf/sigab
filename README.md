@@ -113,7 +113,8 @@ Depois de mudanças no código, execute `graphify update .`. A lista de arquivos
 
 ## Operação e backup
 
-- Banco: faça backup consistente com `pg_dump --format=custom` e proteja o arquivo fora do host; restaure periodicamente em ambiente isolado com `pg_restore`. As metas definidas no [ADR 0004](docs/adr/0004-conectividade-e-contingencia.md) são RPO ≤ 15 min, o que exige arquivamento contínuo de WAL/PITR além do dump, e RTO ≤ 4 h. Retenção e criptografia ainda dependem de decisão formal.
+- Procedimento automatizado: [backup criptografado e ensaio de restauração](docs/backup-e-restauracao.md), com scripts e timer em `ops/backup/`. Aceite de continuidade em produção ainda pendente.
+- Banco: faça backup consistente com `pg_dump --format=custom` e proteja o arquivo fora do host; restaure periodicamente em ambiente isolado com `pg_restore`. As metas definidas no [ADR 0004](docs/adr/0004-conectividade-e-contingencia.md) são RPO ≤ 15 min, o que exige arquivamento contínuo de WAL/PITR além do dump, e RTO ≤ 4 h. Criptografia com age implementada para o dump; retenção, armazenamento externo e gestão das chaves dependem da implantação.
 - Auditoria: `uv run python manage.py verify_audit_chain` verifica a cadeia de hashes da trilha de cada organização e aponta o primeiro registro alterado ou removido; rode após restaurar backup e periodicamente.
 - Migrações: em `backend/`, aplique `uv run python manage.py migrate` antes de iniciar a nova versão; mantenha backup anterior à implantação.
 - Timestamps são persistidos em UTC; a organização carrega seu fuso para apresentação futura.
@@ -121,3 +122,6 @@ Depois de mudanças no código, execute `graphify update .`. A lista de arquivos
 
 Consulte também a [decisão do segmento inicial](docs/decisoes/0001-segmento-inicial.md), a [nota regulatória preliminar](docs/notas-regulatorias/0001-guardas-municipais.md), as [decisões pendentes](docs/decisoes-pendentes.md), o [modelo de domínio](docs/modelo-de-dominio.md) e a documentação de [segurança](docs/seguranca-e-privacidade.md). O backlog preparado para importação no Jira está em [tarefas.csv](docs/tarefas/tarefas-15-10-26/tarefas.csv).
 
+## Evidências da entrega
+
+A [revisão das tarefas 041 a 045](docs/validacao/tarefas-041-a-045.md) liga requisitos aos testes, registra o bloqueio do estoque e traz o roteiro e a ata ainda pendente da demonstração. O teste `test_vertical_flow.py` cobre o fluxo completo pela API HTTP; testes de navegador React permanecem pendentes.

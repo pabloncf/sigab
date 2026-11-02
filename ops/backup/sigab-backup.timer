@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily SIGAB logical backup (WAL/PITR required separately)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00 UTC
+Persistent=true
+Unit=sigab-backup.service
+
+[Install]
+WantedBy=timers.target

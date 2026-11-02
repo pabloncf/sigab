@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793643379.4158916,
-    "ast_hash": "9691ecf50cd732b290c035ec34b6742b",
+    "mtime": 1793644997.958997,
+    "ast_hash": "535a6f99e943d622256b37957e91f722",
     "semantic_hash": ""
   },
   "compose.yaml": {
@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "docs/decisoes-pendentes.md": {
-    "mtime": 1793643379.415591,
-    "ast_hash": "79c1d403bd09b8157f1f3aa014070d90",
+    "mtime": 1793644794.8755734,
+    "ast_hash": "ebb6d97774a5da0e468ac011be5ac444",
     "semantic_hash": ""
   },
   "docs/glossario.md": {
@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "docs/integracao-continua.md": {
-    "mtime": 1793637931.5098913,
-    "ast_hash": "af67d16dbd504c1a7fa5aa7bc7d18be1",
+    "mtime": 1793644883.3456693,
+    "ast_hash": "5264775b05b1da24c3d1e6e89e9f734f",
     "semantic_hash": ""
   },
   "docs/modelo-de-ameacas.md": {
@@ -587,6 +587,46 @@
   "docs/politica-de-dados-pessoais.md": {
     "mtime": 1793643281.9105463,
     "ast_hash": "d16a3c896203686115d67f7dfa4a1dd8",
+    "semantic_hash": ""
+  },
+  "backend/sigab/tests/test_vertical_flow.py": {
+    "mtime": 1793644596.263937,
+    "ast_hash": "7c62726403c31549d29c58bdf5dcdb69",
+    "semantic_hash": ""
+  },
+  "ops/backup/backup.sh": {
+    "mtime": 1793644539.584635,
+    "ast_hash": "e299ded013a55445eb2299cb202f60a4",
+    "semantic_hash": ""
+  },
+  "ops/backup/restore-test.sh": {
+    "mtime": 1793644969.5548804,
+    "ast_hash": "d1d33bbb8ab1e2c40b86119f6c3bd54e",
+    "semantic_hash": ""
+  },
+  "ops/backup/test-backup.sh": {
+    "mtime": 1793644969.55501,
+    "ast_hash": "626fd279a71bcfa8a67f103fb1afb04d",
+    "semantic_hash": ""
+  },
+  ".github/workflows/backup-restore.yml": {
+    "mtime": 1793644883.3341115,
+    "ast_hash": "9acee380a13ecde4087a088e8b05f3e6",
+    "semantic_hash": ""
+  },
+  "docs/backup-e-restauracao.md": {
+    "mtime": 1793644794.861977,
+    "ast_hash": "ca7b9a6258877b8ad972a2189359f97f",
+    "semantic_hash": ""
+  },
+  "docs/validacao/tarefas-041-a-045.md": {
+    "mtime": 1793644997.959174,
+    "ast_hash": "c27eae263c883fce0749ddfb81cb3e7d",
+    "semantic_hash": ""
+  },
+  "docs/validacao/restauracao-sintetica-2026-11-02.json": {
+    "mtime": 1793644997.9478745,
+    "ast_hash": "621ad764d3c7c1e0f23a67afa8a7a3f8",
     "semantic_hash": ""
   }
 }

@@ -34,3 +34,7 @@ O pipeline não usa segredos. `DJANGO_SECRET_KEY: ci-only-key` e a senha do banc
 - Testes e lint de comportamento do frontend ([ADR 0005](adr/0005-api-django-e-frontend-react.md#pendências)).
 - `manage.py check --deploy` com configuração de produção, junto com a correção das lacunas C-02 e C-03 do [modelo de ameaças](modelo-de-ameacas.md).
 - Proteção de branch exigindo o CI verde antes do merge: configuração do repositório, fora do código.
+
+## Ensaio periódico de restauração
+
+[backup-restore.yml](../.github/workflows/backup-restore.yml) roda em alterações do backend/backup, manualmente e no primeiro dia de cada mês às 05:00 UTC. Constrói a imagem de ferramentas e executa backup age → restauração PostgreSQL 17 → verificação de auditoria/contagens, além de casos de corrupção, chave errada e falha de dump. Publica um relatório JSON sintético como artifact. Não acessa backups reais nem comprova RPO/RTO de produção.

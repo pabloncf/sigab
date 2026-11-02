@@ -1,0 +1,23 @@
+{
+  "schema": "sigab.restore-test.v1",
+  "completed_at": "2026-11-02T18:42:51.680020+00:00",
+  "restore_and_checks_seconds": 0.636,
+  "database_rto_within_4h": true,
+  "audit_chain": "passed",
+  "migrations": "current",
+  "application_check": "passed",
+  "production_rpo": "not_measured",
+  "full_service_rto": "not_measured",
+  "restored_counts": {
+    "Organization": 1,
+    "Item": 1,
+    "Movement": 3,
+    "AuditEvent": 3
+  },
+  "backup": {
+    "schema": "sigab.backup.v1",
+    "snapshot_started_at": "2026-11-02T18:42:50Z",
+    "completed_at": "2026-11-02T18:42:51.031254+00:00",
+    "sha256": "fb4c849998ab37631e8e97c23472cf90eb0b49fe65111cce06f8a4c8fa54ed3b"
+  }
+}

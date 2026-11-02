@@ -31,3 +31,10 @@
 | Dupla aprovação e estorno operacional | futura | modelo preserva fatos; UI não implementada |
 | Catálogo global e licenciamento | futura | catálogo privado por organização |
 
+
+## Continuidade e validação da entrega (2026-11-02)
+
+- SIGAB-042: dump criptografado com age, agendamento e ensaio isolado implementados; faltam WAL/PITR, armazenamento externo, retenção e medição de RPO/RTO completos. Ver [procedimento](backup-e-restauracao.md).
+- SIGAB-041: bloqueio de domínio da SIGAB-008 permanece.
+- SIGAB-043/044: teste HTTP integrado e documentação atualizados; teste de navegador continua pendente.
+- SIGAB-045: [roteiro e ata](validacao/tarefas-041-a-045.md) preparados; aguardando demonstração e feedback real da organização-alvo.
