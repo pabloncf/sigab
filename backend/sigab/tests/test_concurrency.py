@@ -1,0 +1,95 @@
+"""Real concurrency on PostgreSQL (SIGAB-031). Each attempt uses its own connection."""
+
+import threading
+import uuid
+from concurrent.futures import ThreadPoolExecutor
+
+import pytest
+from django.db import IntegrityError, close_old_connections, connection, connections
+
+from sigab.management.commands.verify_audit_chain import verify_chain
+from sigab.models import Account, AuditEvent, Item, Movement, MovementEvent, Organization
+from sigab.services import CommandContext, ConflictError, checkout_item, return_item
+
+pytestmark = pytest.mark.django_db(transaction=True)
+
+
+@pytest.fixture(autouse=True)
+def postgresql_only():
+    if connection.vendor != "postgresql":
+        pytest.skip("Concorrência transacional é validada no PostgreSQL.")
+
+
+def _race(world, operation, keys):
+    """Run `operation(ctx, key)` once per key, all released at the same instant."""
+    barrier = threading.Barrier(len(keys))
+
+    def attempt(key):
+        close_old_connections()
+        ctx = CommandContext(
+            Account.objects.get(pk=world["account"].pk),
+            Organization.objects.get(pk=world["org"].pk),
+            f"race-{key}",
+        )
+        barrier.wait()
+        try:
+            _, created = operation(ctx, key)
+            return "accepted" if created else "replayed"
+        except (ConflictError, IntegrityError):
+            return "conflict"
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=len(keys)) as pool:
+        return sorted(pool.map(attempt, keys))
+
+
+def _checkout(world):
+    return lambda ctx, key: checkout_item(
+        ctx,
+        item_id=world["item"].id,
+        recipient_id=world["person"].id,
+        idempotency_key=key,
+        confirmed=True,
+    )
+
+
+def _assert_single_checkout(world):
+    item = Item.objects.get(pk=world["item"].pk)
+    assert item.availability == Item.Availability.IN_CUSTODY
+    assert item.current_holder_id == world["person"].id
+    checkouts = Movement.objects.filter(item=item, movement_type="checkout")
+    assert checkouts.count() == 1
+    assert MovementEvent.objects.filter(item=item, event_type="item.checked_out").count() == 1
+    assert AuditEvent.objects.filter(action="item.checkout", result="success").count() == 1
+    assert verify_chain(world["org"]) is None
+
+
+def test_two_simultaneous_checkouts_accept_exactly_one(world):
+    outcomes = _race(world, _checkout(world), [uuid.uuid4() for _ in range(4)])
+    assert outcomes == ["accepted", "conflict", "conflict", "conflict"]
+    _assert_single_checkout(world)
+
+
+def test_simultaneous_retries_with_same_key_record_once(world):
+    key = uuid.uuid4()
+    outcomes = _race(world, _checkout(world), [key, key, key])
+    assert outcomes.count("accepted") == 1
+    assert set(outcomes) <= {"accepted", "replayed", "conflict"}
+    _assert_single_checkout(world)
+
+
+def test_two_simultaneous_returns_close_the_checkout_once(world):
+    _race(world, _checkout(world), [uuid.uuid4()])
+    outcomes = _race(
+        world,
+        lambda ctx, key: return_item(
+            ctx, item_id=world["item"].id, condition="fit", idempotency_key=key, confirmed=True
+        ),
+        [uuid.uuid4(), uuid.uuid4()],
+    )
+    assert outcomes == ["accepted", "conflict"]
+    item = Item.objects.get(pk=world["item"].pk)
+    assert item.availability == Item.Availability.AVAILABLE and item.current_holder is None
+    assert Movement.objects.filter(item=item, movement_type="return").count() == 1
+    assert verify_chain(world["org"]) is None

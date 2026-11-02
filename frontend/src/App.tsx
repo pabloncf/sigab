@@ -4,6 +4,7 @@ import type { Session } from "./api/types";
 import { AppShell } from "./components/AppShell";
 import { ErrorState, LoadingState } from "./components/Feedback";
 import { ItemDetailPage } from "./pages/ItemDetailPage";
+import { ActivityPage } from "./pages/ActivityPage";
 import { CatalogPage } from "./pages/CatalogPage";
 import { ItemsPage } from "./pages/ItemsPage";
 import { PeoplePage } from "./pages/PeoplePage";
@@ -18,6 +19,7 @@ function Page({ session }: { session: Session }) {
   const itemId = routeId("items");
   if (itemId) return <ItemDetailPage itemId={itemId} />;
   if (session.permissions.can_manage_catalog && /^\/cadastros\/?$/.test(path)) return <CatalogPage />;
+  if (session.permissions.can_view_items && /^\/atividade\/?$/.test(path)) return <ActivityPage />;
   if (session.permissions.can_manage_identity) {
     const personId = routeId("pessoas");
     if (personId) return <PersonDetailPage personId={personId} />;

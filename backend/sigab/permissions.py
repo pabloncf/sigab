@@ -1,4 +1,4 @@
-"""Server-side authorization (decision 0002, matrix 1.2.0).
+"""Server-side authorization (decision 0002, matrix 1.3.0).
 
 Default deny. A permission is granted only by an active, unrevoked grant that is in force
 now, whose role lists the permission explicitly, in the account's own active organization,
@@ -17,6 +17,7 @@ ITEM_CREATE = "item.create"
 ITEM_CONDITION_SET = "item.condition.set"
 MOVEMENT_CHECKOUT = "movement.checkout"
 MOVEMENT_RETURN = "movement.return"
+MOVEMENT_REVERSE = "movement.reverse"
 AUDIT_VIEW = "audit.view"
 AUDIT_EXPORT = "audit.export"
 
@@ -37,6 +38,7 @@ TENANT_PERMISSIONS = frozenset(
         ITEM_CONDITION_SET,
         MOVEMENT_CHECKOUT,
         MOVEMENT_RETURN,
+        MOVEMENT_REVERSE,
         "inventory.adjust.request",
         "inventory.adjust.approve",
         "item.retire.request",
@@ -60,6 +62,7 @@ MUTATING_PERMISSIONS = frozenset(
         ITEM_CONDITION_SET,
         MOVEMENT_CHECKOUT,
         MOVEMENT_RETURN,
+        MOVEMENT_REVERSE,
         "inventory.adjust.request",
         "inventory.adjust.approve",
         "item.retire.request",

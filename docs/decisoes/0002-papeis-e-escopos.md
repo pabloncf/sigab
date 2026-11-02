@@ -203,3 +203,19 @@ organização precisar dividir essas funções.
 `different_actor_same_case` de ajuste, baixa, exceção de restrição e suporte;
 a sessão temporária de suporte; o plano de controle separado para identidades
 globais (hoje, o superusuário do Django Admin, de uso transitório).
+
+## Revisão 1.3.0 — SIGAB-034
+
+Data: 2026-11-02. Acrescenta a permissão atômica `movement.reverse`: estornar,
+com motivo, a saída, a devolução ou a alteração de condição mais recente de um
+item ([ADR 0006](../adr/0006-eventos-auditoria-e-estornos.md#4-estorno)).
+
+| Papel | `movement.reverse` |
+|---|---|
+| Gestor de acervo | sim, na organização |
+| demais papéis | não |
+
+O estorno corrige erro de registro e é um ato de supervisão; por isso fica
+com o Gestor de acervo, e não com quem opera o balcão. Estender ao Operador de
+reserva, ou exigir dupla aprovação, é decisão de produto pendente. Papéis
+criados antes desta revisão não recebem a permissão automaticamente.

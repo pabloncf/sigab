@@ -62,13 +62,19 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   return payload.data as T;
 }
 
-export async function apiPage<T>(path: string): Promise<Page<T>> {
+export async function apiWithMeta<T, M>(path: string): Promise<{ data: T; meta: M }> {
   const response = await fetch(`/api/v1${path}`, { credentials: "same-origin" });
-  const payload = (await response.json().catch(() => ({ success: false }))) as ApiEnvelope<T[]> & { meta?: { count: number } };
+  const payload = (await response.json().catch(() => ({ success: false }))) as ApiEnvelope<T> & { meta?: M };
   if (!response.ok || !payload.success) {
-    throw new ApiError(payload.error ?? "Não foi possível concluir a solicitação.", response.status, payload.details);
+    const fieldMessages = Object.values(payload.details ?? {}).flat();
+    throw new ApiError([payload.error ?? "Não foi possível concluir a solicitação.", ...fieldMessages].join(" "), response.status, payload.details);
   }
-  return { rows: payload.data ?? [], count: payload.meta?.count ?? 0 };
+  return { data: payload.data as T, meta: payload.meta as M };
+}
+
+export async function apiPage<T>(path: string): Promise<Page<T>> {
+  const { data, meta } = await apiWithMeta<T[], { count: number }>(path);
+  return { rows: data ?? [], count: meta?.count ?? 0 };
 }
 
 export function postJson<T>(path: string, body?: unknown): Promise<T> {

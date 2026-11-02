@@ -4,6 +4,7 @@ from uuid import UUID
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 
 from .models import (
@@ -28,6 +29,7 @@ from .permissions import (
     MANAGE_IDENTITY,
     MOVEMENT_CHECKOUT,
     MOVEMENT_RETURN,
+    MOVEMENT_REVERSE,
     MUTATING_PERMISSIONS,
     SET_ITEM_CONDITION,
     has_permission,
@@ -177,6 +179,26 @@ def checkout_item(
     return movement, True
 
 
+def _open_checkout(ctx, item):
+    """The checkout in force: neither reversed nor closed by a return still in force."""
+    returned = Movement.objects.filter(
+        related_movement=OuterRef("pk"),
+        movement_type=Movement.Type.RETURN,
+        reversal__isnull=True,
+    )
+    return (
+        Movement.objects.filter(
+            organization=ctx.organization,
+            item=item,
+            movement_type=Movement.Type.CHECKOUT,
+            reversal__isnull=True,
+        )
+        .exclude(Exists(returned))
+        .order_by("-confirmed_at")
+        .first()
+    )
+
+
 def _condition_reason(condition, reason):
     if condition not in Item.Condition.values:
         raise ValidationError("Condição inválida.")
@@ -217,16 +239,7 @@ def return_item(
         raise ValidationError("Item inválido.")
     if not has_permission(ctx.actor, MOVEMENT_RETURN, ctx.organization, item.unit):
         raise PermissionDenied
-    checkout = (
-        Movement.objects.filter(
-            organization=ctx.organization,
-            item=item,
-            movement_type=Movement.Type.CHECKOUT,
-            responses__isnull=True,
-        )
-        .order_by("-confirmed_at")
-        .first()
-    )
+    checkout = _open_checkout(ctx, item)
     if item.availability != Item.Availability.IN_CUSTODY or not checkout:
         raise ConflictError("O item não possui saída aberta.")
     reason = _condition_reason(condition, reason)
@@ -249,13 +262,15 @@ def return_item(
         if condition == Item.Condition.FIT
         else Item.Availability.UNAVAILABLE
     )
-    Item.objects.filter(pk=item.pk, availability=Item.Availability.IN_CUSTODY).update(
+    updated = Item.objects.filter(pk=item.pk, availability=Item.Availability.IN_CUSTODY).update(
         availability=availability,
         condition=condition,
         condition_reason=item_reason,
         current_holder=None,
         updated_at=now,
     )
+    if updated != 1:
+        raise ConflictError("O item foi movimentado por outra operação.")
     MovementEvent.objects.create(
         organization=ctx.organization,
         movement=movement,
@@ -931,3 +946,157 @@ def incorporate_item(
     item.save()
     record_incorporation(ctx, item)
     return item
+
+
+# Reversal (SIGAB-034, ADR 0006 section 4): corrects a registration error by compensation.
+
+REVERSIBLE_TYPES = (
+    Movement.Type.CHECKOUT,
+    Movement.Type.RETURN,
+    Movement.Type.CONDITION_CHANGE,
+)
+
+
+def latest_movement_in_force(item):
+    """Most recent movement of the item that is neither a reversal nor reversed."""
+    return (
+        Movement.objects.filter(item=item, reversal__isnull=True)
+        .exclude(movement_type=Movement.Type.REVERSAL)
+        .order_by("-confirmed_at", "-created_at")
+        .first()
+    )
+
+
+def _reason_before(item, movement):
+    """Unfit reason in force before `movement`, from the last earlier fact that stated one."""
+    earlier = (
+        Movement.objects.filter(
+            item=item, reversal__isnull=True, confirmed_at__lt=movement.confirmed_at
+        )
+        .exclude(movement_type=Movement.Type.REVERSAL)
+        .exclude(condition_reason="")
+        .order_by("-confirmed_at")
+        .first()
+    )
+    return earlier.condition_reason if earlier else "Condição restaurada por estorno."
+
+
+def _restored_state(item, original):
+    """Projection the item had before `original`, after checking it still shows its effect."""
+    if original.movement_type == Movement.Type.CHECKOUT:
+        if item.availability != Item.Availability.IN_CUSTODY or (
+            item.current_holder_id != original.recipient_id
+        ):
+            raise ConflictError("O item não está mais no estado produzido pela saída.")
+        return {"availability": Item.Availability.AVAILABLE, "current_holder": None}
+    if original.movement_type == Movement.Type.RETURN:
+        if (
+            item.availability == Item.Availability.IN_CUSTODY
+            or item.condition != original.condition_on_return
+        ):
+            raise ConflictError("O item não está mais no estado produzido pela devolução.")
+        # The checkout required a fit item, so the item goes back to custody fit.
+        return {
+            "availability": Item.Availability.IN_CUSTODY,
+            "current_holder": original.related_movement.recipient,
+            "condition": Item.Condition.FIT,
+            "condition_reason": "",
+        }
+    if (
+        item.availability == Item.Availability.IN_CUSTODY
+        or item.condition != original.new_condition
+    ):
+        raise ConflictError("O item não está mais no estado produzido pela alteração de condição.")
+    previous = original.events.get().metadata["previous_condition"]
+    fit = previous == Item.Condition.FIT
+    return {
+        "condition": previous,
+        "condition_reason": "" if fit else _reason_before(item, original),
+        "availability": Item.Availability.AVAILABLE if fit else Item.Availability.UNAVAILABLE,
+    }
+
+
+@transaction.atomic
+def reverse_movement(ctx, *, movement_id, idempotency_key, confirmed, reason):
+    _require_confirmation(confirmed)
+    reason = (reason or "").strip()
+    if not reason:
+        raise ValidationError({"reason": "Informe o motivo do estorno."})
+    existing = _existing(ctx, idempotency_key, Movement.Type.REVERSAL, reverses_id=movement_id)
+    if existing:
+        return existing, False
+    original = (
+        Movement.objects.filter(id=movement_id, organization=ctx.organization)
+        .select_related("item__unit", "related_movement__recipient")
+        .first()
+    )
+    if not original:
+        raise NotFoundError
+    item = Item.objects.select_for_update().get(pk=original.item_id)
+    if not has_permission(ctx.actor, MOVEMENT_REVERSE, ctx.organization, item.unit):
+        raise PermissionDenied
+    if original.movement_type not in REVERSIBLE_TYPES:
+        raise ConflictError(
+            "Somente saída, devolução e alteração de condição podem ser estornadas."
+        )
+    if Movement.objects.filter(reverses=original).exists():
+        raise ConflictError("A movimentação já foi estornada.")
+    if latest_movement_in_force(item) != original:
+        raise ConflictError("Estorne primeiro a movimentação mais recente do item.")
+    before = {
+        "availability": item.availability,
+        "condition": item.condition,
+        "holder_id": str(item.current_holder_id) if item.current_holder_id else None,
+    }
+    restored = _restored_state(item, original)
+    now = timezone.now()
+    reversal = Movement.objects.create(
+        organization=ctx.organization,
+        movement_type=Movement.Type.REVERSAL,
+        item=item,
+        operator=ctx.actor,
+        reverses=original,
+        reason=reason,
+        idempotency_key=idempotency_key,
+        confirmed_at=now,
+    )
+    updated = Item.objects.filter(
+        pk=item.pk, availability=item.availability, condition=item.condition
+    ).update(**restored, updated_at=now)
+    if updated != 1:
+        raise ConflictError("O item foi movimentado por outra operação.")
+    item.refresh_from_db()
+    MovementEvent.objects.create(
+        organization=ctx.organization,
+        movement=reversal,
+        item=item,
+        event_type="item.movement_reversed",
+        actor=ctx.actor,
+        occurred_at=now,
+        compensates=original.events.get(),
+        metadata={
+            "reversed_type": original.movement_type,
+            "schema": "item.movement_reversed.v1",
+        },
+    )
+    after = {
+        "availability": item.availability,
+        "condition": item.condition,
+        "holder_id": str(item.current_holder_id) if item.current_holder_id else None,
+    }
+    audit(
+        ctx,
+        "movement.reverse",
+        reversal,
+        {
+            "reversed_movement_id": str(original.id),
+            "reversed_type": original.movement_type,
+            **{
+                key: {"from": before[key], "to": after[key]}
+                for key in before
+                if before[key] != after[key]
+            },
+        },
+        reason=reason,
+    )
+    return reversal, True

@@ -231,7 +231,7 @@ Esta decisão orienta a implementação abaixo. Os itens 1 a 3 já foram impleme
 1. ~~Corrigir a saída para exigir `administrative_status = active`.~~ Implementado em 2026-10-19.
 2. ~~Motivo de inapto em T04 e T05.~~ Implementado em 2026-10-19 (`Item.condition_reason`, `Movement.condition_reason`, restrição `item_unfit_requires_reason`).
 3. ~~T05/T06 como serviço transacional.~~ Implementado em 2026-10-19 (`set_item_condition`). Papéis criados antes dessa data não recebem `item.condition.set` automaticamente: a permissão precisa ser concedida pelo administrador de acesso.
-4. **Estorno** de saída e devolução. A SIGAB-034 está como `Done` no backlog, mas o código não tem fluxo de estorno e o ADR 0003 registra que “estorno não foi exposto nesta entrega”. O backlog precisa ser conferido.
+4. ~~**Estorno** de saída e devolução.~~ Implementado em 2026-11-02 (SIGAB-034) para saída, devolução e alteração de condição, conforme a seção 6 e o [ADR 0006](../adr/0006-eventos-auditoria-e-estornos.md#4-estorno).
 5. **T20 (anulação)** e a substituição de `inactive` por `retired`/`voided`, com migração nova.
 
 As transições `futura` precisam de tarefas próprias (manutenção, transferência, sinistro, baixa), que hoje não existem no backlog. Pelas regras do projeto, não se criam tabelas nem endpoints vazios para elas.

@@ -8,13 +8,15 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError
 from django.db.models import Q
 from django.http import Http404, JsonResponse
-from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_datetime
 from django.views import defaults
 from django.views.csrf import csrf_failure as django_csrf_failure
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from sigab.models import (
     Account,
+    AuditEvent,
     EquipmentType,
     Item,
     Membership,
@@ -27,11 +29,14 @@ from sigab.models import (
 from sigab.observability import correlation_id_var
 from sigab.permissions import (
     ALL_UNITS,
+    AUDIT_VIEW,
     CATALOG_MANAGE,
     ITEM_CREATE,
     MANAGE_IDENTITY,
     MOVEMENT_CHECKOUT,
     MOVEMENT_RETURN,
+    MOVEMENT_REVERSE,
+    PERSON_VIEW_MINIMAL,
     SET_ITEM_CONDITION,
     VIEW_ITEM,
     has_any_scope,
@@ -39,6 +44,7 @@ from sigab.permissions import (
     permitted_unit_ids,
 )
 from sigab.services import (
+    REVERSIBLE_TYPES,
     CommandContext,
     ConflictError,
     NotFoundError,
@@ -52,8 +58,10 @@ from sigab.services import (
     create_unit,
     end_account_sessions,
     incorporate_item,
+    latest_movement_in_force,
     reactivate_account,
     return_item,
+    reverse_movement,
     revoke_account,
     revoke_grant,
     set_equipment_type_active,
@@ -113,13 +121,17 @@ def api_view(*, methods):
             try:
                 return view(request, *args, **kwargs)
             except (Http404, NotFoundError):
+                _audit_refusal(request, kwargs, "not_found")
                 return _error("Recurso não encontrado.", status=404)
             except PermissionDenied:
+                _audit_refusal(request, kwargs, "denied")
                 return _error("Acesso negado.", status=403)
             except ConflictError as exc:
+                _audit_refusal(request, kwargs, "conflict")
                 return _error(_validation_message(exc), status=409)
             except IntegrityError:
                 # A concurrent request won a unique constraint; the client may reload and retry.
+                _audit_refusal(request, kwargs, "conflict")
                 return _error("A operação conflita com outro registro.", status=409)
             except (JSONDecodeError, UnicodeDecodeError):
                 return _error("JSON inválido.", status=400)
@@ -129,6 +141,24 @@ def api_view(*, methods):
         return wrapped
 
     return decorator
+
+
+def _audit_refusal(request, kwargs, result):
+    """Audit refused writes (T-04): denied, missing or conflicting targets leave a trace."""
+    if request.method in ("GET", "HEAD", "OPTIONS") or not request.user.organization_id:
+        return
+    match = request.resolver_match
+    AuditEvent.objects.create(
+        organization_id=request.user.organization_id,
+        actor=request.user,
+        action=f"api.{match.url_name if match else 'unknown'}",
+        object_type="api.request",
+        object_id=str(kwargs.get("pk", ""))[:64],
+        occurred_at=timezone.now(),
+        correlation_id=request.correlation_id,
+        result=result,
+        changes={},
+    )
 
 
 def _validation_message(exc):
@@ -251,17 +281,28 @@ def _item_resource(request, item):
         "serial_number": item.serial_number,
         "asset_number": item.asset_number,
         "official_identifier": item.official_identifier,
+        "reversible_movement_id": _reversible_movement_id(request, item),
         "permissions": {
             "can_checkout": has_permission(
                 request.user, MOVEMENT_CHECKOUT, organization, item.unit
             ),
             "can_return": has_permission(request.user, MOVEMENT_RETURN, organization, item.unit),
+            "can_reverse": has_permission(request.user, MOVEMENT_REVERSE, organization, item.unit),
             "can_set_condition": has_permission(
                 request.user, SET_ITEM_CONDITION, organization, item.unit
             ),
         },
     }
     return resource
+
+
+def _reversible_movement_id(request, item):
+    if not has_permission(request.user, MOVEMENT_REVERSE, item.organization, item.unit):
+        return None
+    latest = latest_movement_in_force(item)
+    if latest is None or latest.movement_type not in REVERSIBLE_TYPES:
+        return None
+    return str(latest.id)
 
 
 def _event_resource(event):
@@ -280,7 +321,9 @@ def _event_resource(event):
                 else None
             ),
             "condition": movement.condition_on_return or movement.new_condition or None,
-            "reason": movement.condition_reason,
+            "reason": movement.reason or movement.condition_reason,
+            "reverses": str(movement.reverses_id) if movement.reverses_id else None,
+            "reversed": hasattr(movement, "reversal"),
         },
     }
 
@@ -319,6 +362,8 @@ def session_detail(request):
                 "can_manage_identity": has_permission(request.user, MANAGE_IDENTITY, organization),
                 "can_manage_catalog": has_permission(request.user, CATALOG_MANAGE, organization),
                 "can_create_item": has_any_scope(request.user, ITEM_CREATE, organization),
+                "can_view_items": has_any_scope(request.user, VIEW_ITEM, organization),
+                "can_view_audit": has_permission(request.user, AUDIT_VIEW, organization),
             },
         }
     )
@@ -349,13 +394,7 @@ def item_list(request):
         )
         return _response(_item_resource(request, _item(request, item.pk)), status=201)
     items = Item.objects.filter(organization=organization)
-    holder = request.GET.get("holder")
-    if holder:
-        # RF-51: current possession of a person.
-        try:
-            items = items.filter(current_holder_id=UUID(holder))
-        except ValueError as exc:
-            raise ValidationError({"holder": "Informe um UUID válido."}) from exc
+    items = _filter_items(request, items)
     unit_ids = permitted_unit_ids(request.user, VIEW_ITEM, organization)
     if unit_ids is not ALL_UNITS:
         items = items.filter(unit_id__in=unit_ids)
@@ -376,10 +415,28 @@ def item_events(request, pk):
     item = _item(request, pk)
     events = (
         MovementEvent.objects.filter(item=item, organization=item.organization)
-        .select_related("actor", "movement", "movement__recipient")
+        .select_related("actor", "movement", "movement__recipient", "movement__reversal")
         .order_by("occurred_at", "id")
     )
     return _paginated(request, events, _event_resource)
+
+
+@api_view(methods={"POST"})
+def movement_reverse(request, pk):
+    """Compensating reversal of a checkout, return or condition change (SIGAB-034)."""
+    organization = _organization(request)
+    payload = _parse_json(request)
+    reversal, created = reverse_movement(
+        _context(request),
+        movement_id=pk,
+        idempotency_key=_required_uuid(payload, "idempotency_key"),
+        confirmed=_required_confirmation(payload),
+        reason=_required_string(payload, "reason", max_length=500),
+    )
+    item = Item.objects.select_related(
+        "equipment_type", "unit", "storage_location", "current_holder"
+    ).get(pk=reversal.item_id, organization=organization)
+    return _movement_response(request, item, reversal, created)
 
 
 @api_view(methods={"GET"})
@@ -929,3 +986,182 @@ def equipment_type_status(request, pk):
         reason=_string(payload, "reason"),
     )
     return _response(_type_resource(equipment_type))
+
+
+# Search (SIGAB-038, RF-50), activity feed (SIGAB-036, RF-61) and audit trail (SIGAB-035).
+
+ITEM_FILTERS = {
+    "availability": Item.Availability.values,
+    "condition": Item.Condition.values,
+}
+
+
+def _uuid_param(request, name):
+    value = request.GET.get(name)
+    if not value:
+        return None
+    try:
+        return UUID(value)
+    except ValueError as exc:
+        raise ValidationError({name: "Informe um UUID válido."}) from exc
+
+
+def _filter_items(request, items):
+    holder = _uuid_param(request, "holder")
+    if holder:
+        # RF-51: current possession of a person.
+        items = items.filter(current_holder_id=holder)
+    for name, allowed in ITEM_FILTERS.items():
+        value = request.GET.get(name)
+        if value:
+            if value not in allowed:
+                raise ValidationError({name: "Valor inválido."})
+            items = items.filter(**{name: value})
+    for name, field in (("unit", "unit_id"), ("type", "equipment_type_id")):
+        value = _uuid_param(request, name)
+        if value:
+            items = items.filter(**{field: value})
+    query = request.GET.get("q", "").strip()[:100]
+    if query:
+        items = items.filter(
+            Q(serial_number__icontains=query)
+            | Q(asset_number__icontains=query)
+            | Q(official_identifier__icontains=query)
+            | Q(equipment_type__name__icontains=query)
+            | Q(unit__code__icontains=query)
+            | Q(unit__name__icontains=query)
+            | Q(current_holder__name__icontains=query)
+            | Q(current_holder__functional_name__icontains=query)
+        )
+    return items
+
+
+@api_view(methods={"GET"})
+def search(request):
+    """Single search box (RF-50): items in the reader's scope and people, minimally."""
+    organization = _organization(request)
+    query = request.GET.get("q", "").strip()[:100]
+    if len(query) < 2:
+        raise ValidationError({"q": "Informe ao menos 2 caracteres."})
+    unit_ids = permitted_unit_ids(request.user, VIEW_ITEM, organization)
+    items = Item.objects.filter(organization=organization)
+    if unit_ids is not ALL_UNITS:
+        items = items.filter(unit_id__in=unit_ids)
+    items = _filter_items(request, items).select_related(
+        "equipment_type", "unit", "storage_location", "current_holder"
+    )
+    people = []
+    if has_any_scope(request.user, PERSON_VIEW_MINIMAL, organization):
+        matches = (
+            Person.objects.filter(organization=organization)
+            .filter(
+                Q(name__icontains=query)
+                | Q(functional_name__icontains=query)
+                | Q(memberships__registration__icontains=query)
+            )
+            .prefetch_related("memberships")
+            .distinct()
+            .order_by("name", "id")[:20]
+        )
+        # person.view_minimal: identification only, never CPF or phone.
+        people = [
+            {
+                "id": str(person.id),
+                "name": str(person),
+                "is_active": person.is_active,
+                "registrations": [m.registration for m in person.memberships.all() if m.is_active],
+            }
+            for person in matches
+        ]
+    limit, offset = _page(request)
+    item_rows = items.order_by("equipment_type__name", "serial_number", "id")
+    return _response(
+        {
+            "items": [_item_summary(item) for item in item_rows[offset : offset + limit]],
+            "people": people,
+        },
+        meta={"items_count": item_rows.count(), "limit": limit, "offset": offset},
+    )
+
+
+def _date_range(request, queryset, field):
+    for name, lookup in (("from", "gte"), ("to", "lte")):
+        value = request.GET.get(name)
+        if value:
+            day = parse_date(value)
+            if day is None:
+                raise ValidationError({name: "Use a data no formato AAAA-MM-DD."})
+            queryset = queryset.filter(**{f"{field}__date__{lookup}": day})
+    return queryset
+
+
+@api_view(methods={"GET"})
+def activity_feed(request):
+    """Read-only projection of domain events; it never replaces the audit trail (RF-61)."""
+    organization = _organization(request)
+    unit_ids = permitted_unit_ids(request.user, VIEW_ITEM, organization)
+    if unit_ids is not ALL_UNITS and not unit_ids:
+        raise PermissionDenied
+    events = MovementEvent.objects.filter(organization=organization)
+    if unit_ids is not ALL_UNITS:
+        events = events.filter(item__unit_id__in=unit_ids)
+    person = _uuid_param(request, "person")
+    if person:
+        events = events.filter(
+            Q(movement__recipient_id=person) | Q(movement__reverses__recipient_id=person)
+        )
+    item = _uuid_param(request, "item")
+    if item:
+        events = events.filter(item_id=item)
+    action = request.GET.get("action")
+    if action:
+        events = events.filter(event_type=action)
+    events = _date_range(request, events, "occurred_at").select_related(
+        "actor", "item__equipment_type", "movement", "movement__recipient", "movement__reversal"
+    )
+
+    def row(event):
+        return {
+            **_event_resource(event),
+            "item": {
+                "id": str(event.item_id),
+                "identifier": event.item.display_identifier,
+                "equipment_type": event.item.equipment_type.name,
+            },
+        }
+
+    return _paginated(request, events.order_by("-occurred_at", "-id"), row)
+
+
+@api_view(methods={"GET"})
+def audit_trail(request):
+    """Audit events of the organization; read only, for audit.view at organization scope."""
+    organization = _organization(request)
+    if not has_permission(request.user, AUDIT_VIEW, organization):
+        raise PermissionDenied
+    events = AuditEvent.objects.filter(organization=organization)
+    for name in ("action", "result", "object_id"):
+        value = request.GET.get(name)
+        if value:
+            events = events.filter(**{name: value})
+    actor = _uuid_param(request, "actor")
+    if actor:
+        events = events.filter(actor_id=actor)
+    events = _date_range(request, events, "occurred_at").select_related("actor")
+
+    def row(event):
+        return {
+            "id": str(event.id),
+            "sequence": event.sequence,
+            "occurred_at": event.occurred_at.isoformat(),
+            "actor": event.actor.username if event.actor_id else None,
+            "action": event.action,
+            "object_type": event.object_type,
+            "object_id": event.object_id,
+            "result": event.result,
+            "changes": event.changes,
+            "reason": event.reason,
+            "correlation_id": event.correlation_id,
+        }
+
+    return _paginated(request, events.order_by("-occurred_at", "-id"), row)

@@ -1,13 +1,14 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.2.0",
+  "matrix_version": "1.3.0",
   "decision": "SIGAB-004",
   "status": "approved_baseline",
   "approved_on": "2026-10-19",
   "revisions": [
     {"matrix_version": "1.0.0", "decision": "SIGAB-004", "date": "2026-10-19", "change": "Matriz inicial."},
     {"matrix_version": "1.1.0", "decision": "SIGAB-009", "date": "2026-10-19", "change": "Adiciona item.condition.set ao Operador de reserva e ao Gestor de acervo (DOC-0011, seção 3)."},
-    {"matrix_version": "1.2.0", "decision": "SIGAB-022", "date": "2026-11-02", "change": "Esclarece que catalog.manage abrange unidades e locais de guarda; registra a implementação das permissões atômicas, da vigência e dos conflitos no_self_grant e independent_auditor."}
+    {"matrix_version": "1.2.0", "decision": "SIGAB-022", "date": "2026-11-02", "change": "Esclarece que catalog.manage abrange unidades e locais de guarda; registra a implementação das permissões atômicas, da vigência e dos conflitos no_self_grant e independent_auditor."},
+    {"matrix_version": "1.3.0", "decision": "SIGAB-034", "date": "2026-11-02", "change": "Adiciona movement.reverse (estorno compensatório de saída, devolução e alteração de condição) ao Gestor de acervo."}
   ],
   "default_effect": "deny",
   "role_inheritance": false,
@@ -27,6 +28,7 @@
     "item.condition.set",
     "movement.checkout",
     "movement.return",
+    "movement.reverse",
     "inventory.adjust.request",
     "inventory.adjust.approve",
     "item.retire.request",
@@ -46,6 +48,7 @@
     "cadastro": ["platform.organization.manage", "identity.manage", "catalog.manage", "item.create"],
     "saida": ["movement.checkout"],
     "devolucao": ["movement.return"],
+    "estorno": ["movement.reverse"],
     "condicao": ["item.condition.set"],
     "ajuste": ["inventory.adjust.request", "inventory.adjust.approve"],
     "baixa": ["item.retire.request", "item.retire.approve"],
@@ -82,6 +85,7 @@
         "catalog.manage",
         "item.create",
         "item.condition.set",
+        "movement.reverse",
         "inventory.adjust.approve",
         "item.retire.approve",
         "restriction.view_decision",

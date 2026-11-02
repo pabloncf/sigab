@@ -1,23 +1,23 @@
 # Graph Report - sigab  (2026-11-02)
 
 ## Corpus Check
-- 98 files · ~61,077 words
+- 110 files · ~69,232 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 954 nodes · 2277 edges · 68 communities (55 shown, 13 thin omitted)
-- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 192 edges (avg confidence: 0.55)
+- 1089 nodes · 2631 edges · 75 communities (63 shown, 12 thin omitted)
+- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 197 edges (avg confidence: 0.55)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `52487406`
+- Built from commit: `d7187de7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - test_flow.py
-- test_authorization.py
-- CommandContext
+- has_permission
+- models.py
 - 2. Matriz de obrigações aplicáveis
 - Decisão de domínio 0004 — Ciclo de vida do item individual
 - CLAUDE.md — SIGAB
@@ -47,12 +47,12 @@
 - Decisão de produto 0001 — Segmento inicial
 - vite.config.ts
 - services.py
-- models.py
+- Account
 - test_identity.py
 - test_observability.py
 - test_items.py
 - test_isolation.py
-- modelo-de-dominio.md
+- DOC-0011-analise-de-requisitos-v0.1.md
 - 3. Ameaças
 - test_catalog.py
 - test_api_conventions.py
@@ -63,28 +63,35 @@
 - AccountAdmin
 - Observabilidade mínima
 - Banco e migrações
-- roles.py
-- ADR 0004 — Conectividade online, contingência em papel e reconciliação
+- test_concurrency.py
+- 0004-conectividade-e-contingencia.md
 - 0005_atomic_permission_codes.py
 - Item
 - Integração contínua
 - validate_cpf
 - 0003_person_cpf_account_revocation.py
-- api_world
-- Requisitos e rastreabilidade
-- visao-do-produto.md
+- world
+- test_reversal.py
+- 0001-guardas-municipais.md
+- Decisão de domínio 0005 — Restrição operacional da pessoa
+- Contrato da devolução de item individual
+- Política de dados pessoais
+- 0007_audit_hash_chain.py
+- busca.md
+- 0004_authorization_matrix_and_login_throttle.py
+- 0006_movement_reversal.py
 
 ## God Nodes (most connected - your core abstractions)
-1. `Account` - 36 edges
-2. `Item` - 35 edges
-3. `CommandContext` - 34 edges
-4. `ConflictError` - 32 edges
-5. `Person` - 31 edges
-6. `Grant` - 31 edges
-7. `AuditEvent` - 31 edges
-8. `has_permission()` - 30 edges
-9. `api_view()` - 29 edges
-10. `Organization` - 29 edges
+1. `Account` - 40 edges
+2. `Item` - 39 edges
+3. `CommandContext` - 39 edges
+4. `AuditEvent` - 38 edges
+5. `ConflictError` - 36 edges
+6. `Grant` - 34 edges
+7. `api_view()` - 33 edges
+8. `Organization` - 33 edges
+9. `Person` - 33 edges
+10. `has_permission()` - 33 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `convert()` --references--> `Status`  [EXTRACTED]
@@ -101,19 +108,19 @@
 ## Import Cycles
 - None detected.
 
-## Communities (68 total, 13 thin omitted)
+## Communities (75 total, 12 thin omitted)
 
 ### Community 0 - "test_flow.py"
-Cohesion: 0.13
-Nodes (34): checkout_item(), _checkout(), django_db, fixture, parametrize, _set_condition(), test_bulk_update_and_delete_are_blocked(), test_checkout_is_idempotent_and_prevents_second_checkout() (+26 more)
-
-### Community 1 - "test_authorization.py"
-Cohesion: 0.10
-Nodes (39): CheckoutForm, ConditionForm, ReturnForm, _effective_grants(), has_permission(), permitted_unit_ids(), Server-side authorization (decision 0002, matrix 1.2.0). Default deny. A…, Return ALL_UNITS for organization-wide access, else the set of unit ids granted. (+31 more)
-
-### Community 2 - "CommandContext"
 Cohesion: 0.15
-Nodes (25): AuditedAdmin, AuditEventAdmin, ItemAdmin, MovementAdmin, MovementEventAdmin, OrganizationAdmin, Classification, EquipmentType (+17 more)
+Nodes (32): checkout_item(), _checkout(), django_db, parametrize, _set_condition(), test_bulk_update_and_delete_are_blocked(), test_checkout_is_idempotent_and_prevents_second_checkout(), test_checkout_rejects_inactive_item() (+24 more)
+
+### Community 1 - "has_permission"
+Cohesion: 0.10
+Nodes (37): CheckoutForm, ConditionForm, ReturnForm, _effective_grants(), has_permission(), Server-side authorization (decision 0002, matrix 1.3.0). Default deny. A…, access_admin(), _grant() (+29 more)
+
+### Community 2 - "models.py"
+Cohesion: 0.15
+Nodes (28): AuditedAdmin, AuditEventAdmin, ItemAdmin, MovementAdmin, MovementEventAdmin, OrganizationAdmin, AuthenticationFailure, Classification (+20 more)
 
 ### Community 3 - "2. Matriz de obrigações aplicáveis"
 Cohesion: 0.08
@@ -128,8 +135,8 @@ Cohesion: 0.12
 Nodes (15): Acervo e movimentações, Auditoria, Autorização, CLAUDE.md — SIGAB, Comandos obrigatórios, Documentação e entrega, Fora do escopo sem autorização explícita, graphify (+7 more)
 
 ### Community 6 - "decisoes-pendentes.md"
-Cohesion: 0.27
-Nodes (4): ADR 0001 — Monólito Django e templates server-side, Decisões pendentes, Modelo de ameaças, Segurança e privacidade
+Cohesion: 0.31
+Nodes (4): ADR 0002 — Tenancy compartilhada e autorização explícita, Decisões pendentes, Modelo de ameaças, Segurança e privacidade
 
 ### Community 7 - "convert"
 Cohesion: 0.39
@@ -148,8 +155,8 @@ Cohesion: 0.11
 Nodes (18): 10. Divergências entre a proposta e o DOC-0011, 11. Conformidade com os requisitos relacionados, 12. Questões para validar com a Guarda participante, 13. Validação, 1. Decisão proposta, 2.1 Onde fica cada atributo, 2. Conceitos, 3. Posições de saldo (+10 more)
 
 ### Community 12 - "test_authentication.py"
-Cohesion: 0.10
-Nodes (29): AppConfig, SigabConfig, client_ip(), _correlation_id(), is_throttled(), Authentication hardening (SIGAB-021): throttling, login audit and session…, End sessions opened before the account's session_version was incremented., ModelBackend that refuses throttled attempts and accounts of suspended… (+21 more)
+Cohesion: 0.11
+Nodes (27): AppConfig, SigabConfig, client_ip(), _correlation_id(), is_throttled(), Authentication hardening (SIGAB-021): throttling, login audit and session…, End sessions opened before the account's session_version was incremented., ModelBackend that refuses throttled attempts and accounts of suspended… (+19 more)
 
 ### Community 13 - "4. Dicionário de dados"
 Cohesion: 0.09
@@ -168,16 +175,16 @@ Cohesion: 0.14
 Nodes (14): 1. Conclusões, 2. Fontes analisadas, 3. Modalidades e correspondência com o glossário, 4. Pessoas e responsabilidades, 5.1 Termo de Responsabilidade e Cautela (F1 Anexo II; F2 Anexo II), 5.2 Termo de Cautelamento, documento de porte (F1 Anexo I; F2 Anexo I), 5.3 Registro de cautela no livro, planilha ou sistema (F3 6.1.6 e 6.1.10; F4 art. 43; F1 e F2 art. 8º), 5.4 Documentos acessórios encontrados (+6 more)
 
 ### Community 27 - "Decisão de produto e segurança 0002 — Papéis e escopos"
-Cohesion: 0.18
-Nodes (11): Compatibilidade e implementação, Decisão, Decisão de produto e segurança 0002 — Papéis e escopos, Matriz resumida de autorização, Papéis aprovados, Rastreabilidade do critério de aceite, Regras de aplicação, Revisão 1.1.0 — SIGAB-009 (+3 more)
+Cohesion: 0.17
+Nodes (12): Compatibilidade e implementação, Decisão, Decisão de produto e segurança 0002 — Papéis e escopos, Matriz resumida de autorização, Papéis aprovados, Rastreabilidade do critério de aceite, Regras de aplicação, Revisão 1.1.0 — SIGAB-009 (+4 more)
 
 ### Community 29 - "types.ts"
 Cohesion: 0.08
-Nodes (51): ApiEnvelope, ApiError, apiPage(), apiRequest(), getCookie(), postJson(), sendJson(), AccountInfo (+43 more)
+Nodes (57): ApiEnvelope, ApiError, apiPage(), apiRequest(), apiWithMeta(), getCookie(), postJson(), sendJson() (+49 more)
 
 ### Community 30 - "api/views.py"
-Cohesion: 0.12
-Nodes (70): account_action(), account_grants(), _account_or_person_response(), _account_resource(), api_view(), _boolean(), _can_read_structure(), _catalog_object() (+62 more)
+Cohesion: 0.09
+Nodes (86): account_action(), account_grants(), _account_or_person_response(), _account_resource(), activity_feed(), api_view(), _audit_refusal(), audit_trail() (+78 more)
 
 ### Community 31 - "package.json"
 Cohesion: 0.08
@@ -204,12 +211,12 @@ Cohesion: 0.22
 Nodes (9): Consequências, Decisão, Decisão de produto 0001 — Segmento inicial, Escopo e exclusões iniciais, Justificativa, Premissas validadas no levantamento inicial, Problema inicial, Público inicial (+1 more)
 
 ### Community 41 - "services.py"
-Cohesion: 0.08
-Nodes (56): AppendOnlyQuerySet, Block bulk writes that bypass the per-instance immutability guards., _account_for_update(), audit(), _audit_account_status(), _check_grant_conflicts(), _condition_reason(), ConflictError (+48 more)
+Cohesion: 0.07
+Nodes (65): AppendOnlyQuerySet, Block bulk writes that bypass the per-instance immutability guards., _account_for_update(), audit(), _audit_account_status(), _check_grant_conflicts(), _condition_reason(), ConflictError (+57 more)
 
-### Community 42 - "models.py"
-Cohesion: 0.12
-Nodes (16): AbstractUser, Command, BaseCommand, Command, atomic, BaseCommand, Command, atomic (+8 more)
+### Community 42 - "Account"
+Cohesion: 0.10
+Nodes (18): AbstractUser, Command, atomic, BaseCommand, Command, atomic, BaseCommand, Command (+10 more)
 
 ### Community 43 - "test_identity.py"
 Cohesion: 0.21
@@ -226,6 +233,10 @@ Nodes (21): _checkout(), creator(), _post(), django_db, fixture, parametrize, De
 ### Community 46 - "test_isolation.py"
 Cohesion: 0.19
 Nodes (14): Versioned HTTP API consumed by the React frontend., _call(), _key(), django_db, fixture, parametrize, Cross-organization isolation suite (SIGAB-025, RF-01, RNF-05). Every API route…, _snapshot() (+6 more)
+
+### Community 47 - "DOC-0011-analise-de-requisitos-v0.1.md"
+Cohesion: 0.37
+Nodes (3): ADR 0003 — Eventos, projeção atual e idempotência, Estado individual: ciclo de vida do item, Requisitos e rastreabilidade
 
 ### Community 48 - "3. Ameaças"
 Cohesion: 0.14
@@ -260,45 +271,73 @@ Cohesion: 0.25
 Nodes (8): Fora do escopo, Formato do log, Identificador de requisição, O que nunca é registrado, Observabilidade mínima, Separação, Testes, Tratamento centralizado de erros
 
 ### Community 57 - "Banco e migrações"
-Cohesion: 0.29
+Cohesion: 0.33
 Nodes (6): Banco e migrações, Bancos, Convenções, Do banco vazio à versão atual, Migrações atuais, Verificação em ambiente descartável
 
-### Community 58 - "roles.py"
-Cohesion: 0.33
-Nodes (4): atomic, create_tenant_roles(), Tenant role templates of decision 0002 (matrix 1.2.0). Global roles (platform…, Create the approved tenant roles for a new organization; return them by key.
+### Community 58 - "test_concurrency.py"
+Cohesion: 0.11
+Nodes (27): Command, BaseCommand, Return None when the chain is intact, else a description of the first break., verify_chain(), audit_record_hash(), SHA-256 over the canonical content of an audit event and the previous hash., admin(), _audited() (+19 more)
 
-### Community 59 - "ADR 0004 — Conectividade online, contingência em papel e reconciliação"
-Cohesion: 0.33
-Nodes (6): ADR 0004 — Conectividade online, contingência em papel e reconciliação, Consequências, Contexto, Decisão, Prevenção de dupla entrega, Procedimento de contingência
+### Community 59 - "0004-conectividade-e-contingencia.md"
+Cohesion: 0.22
+Nodes (7): ADR 0001 — Monólito Django e templates server-side, ADR 0004 — Conectividade online, contingência em papel e reconciliação, Consequências, Contexto, Decisão, Prevenção de dupla entrega, Procedimento de contingência
 
 ### Community 60 - "0005_atomic_permission_codes.py"
 Cohesion: 0.60
 Nodes (4): backward(), forward(), Migration, _rewrite()
 
 ### Community 61 - "Item"
-Cohesion: 0.40
-Nodes (4): AdministrativeStatus, Availability, Condition, Item
+Cohesion: 0.18
+Nodes (17): AdministrativeStatus, Availability, Condition, Item, _checkout(), _post(), django_db, fixture (+9 more)
 
 ### Community 62 - "Integração contínua"
 Cohesion: 0.40
 Nodes (5): Etapas, Integração contínua, Pendências, Reprodutibilidade, Segredos
 
+### Community 65 - "world"
+Cohesion: 0.67
+Nodes (3): api_world(), fixture, world()
+
+### Community 66 - "test_reversal.py"
+Cohesion: 0.36
+Nodes (16): _checkout(), flows(), _item(), _post(), django_db, fixture, _return(), _reverse() (+8 more)
+
+### Community 68 - "Decisão de domínio 0005 — Restrição operacional da pessoa"
+Cohesion: 0.20
+Nodes (10): 1. Decisão, 2. Dados, 3. Vigência e decisão na saída, 4. Registro, alteração e encerramento, 5. Exceção, 6. Recolhimento, 7. Privacidade e auditoria, 8. Fora desta decisão (+2 more)
+
+### Community 69 - "Contrato da devolução de item individual"
+Cohesion: 0.22
+Nodes (9): 1. Comando, 2. Dados e origem, 3. Pré-condições, 4. Efeitos (atômicos), 5. Repetição e devolução duplicada, 6. Correção, 7. Respostas, 8. Critérios de aceite e evidências (+1 more)
+
+### Community 70 - "Política de dados pessoais"
+Cohesion: 0.25
+Nodes (8): 1. Papéis no tratamento, 2. Finalidade e base legal comuns, 3. Matriz de dados, 4. Regras de acesso e exibição, 5. Direitos do titular, 6. Exportação, 7. Pendências, Política de dados pessoais
+
+### Community 71 - "0007_audit_hash_chain.py"
+Cohesion: 0.67
+Nodes (3): chain_existing_events(), _hash(), Migration
+
+### Community 72 - "busca.md"
+Cohesion: 0.50
+Nodes (3): Busca inicial, Contrato, Medição
+
 ## Knowledge Gaps
-- **298 isolated node(s):** `sigab`, `Migration`, `Migration`, `Migration`, `Migration` (+293 more)
+- **328 isolated node(s):** `sigab`, `Migration`, `Migration`, `Migration`, `Migration` (+323 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Account` connect `models.py` to `test_flow.py`, `test_authorization.py`, `CommandContext`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_items.py`, `test_isolation.py`, `test_catalog.py`, `AccountAdmin`, `api/views.py`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
-- **Why does `Organization` connect `models.py` to `test_flow.py`, `test_authorization.py`, `CommandContext`, `convert`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_isolation.py`, `test_api.py`, `AccountAdmin`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Why does `Item` connect `Item` to `test_flow.py`, `test_authorization.py`, `CommandContext`, `services.py`, `models.py`, `test_items.py`, `test_isolation.py`, `test_catalog.py`, `test_api_conventions.py`, `test_api.py`, `AccountAdmin`, `api/views.py`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Are the 25 inferred relationships involving `ValidationError` (e.g. with `_boolean()` and `equipment_type_detail()`) actually correct?**
-  _`ValidationError` has 25 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `AuditEvent` connect `Account` to `test_flow.py`, `has_permission`, `models.py`, `test_reversal.py`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_items.py`, `test_isolation.py`, `test_catalog.py`, `AccountAdmin`, `test_concurrency.py`, `api/views.py`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `Account` connect `Account` to `test_flow.py`, `has_permission`, `models.py`, `test_reversal.py`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_items.py`, `test_isolation.py`, `test_catalog.py`, `AccountAdmin`, `test_concurrency.py`, `Item`, `api/views.py`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+- **Why does `Role` connect `models.py` to `test_flow.py`, `has_permission`, `test_reversal.py`, `services.py`, `Account`, `test_identity.py`, `test_authentication.py`, `test_items.py`, `test_isolation.py`, `test_catalog.py`, `test_api_conventions.py`, `AccountAdmin`, `test_concurrency.py`, `Item`, `api/views.py`?**
+  _High betweenness centrality (0.022) - this node is a cross-community bridge._
+- **Are the 28 inferred relationships involving `ValidationError` (e.g. with `_boolean()` and `_date_range()`) actually correct?**
+  _`ValidationError` has 28 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 15 inferred relationships involving `Account` (e.g. with `AccountAdmin` and `AuditedAdmin`) actually correct?**
   _`Account` has 15 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 13 inferred relationships involving `Item` (e.g. with `AccountAdmin` and `AuditedAdmin`) actually correct?**

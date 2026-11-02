@@ -10,6 +10,7 @@ interface AppShellProps {
 function areas(session: Session) {
   return [
     { href: "/", label: "Acervo" },
+    ...(session.permissions.can_view_items ? [{ href: "/atividade", label: "Atividade" }] : []),
     ...(session.permissions.can_manage_identity ? [{ href: "/pessoas", label: "Pessoas" }] : []),
     ...(session.permissions.can_manage_catalog ? [{ href: "/cadastros", label: "Cadastros" }] : [])
   ];
@@ -36,7 +37,7 @@ export function AppShell({ session, children }: AppShellProps) {
             <small>Gestão de acervo</small>
           </span>
         </a>
-        {(session.permissions.can_manage_identity || session.permissions.can_manage_catalog) && (
+        {areas(session).length > 1 && (
           <nav className="main-nav" aria-label="Áreas">
             {areas(session).map((area) => (
               <a key={area.href} href={area.href} aria-current={currentArea(session) === area.href ? "page" : undefined}>{area.label}</a>

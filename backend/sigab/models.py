@@ -1,8 +1,10 @@
+import hashlib
+import json
 import uuid
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 
 
@@ -384,6 +386,7 @@ class Movement(TimestampedModel):
         CHECKOUT = "checkout", "Saída"
         RETURN = "return", "Devolução"
         CONDITION_CHANGE = "condition_change", "Alteração de condição"
+        REVERSAL = "reversal", "Estorno"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(
@@ -405,6 +408,11 @@ class Movement(TimestampedModel):
     condition_on_return = models.CharField(max_length=16, choices=Item.Condition, blank=True)
     new_condition = models.CharField(max_length=16, choices=Item.Condition, blank=True)
     condition_reason = models.CharField(max_length=200, blank=True)
+    # Reversal (ADR 0006, section 4): a compensating movement, at most one per original.
+    reverses = models.OneToOneField(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="reversal"
+    )
+    reason = models.CharField(max_length=500, blank=True)
 
     objects = AppendOnlyQuerySet.as_manager()
 
@@ -412,7 +420,12 @@ class Movement(TimestampedModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["organization", "idempotency_key"], name="uniq_movement_idempotency_org"
-            )
+            ),
+            models.CheckConstraint(
+                condition=(Q(movement_type="reversal") & Q(reverses__isnull=False) & ~Q(reason=""))
+                | (~Q(movement_type="reversal") & Q(reverses__isnull=True)),
+                name="reversal_has_original_and_reason",
+            ),
         ]
 
     def save(self, *args, **kwargs):
@@ -451,6 +464,9 @@ class MovementEvent(ImmutableModel):
     occurred_at = models.DateTimeField()
     schema_version = models.PositiveSmallIntegerField(default=1)
     metadata = models.JSONField(default=dict)
+    compensates = models.OneToOneField(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="compensation"
+    )
 
     class Meta:
         ordering = ["occurred_at", "id"]
@@ -472,10 +488,60 @@ class AuditEvent(ImmutableModel):
     result = models.CharField(max_length=32, default="success")
     changes = models.JSONField(default=dict)
     reason = models.TextField(blank=True)
+    # Hash chain per organization (SIGAB-035): detects edits or deletions made outside the
+    # application, e.g. by direct SQL. Events without organization are not chained.
+    sequence = models.PositiveBigIntegerField(null=True, blank=True, editable=False)
+    previous_hash = models.CharField(max_length=64, blank=True, editable=False)
+    record_hash = models.CharField(max_length=64, blank=True, editable=False)
 
     class Meta:
         ordering = ["occurred_at", "id"]
         indexes = [models.Index(fields=["organization", "occurred_at"])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "sequence"], name="uniq_audit_sequence_org"
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.organization_id and not self.record_hash:
+            with transaction.atomic():
+                # Serialize appends per organization so the chain never forks. NO KEY UPDATE
+                # does not conflict with the KEY SHARE locks taken by foreign-key inserts.
+                Organization.objects.select_for_update(no_key=True).filter(
+                    pk=self.organization_id
+                ).first()
+                last = (
+                    AuditEvent.objects.filter(organization_id=self.organization_id)
+                    .order_by("-sequence")
+                    .first()
+                )
+                self.sequence = (last.sequence if last else 0) + 1
+                self.previous_hash = last.record_hash if last else ""
+                self.record_hash = audit_record_hash(self)
+                return super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
+
+
+def audit_record_hash(event):
+    """SHA-256 over the canonical content of an audit event and the previous hash."""
+    payload = {
+        "sequence": event.sequence,
+        "previous_hash": event.previous_hash,
+        "id": str(event.id),
+        "organization_id": str(event.organization_id) if event.organization_id else None,
+        "actor_id": str(event.actor_id) if event.actor_id else None,
+        "action": event.action,
+        "object_type": event.object_type,
+        "object_id": event.object_id,
+        "occurred_at": event.occurred_at.isoformat(),
+        "correlation_id": event.correlation_id,
+        "result": event.result,
+        "changes": event.changes,
+        "reason": event.reason,
+    }
+    canonical = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()
 
 
 class AuthenticationFailure(models.Model):

@@ -76,7 +76,7 @@ Responsáveis por papel: **Backend** (Tech Lead/Backend), **Implantação** (que
 | I-06 | P1 | operador registra saída para si mesmo ou em conluio | regra de produto ainda não decidida | auditoria; relatório de saídas por operador (futuro) | ausente | Produto | previsto após decisão |
 | I-07 | P1 | saída e devolução com a mesma permissão | `movement.checkout` e `movement.return` separados (matriz 0002) | — | impl. | Backend | `test_checkout_and_return_are_separate_permissions` |
 | I-08 | P1 | gestor concede a si mesmo papel mais amplo | `no_self_grant`; motivo obrigatório; `granted_by` registrado | auditoria `grant.create`/`grant.revoke` com motivo | impl. | Backend | `test_no_self_grant`, `test_grant_requires_reason_and_is_audited`, `test_independent_auditor_conflict` |
-| I-09 | P1 | correção feita apagando ou editando o histórico | estorno compensatório com motivo (ADR 0006) | histórico mostra original e estorno | parcial: estorno não implementado (SIGAB-034) | Backend | previsto na SIGAB-034 |
+| I-09 | P1 | correção feita apagando ou editando o histórico | estorno compensatório com motivo e permissão própria (ADR 0006) | histórico mostra original marcado e estorno | impl. | Backend | `test_checkout_reversal_restores_reserve_and_keeps_original`, `test_reversal_rules`, `test_reversal_requires_permission` |
 
 ### 3.3 Furto de credencial e sessão
 
@@ -95,9 +95,9 @@ Responsáveis por papel: **Backend** (Tech Lead/Backend), **Implantação** (que
 | ID | P | Ameaça | Preventivo | Detectivo | Estado | Resp. | Teste |
 |---|---|---|---|---|---|---|---|
 | T-01 | P0 | alterar ou apagar movimentação, evento ou auditoria pela aplicação, Admin ou operação em lote | `save`/`delete` bloqueados, `AppendOnlyQuerySet`, Admin somente leitura, API sem `PUT`/`PATCH`/`DELETE` | — | impl. | Backend | `test_events_are_immutable`, `test_bulk_update_and_delete_are_blocked` |
-| T-02 | P0 | alterar ou apagar registros por SQL direto ou pelo administrador do banco | papel da aplicação sem `UPDATE`/`DELETE` nessas tabelas; acesso ao banco restrito e nominal | backup fora do host comparável com a base; encadeamento por hash (a decidir) | **ausente** | Implantação, Segurança | previsto: teste de integração no PostgreSQL de que o papel da aplicação recebe erro em `UPDATE` |
-| T-03 | P0 | ação crítica executada sem registro de auditoria | movimentação, evento e auditoria na mesma transação (`transaction.atomic`) | — | parcial: sem teste que exija auditoria em cada fluxo | Backend | previsto: teste parametrizado de que incorporação, saída, devolução e alteração de condição criam `AuditEvent` com ator, organização e correlação |
-| T-04 | P1 | tentativa negada ou em conflito não deixa rastro | auditar `denied` e `conflict` (ADR 0006) | alerta por volume de negações | ausente | Backend | previsto: tentativa sem permissão gera `AuditEvent` com `result=denied` |
+| T-02 | P0 | alterar ou apagar registros por SQL direto ou pelo administrador do banco | papel da aplicação sem `UPDATE`/`DELETE` nessas tabelas; acesso ao banco restrito e nominal | cadeia de hashes por organização e `verify_audit_chain`; ancoragem externa do último hash (pendente) | parcial: detectivo implementado; preventivo depende da implantação | Implantação, Segurança, Backend | `test_chain_detects_direct_sql_changes_and_deletions` |
+| T-03 | P0 | ação crítica executada sem registro de auditoria | movimentação, evento e auditoria na mesma transação (`transaction.atomic`) | — | impl. | Backend | `test_every_p0_operation_is_audited`, `test_checkout_is_atomic_when_a_later_step_fails` |
+| T-04 | P1 | tentativa negada ou em conflito não deixa rastro | escrita recusada pela API gera `AuditEvent` com `result` `denied`, `not_found` ou `conflict` | trilha consultável em `/api/v1/audit/`; alerta por volume (pendente) | impl. | Backend | `test_reversal_requires_permission` |
 | T-05 | P2 | injeção de conteúdo no log por `X-Request-ID` | aceita só `[A-Za-z0-9._-]{1,64}`; caso contrário gera UUID | — | impl. | Backend | `test_unsafe_request_id_is_replaced` |
 
 ### 3.5 Vazamento de dados e exportação (RNF-04)
@@ -119,8 +119,8 @@ Ameaças P0 cujo controle está ausente ou parcial, em ordem sugerida:
 | 1 | C-03, V-03, C-02 | configuração de produção segura por padrão: `DEBUG` falso, falha sem chave, cookies `Secure`, HSTS; `check --deploy` no CI | Backend |
 | 2 | A-04 | ~~remover o atalho de superusuário~~ feito na SIGAB-022; falta tirar dados de negócio do Django Admin do superusuário | Backend |
 | 3 | C-01 | ~~limite de tentativas e auditoria de login~~ feito na SIGAB-021; falta limite no proxy | Implantação |
-| 4 | T-03, V-02, A-03 | testes previstos para controles já existentes | Backend |
-| 5 | T-02 | papel de banco sem `UPDATE`/`DELETE`, junto com a decisão de implantação | Implantação |
+| 4 | V-02, A-03 | testes previstos para controles já existentes (T-03 feito na SIGAB-035) | Backend |
+| 5 | T-02 | papel de banco sem `UPDATE`/`DELETE` e ancoragem externa do hash, junto com a implantação (detecção feita na SIGAB-035) | Implantação |
 | 6 | A-02 | chaves estrangeiras compostas ou verificação no banco para referências entre organizações | Backend |
 | 7 | I-01, C-04 | conferência física periódica e revisão de contas: processos de produto | Produto |
 

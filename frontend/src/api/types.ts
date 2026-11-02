@@ -1,7 +1,13 @@
 export interface Session {
   user: { id: string; username: string };
   organization: { id: string; name: string };
-  permissions: { can_manage_identity: boolean; can_manage_catalog: boolean; can_create_item: boolean };
+  permissions: {
+    can_manage_identity: boolean;
+    can_manage_catalog: boolean;
+    can_create_item: boolean;
+    can_view_items: boolean;
+    can_view_audit: boolean;
+  };
 }
 
 export interface Page<T> {
@@ -29,7 +35,8 @@ export interface ItemDetail extends ItemSummary {
   serial_number: string;
   asset_number: string;
   official_identifier: string;
-  permissions: { can_checkout: boolean; can_return: boolean; can_set_condition: boolean };
+  reversible_movement_id: string | null;
+  permissions: { can_checkout: boolean; can_return: boolean; can_reverse: boolean; can_set_condition: boolean };
 }
 
 export interface ItemEvent {
@@ -43,7 +50,20 @@ export interface ItemEvent {
     recipient: { id: string; name: string } | null;
     condition: "fit" | "unfit" | null;
     reason: string;
+    reverses: string | null;
+    reversed: boolean;
   };
+}
+
+export interface ActivityEvent extends ItemEvent {
+  item: { id: string; identifier: string; equipment_type: string };
+}
+
+export interface PersonMatch {
+  id: string;
+  name: string;
+  is_active: boolean;
+  registrations: string[];
 }
 
 export interface Recipient {

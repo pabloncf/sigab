@@ -41,13 +41,14 @@ Toda escrita passa por três camadas:
 2. **Regra de domínio** (`services.py`): tenant, permissão, estado atual, `full_clean()` e restrições do banco, sob `transaction.atomic`.
 3. **Banco**: restrições únicas e de verificação; violação concorrente vira `409`.
 
-Confirmação explícita (RF-21): operações que mudam estado operacional ou situação exigem `"confirmed": true` no corpo. Hoje: incorporação, saída, devolução e condição do item; situação de pessoa, vínculo, unidade, local e tipo; suspensão, reativação, revogação e encerramento de sessões de conta; revogação de concessão.
+Confirmação explícita (RF-21): operações que mudam estado operacional ou situação exigem `"confirmed": true` no corpo. Hoje: incorporação, saída, devolução, condição e estorno do item; situação de pessoa, vínculo, unidade, local e tipo; suspensão, reativação, revogação e encerramento de sessões de conta; revogação de concessão.
 
 Estratégia de idempotência por tipo de escrita:
 
 | Escrita | Estratégia | Repetição da mesma requisição | Mesma chave com outro conteúdo |
 |---|---|---|---|
 | saída, devolução, condição do item | `idempotency_key` (UUID) obrigatório, único por organização no banco | `200` com a movimentação original e `"created": false` | `409` |
+| estorno | `idempotency_key` obrigatório; no máximo um estorno por movimentação (restrição única) | `200` com o estorno original | `409` |
 | incorporação de item | chave natural: número de série e patrimônio únicos na organização (RN-02), ao menos um obrigatório | `400` (número já usado) | — |
 | unidade, local de guarda, tipo | chave natural: código ou nome único na organização | `400` | — |
 | concessão de papel | sem chave; repetir cria outra concessão equivalente, visível e revogável | — | — |
@@ -81,6 +82,7 @@ Erro:
 - `details` aparece só em `400` de validação: chave = campo; `non_field_errors` para regras sem campo.
 - `correlation_id` é o mesmo valor do cabeçalho `X-Request-ID` e liga a resposta ao log técnico e à auditoria.
 - Mensagens nunca incluem CPF, senha, token, dado de outra organização nem detalhe técnico.
+- Escrita recusada com `403`, `404` ou `409` gera `AuditEvent` `api.<rota>` com `result` `denied`, `not_found` ou `conflict`, ator e correlação.
 
 | Status | Quando | `error` |
 |---|---|---|
@@ -108,12 +110,16 @@ Permissões da [matriz 0002](decisoes/0002-papeis-e-escopos.md) (versão 1.2.0).
 
 | Método e rota | Permissão | Uso |
 |---|---|---|
-| `GET /session/` | autenticado | conta, organização e flags de interface (`can_manage_identity`, `can_manage_catalog`, `can_create_item`) |
+| `GET /session/` | autenticado | conta, organização e flags de interface (`can_manage_identity`, `can_manage_catalog`, `can_create_item`, `can_view_items`, `can_view_audit`) |
 | `POST /session/logout/` | autenticado | encerra a sessão |
-| `GET /items/` | `item.view` no escopo | itens visíveis, paginado; `?holder=<pessoa>` dá a posse atual (RF-51) |
+| `GET /items/` | `item.view` no escopo | itens visíveis, paginado; `?holder=<pessoa>` dá a posse atual (RF-51); aceita `q`, `availability`, `condition`, `unit`, `type` |
 | `POST /items/` | `item.create` na unidade | incorporação (T01) com condição declarada |
 | `GET /items/<id>/` | `item.view` na unidade | situação atual, identificadores e flags de ação |
-| `GET /items/<id>/events/` | `item.view` na unidade | histórico cronológico e paginado, somente leitura (RF-15, RF-53) |
+| `GET /items/<id>/events/` | `item.view` na unidade | histórico cronológico e paginado, somente leitura, com marca de estornado (RF-15, RF-53) |
+| `POST /movements/<id>/reverse/` | `movement.reverse` na unidade | estorno da movimentação mais recente em vigor, com motivo (SIGAB-034); `reversible_movement_id` no detalhe do item indica qual |
+| `GET /search/` | `item.view` (itens) e `person.view_minimal` (pessoas) | busca única (RF-50), [detalhes](busca.md) |
+| `GET /activity/` | `item.view` no escopo | feed de eventos de domínio, do mais recente ao mais antigo; filtros `person`, `item`, `action`, `from`, `to` (RF-61). Não substitui a auditoria |
+| `GET /audit/` | `audit.view` na organização | trilha de auditoria com `sequence`, filtros `action`, `result`, `actor`, `object_id`, `from`, `to`; somente leitura |
 | `GET /items/<id>/recipients/` | `movement.checkout` na unidade | pessoas ativas com vínculo ativo |
 | `POST /items/<id>/checkout/` | `movement.checkout` | saída (T02), [contrato](contratos/saida-individual.md) |
 | `POST /items/<id>/return/` | `movement.return` | devolução (T03/T04) |

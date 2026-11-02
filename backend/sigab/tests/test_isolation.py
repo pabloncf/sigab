@@ -29,12 +29,13 @@ from sigab.models import (
     Unit,
 )
 from sigab.permissions import AUDIT_EXPORT, TENANT_PERMISSIONS
+from sigab.services import CommandContext, checkout_item
 
 PASSWORD = "Senha-forte-123"
 NOT_FOUND = {"success": False, "error": "Recurso não encontrado."}
 
 
-def _tenant(name, code):
+def _tenant(name, code, with_movement=False):
     organization = Organization.objects.create(name=name)
     unit = Unit.objects.create(organization=organization, name=f"Unidade {code}", code=f"U-{code}")
     location = StorageLocation.objects.create(
@@ -65,7 +66,17 @@ def _tenant(name, code):
     grant = Grant.objects.create(
         organization=organization, account=account, role=role, scope_type="organization"
     )
+    movement = None
+    if with_movement:
+        movement, _ = checkout_item(
+            CommandContext(account, organization, f"setup-{code}"),
+            item_id=item.id,
+            recipient_id=person.id,
+            idempotency_key=uuid.uuid4(),
+            confirmed=True,
+        )
     return {
+        "movement": movement,
         "organization": organization,
         "unit": unit,
         "location": location,
@@ -82,7 +93,7 @@ def _tenant(name, code):
 @pytest.fixture
 def tenants(db):
     own = _tenant("Organização A", "A")
-    foreign = _tenant("Organização B", "B")
+    foreign = _tenant("Organização B", "B", with_movement=True)
     # A second account in A acts, so that "own account" rules never mask isolation.
     actor = Account.objects.create_user(
         username="ator-a", password=PASSWORD, organization=own["organization"]
@@ -118,6 +129,12 @@ def _key():
 OBJECT_CASES = [
     ("item-detail", "get", lambda f: f"items/{f['item'].id}/", None),
     ("item-events", "get", lambda f: f"items/{f['item'].id}/events/", None),
+    (
+        "movement-reverse",
+        "post",
+        lambda f: f"movements/{f['movement'].id}/reverse/",
+        lambda f: {"idempotency_key": _key(), "confirmed": True, "reason": "x"},
+    ),
     ("recipient-list", "get", lambda f: f"items/{f['item'].id}/recipients/", None),
     (
         "item-checkout",
@@ -234,6 +251,9 @@ OBJECT_CASES = [
 # Collections: listing never shows foreign rows; creation never accepts foreign references.
 COLLECTION_CASES = {
     "item-list",
+    "search",
+    "activity",
+    "audit-trail",
     "person-list",
     "unit-list",
     "equipment-type-list",
@@ -276,6 +296,7 @@ def test_foreign_object_is_indistinguishable_from_missing(tenants, name, method,
         foreign["unit"].id,
         foreign["location"].id,
         foreign["type"].id,
+        foreign["movement"].id,
     ):
         missing = missing.replace(str(value), str(uuid.uuid4()))
     random = _call(tenants["client"], method, missing, payload(foreign) if payload else None)
@@ -287,7 +308,9 @@ def test_foreign_object_is_indistinguishable_from_missing(tenants, name, method,
 @pytest.mark.django_db
 def test_listings_and_search_never_return_foreign_rows(tenants):
     client, foreign = tenants["client"], tenants["foreign"]
-    foreign_ids = {str(foreign[key].id) for key in ("item", "person", "unit", "type", "role")}
+    foreign_ids = {
+        str(foreign[key].id) for key in ("item", "person", "unit", "type", "role", "movement")
+    }
     for path in (
         "items/",
         "items/?limit=500",
@@ -298,6 +321,14 @@ def test_listings_and_search_never_return_foreign_rows(tenants):
         "units/",
         "equipment-types/",
         "roles/",
+        "search/?q=SER",
+        "search/?q=Pessoa",
+        "search/?q=MAT",
+        "activity/",
+        f"activity/?item={foreign['item'].id}",
+        f"activity/?person={foreign['person'].id}",
+        "audit/",
+        f"audit/?object_id={foreign['movement'].id}",
     ):
         body = client.get(f"/api/v1/{path}").content.decode()
         assert not any(foreign_id in body for foreign_id in foreign_ids), path

@@ -1,6 +1,6 @@
 # ADR 0006 — Eventos de domínio, auditoria e estornos
 
-Status: aceito, 2026-10-31 (SIGAB-012). Amplia o [ADR 0003](0003-eventos-idempotencia.md), que continua válido para projeção atual e idempotência.
+Status: aceito, 2026-10-31 (SIGAB-012); implementação do estorno e da cadeia de integridade em 2026-11-02 (SIGAB-034, SIGAB-035). Amplia o [ADR 0003](0003-eventos-idempotencia.md), que continua válido para projeção atual e idempotência.
 
 Requisitos: RF-60, RF-61, RF-62, RN-05 e RN-09 do [DOC-0011 v0.1](../fontes/DOC-0011-analise-de-requisitos-v0.1.md). Estados e transições: [decisão 0004](../decisoes/0004-ciclo-de-vida-do-item-individual.md). Entidades: [modelo de domínio](../modelo-de-dominio.md).
 
@@ -62,7 +62,7 @@ Catálogo vigente:
 | `object_type`, `object_id` | referência lógica ao objeto afetado |
 | `occurred_at` | instante UTC |
 | `correlation_id` | identificador da requisição (`X-Request-ID` recebido, truncado em 64, ou gerado); serve para rastrear, nunca para autorizar |
-| `result` | `success`, `denied` ou `conflict` |
+| `result` | `success`; `denied`, `not_found` ou `conflict` em escrita recusada; `failure` em login malsucedido |
 | `changes` | ver abaixo |
 | `reason` | obrigatório nas ações de RN-09 e em todo estorno |
 
@@ -79,7 +79,7 @@ Ações que exigem motivo (RN-09): baixa de item, ajuste de estoque, consumo, al
 
 Estorno corrige **erro de registro**. Um fato real posterior (item recuperado, condição que mudou de verdade) é registrado pela transição normal, não por estorno.
 
-Modelo (a implementar na SIGAB-034):
+Modelo (implementado na SIGAB-034; `Movement.reverses`, `Movement.reason`, `MovementEvent.compensates`, `reverse_movement`, `POST /api/v1/movements/{id}/reverse/`):
 
 - nova movimentação do tipo `reversal`, com:
   - `reverses`: chave estrangeira para a movimentação estornada, obrigatória neste tipo;
@@ -121,8 +121,11 @@ O fato original nunca é editado. Ele é exibido no histórico com a marca “es
 | Django Admin | movimentações e eventos somente leitura, sem incluir, alterar ou excluir | implementado |
 | API | nenhuma rota `PUT`, `PATCH` ou `DELETE` para movimentação ou evento; só `POST` de fatos novos | implementado |
 | Banco | papel da aplicação sem `UPDATE`/`DELETE` nessas tabelas, ou gatilho de rejeição | **pendente**; depende da implantação (ADR 0005) |
+| Integridade (detectivo) | cadeia de hashes por organização em `AuditEvent` (`sequence`, `previous_hash`, `record_hash`); `manage.py verify_audit_chain` aponta o primeiro registro alterado, removido ou fora de ordem | implementado na SIGAB-035 |
 
-SQL direto e o administrador do banco ainda conseguem alterar registros. Proteção contra esse nível exige controle na implantação e, para RF-62 pleno, verificação de integridade (por exemplo, encadeamento por hash), a decidir.
+SQL direto e o administrador do banco ainda conseguem alterar registros; a cadeia não impede, mas **detecta** a alteração ou remoção de qualquer evento de auditoria encadeado. Quem reescrever a cadeia inteira a partir do ponto alterado também escapa da verificação local; ancorar periodicamente o último hash fora do banco (por exemplo, no backup ou em registro externo) fecha essa lacuna e fica para a implantação. Eventos sem organização não são encadeados.
+
+Escritas na mesma organização são serializadas ao anexar à cadeia (`SELECT … FOR NO KEY UPDATE` na linha da organização), o que não conflita com os bloqueios de chave estrangeira das demais tabelas.
 
 ## Alternativas consideradas
 
@@ -143,8 +146,11 @@ SQL direto e o administrador do banco ainda conseguem alterar registros. Proteç
 
 ## Pendências
 
-- **SIGAB-034:** implementar o estorno. A tarefa consta como `Done`, mas não há código de estorno.
-- **Tentativas negadas e conflitos:** hoje só se audita `success`. Auditar `denied` e `conflict` nos serviços.
+- ~~**SIGAB-034:** implementar o estorno.~~ Feito em 2026-11-02.
+- ~~**Tentativas negadas e conflitos.**~~ Feito: escritas recusadas pela API geram `AuditEvent` com `result` `denied`, `not_found` ou `conflict` e ação `api.<rota>`.
+- **Ancoragem externa da cadeia:** guardar o último `record_hash` de cada organização fora do banco, com a implantação.
+- **Retenção da auditoria:** definir com o Jurídico e a tabela de temporalidade ([política de dados pessoais](../politica-de-dados-pessoais.md)).
+- **Dupla aprovação do estorno:** a tarefa admite exigir após validação; hoje um ator com `movement.reverse` basta.
 - **Auditoria do Django Admin:** grava só nomes de campos; adotar o formato `from`/`to` da seção 3, respeitando a regra de dado pessoal ([modelo de domínio](../modelo-de-dominio.md), D-11).
 - **Proteção no banco:** revogar `UPDATE`/`DELETE` do papel da aplicação ou criar gatilho, junto com a decisão de implantação.
-- **Permissão `movement.reverse`:** definir em quais papéis entra na matriz 0002.
+- ~~**Permissão `movement.reverse`.**~~ Matriz 1.3.0: Gestor de acervo. Incluir o Operador de reserva é decisão de produto pendente.

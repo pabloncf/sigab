@@ -114,6 +114,7 @@ Depois de mudanças no código, execute `graphify update .`. A lista de arquivos
 ## Operação e backup
 
 - Banco: faça backup consistente com `pg_dump --format=custom` e proteja o arquivo fora do host; restaure periodicamente em ambiente isolado com `pg_restore`. As metas definidas no [ADR 0004](docs/adr/0004-conectividade-e-contingencia.md) são RPO ≤ 15 min, o que exige arquivamento contínuo de WAL/PITR além do dump, e RTO ≤ 4 h. Retenção e criptografia ainda dependem de decisão formal.
+- Auditoria: `uv run python manage.py verify_audit_chain` verifica a cadeia de hashes da trilha de cada organização e aponta o primeiro registro alterado ou removido; rode após restaurar backup e periodicamente.
 - Migrações: em `backend/`, aplique `uv run python manage.py migrate` antes de iniciar a nova versão; mantenha backup anterior à implantação.
 - Timestamps são persistidos em UTC; a organização carrega seu fuso para apresentação futura.
 - Configure `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=false`, `DJANGO_ALLOWED_HOSTS` e TLS no proxy em qualquer ambiente não local.

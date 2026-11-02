@@ -13,6 +13,7 @@ from sigab.models import (
     Unit,
 )
 from sigab.permissions import MOVEMENT_CHECKOUT, MOVEMENT_RETURN, SET_ITEM_CONDITION, VIEW_ITEM
+from sigab.services import CommandContext, record_incorporation
 
 
 @pytest.fixture
@@ -62,4 +63,54 @@ def api_world(db):
         "person": person,
         "account": account,
         "item": item,
+    }
+
+
+@pytest.fixture
+def world(db):
+    org = Organization.objects.create(name="Organização A")
+    unit = Unit.objects.create(organization=org, name="Unidade A", code="UA")
+    location = StorageLocation.objects.create(
+        organization=org, unit=unit, name="Reserva", code="R1"
+    )
+    person = Person.objects.create(organization=org, name="Pessoa Sintética")
+    Membership.objects.create(organization=org, person=person, registration="MAT-1", main_unit=unit)
+    account = Account.objects.create_user(
+        username="operador", password="Senha-forte-123", organization=org
+    )
+    role = Role.objects.create(
+        organization=org,
+        name="Operador",
+        permissions=[MOVEMENT_CHECKOUT, MOVEMENT_RETURN, SET_ITEM_CONDITION, VIEW_ITEM],
+    )
+    Grant.objects.create(
+        organization=org,
+        account=account,
+        role=role,
+        scope_type=Grant.Scope.ORGANIZATION,
+        granted_by=account,
+    )
+    equipment_type = EquipmentType.objects.create(
+        organization=org,
+        name="Equipamento sintético",
+        classification=EquipmentType.Classification.INDIVIDUAL,
+    )
+    item = Item.objects.create(
+        organization=org,
+        equipment_type=equipment_type,
+        unit=unit,
+        storage_location=location,
+        serial_number="SYN-001",
+    )
+    ctx = CommandContext(account, org, "test-correlation")
+    record_incorporation(ctx, item)
+    return {
+        "org": org,
+        "unit": unit,
+        "location": location,
+        "person": person,
+        "account": account,
+        "type": equipment_type,
+        "item": item,
+        "ctx": ctx,
     }

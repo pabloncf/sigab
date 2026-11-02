@@ -1,7 +1,7 @@
 # Modelo de domínio
 
 - Tarefa: SIGAB-011
-- Revisão: 2026-11-02, conferida com `backend/sigab/models.py` (migrações `0001` a `0005`)
+- Revisão: 2026-11-02, conferida com `backend/sigab/models.py` (migrações `0001` a `0007`)
 - Requisitos: RF-01, RF-03, RF-10, RF-12 e RF-60 do [DOC-0011 v0.1](fontes/DOC-0011-analise-de-requisitos-v0.1.md)
 - Base: [glossário](glossario.md), [decisão 0002 — papéis e escopos](decisoes/0002-papeis-e-escopos.md), [decisão 0004 — ciclo de vida do item](decisoes/0004-ciclo-de-vida-do-item-individual.md), [ADR 0002](adr/0002-tenancy-autorizacao.md), [ADR 0003](adr/0003-eventos-idempotencia.md), [ADR 0005](adr/0005-api-django-e-frontend-react.md)
 
@@ -231,7 +231,7 @@ Operação confirmada sobre um item. Imutável depois de gravada.
 | Campo | Tipo | Obrig. | Regra |
 |---|---|---|---|
 | `organization` | FK | sim | |
-| `movement_type` | `incorporation` \| `checkout` \| `return` \| `condition_change` | sim | |
+| `movement_type` | `incorporation` \| `checkout` \| `return` \| `condition_change` \| `reversal` | sim | |
 | `item` | FK Item | sim | |
 | `operator` | FK Account | sim | quem confirmou |
 | `recipient` | FK Person | na saída | destinatário |
@@ -241,16 +241,19 @@ Operação confirmada sobre um item. Imutável depois de gravada.
 | `condition_on_return` | `fit` \| `unfit` | na devolução | |
 | `new_condition` | `fit` \| `unfit` | em `condition_change` | |
 | `condition_reason` | texto 200 | se inapto | |
+| `reverses` | FK Movement, única | em `reversal` | movimentação estornada; no máximo um estorno por movimentação |
+| `reason` | texto 500 | em `reversal` | motivo do estorno (RN-09); `reversal_has_original_and_reason` garante tipo, referência e motivo juntos |
 
 ### 4.12 MovementEvent — evento de domínio
 
 | Campo | Tipo | Obrig. | Regra |
 |---|---|---|---|
 | `organization`, `movement`, `item`, `actor` | FK | sim | |
-| `event_type` | texto 32 | sim | `item.incorporated`, `item.checked_out`, `item.returned`, `item.condition_changed` |
+| `event_type` | texto 32 | sim | `item.incorporated`, `item.checked_out`, `item.returned`, `item.condition_changed`, `item.movement_reversed` |
 | `occurred_at` | instante UTC | sim | |
 | `schema_version` | inteiro | sim | versão do contrato de `metadata` |
 | `metadata` | JSON | sim | mínimo e versionado; sem dados pessoais desnecessários |
+| `compensates` | FK MovementEvent, única | no estorno | evento original compensado |
 
 ### 4.13 AuditEvent — evento de auditoria (RF-60)
 
@@ -265,6 +268,7 @@ Operação confirmada sobre um item. Imutável depois de gravada.
 | `result` | texto 32 | sim | padrão `success` |
 | `changes` | JSON | sim | valor anterior e novo, minimizado |
 | `reason` | texto | não | motivo, quando exigido |
+| `sequence`, `previous_hash`, `record_hash` | inteiro, SHA-256 | quando há organização | cadeia de integridade por organização (`uniq_audit_sequence_org`); verificada por `manage.py verify_audit_chain` (ADR 0006) |
 
 `MovementEvent` e `AuditEvent` são imutáveis (`ImmutableModel`): `save` sobre registro existente, `delete` e `update`/`delete` em lote falham. Contratos de evento e auditoria: [ADR 0006](adr/0006-eventos-auditoria-e-estornos.md). O log técnico não é tabela de domínio.
 
@@ -331,7 +335,7 @@ A imutabilidade (I-15) vale na camada de aplicação; operações SQL diretas e 
 | D-06 | isolamento de referências por `clean()`, sem chave estrangeira composta no banco | ADR 0002 | gravação que não passe por `full_clean()` ou pelos serviços pode criar referência cruzada |
 | D-07 | ~~`Grant` com escopo `organization` e unidade~~ | — | **resolvida**: restrição `grant_scope_matches_unit` |
 | D-08 | `official_identifier` sem restrição única | — | depende da regra do registro oficial (SIGAB-005) |
-| D-09 | “uma devolução por saída” garantida só no serviço | — | candidata a restrição única parcial em `related_movement` |
+| D-09 | “uma devolução em vigor por saída” garantida só no serviço | — | **mantida por decisão**: o estorno de uma devolução reabre a saída, que recebe nova devolução; uma restrição única em `related_movement` impediria isso. A exclusividade vem do bloqueio do item ([contrato da devolução](contratos/devolucao-individual.md)) |
 | D-10 | ~~`session_version` sem uso~~ | — | **resolvida** na SIGAB-021 |
 | D-11 | auditoria do Django Admin grava só os nomes dos campos alterados (`changes.fields`) | RF-60: valor anterior e novo | cadastros feitos pelo Admin não têm valor anterior e novo; valores pessoais precisam de minimização antes de serem incluídos |
 | D-12 | `username` é único em todo o sistema; matrícula é única só na organização | RF-02: acesso por matrícula e senha | usar a matrícula como login colide entre organizações, e a mensagem de indisponibilidade sinaliza que o nome existe em algum lugar; definir identificador de login por organização |
