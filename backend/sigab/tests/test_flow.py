@@ -21,7 +21,7 @@ from sigab.models import (
     StorageLocation,
     Unit,
 )
-from sigab.permissions import MOVE_ITEM, SET_ITEM_CONDITION, VIEW_ITEM
+from sigab.permissions import MOVEMENT_CHECKOUT, MOVEMENT_RETURN, SET_ITEM_CONDITION, VIEW_ITEM
 from sigab.services import (
     CommandContext,
     ConflictError,
@@ -45,7 +45,7 @@ def test_controlled_bootstrap_creates_admin_grant_and_audit():
     account = Account.objects.get(username="admin-bootstrap")
     assert account.is_staff and not account.is_superuser
     assert account.grants.filter(scope_type=Grant.Scope.ORGANIZATION).exists()
-    assert AuditEvent.objects.filter(organization=account.organization).count() == 3
+    assert AuditEvent.objects.filter(organization=account.organization).count() == 4
 
 
 @pytest.mark.django_db
@@ -81,7 +81,7 @@ def world(db):
     role = Role.objects.create(
         organization=org,
         name="Operador",
-        permissions=[MOVE_ITEM, SET_ITEM_CONDITION, VIEW_ITEM],
+        permissions=[MOVEMENT_CHECKOUT, MOVEMENT_RETURN, SET_ITEM_CONDITION, VIEW_ITEM],
     )
     Grant.objects.create(
         organization=org,
@@ -488,7 +488,9 @@ def test_condition_change_requires_permission(world):
         username="so-saida", password="Senha-forte-123", organization=world["org"]
     )
     role = Role.objects.create(
-        organization=world["org"], name="Só saída", permissions=[MOVE_ITEM, VIEW_ITEM]
+        organization=world["org"],
+        name="Só saída",
+        permissions=[MOVEMENT_CHECKOUT, MOVEMENT_RETURN, VIEW_ITEM],
     )
     Grant.objects.create(
         organization=world["org"],

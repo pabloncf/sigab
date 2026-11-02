@@ -169,3 +169,37 @@ que dá a ação “Marcar item como inapto ou apto” ao Armeiro e ao Adm. A
 permissão não tem separação de funções: quem declara inapto pode liberar,
 e a auditoria registra o ator de cada ato. Mudar a condição durante a posse
 operacional continua sendo papel da devolução (`movement.return`).
+
+## Revisão 1.2.0 — SIGAB-022 e SIGAB-024
+
+Data: 2026-11-02. Os papéis e as permissões não mudam; esta revisão registra
+um esclarecimento de alcance e o estado da implementação.
+
+**Esclarecimento.** `catalog.manage` abrange, além dos tipos de equipamento,
+o cadastro de unidades e locais de guarda da organização. A matriz não tinha
+permissão própria para a estrutura física, e o Gestor de acervo é o papel que
+“gere o cadastro do acervo”. Uma permissão separada só será criada se uma
+organização precisar dividir essas funções.
+
+**Implementado** (`backend/sigab/permissions.py`, `services.py`, `roles.py`):
+
+- permissões atômicas no lugar de `inventory.manage` e `movement.execute`
+  (migração `0005` converte papéis existentes: `inventory.manage` →
+  `catalog.manage` + `item.create`; `movement.execute` → `movement.checkout` +
+  `movement.return`);
+- papel só aceita códigos da matriz e só é concedido nos escopos permitidos;
+- concessão vigente: ativa, não revogada, `valid_from` ≤ agora < `valid_until`;
+- superusuário e identidades da plataforma não recebem permissão de tenant;
+- organização suspensa não recebe permissão alguma;
+- conflitos verificados na concessão: `no_self_grant` (conta não concede nem
+  revoga para si mesma) e `independent_auditor` (papel com `audit.export` não
+  acumula permissão que altera dados em escopo sobreposto);
+- toda organização nova recebe os papéis de tenant desta matriz; o primeiro
+  administrador recebe Administrador de acesso e Gestor de acervo, ambos na
+  organização. Ele não executa saída nem devolução: essas exigem Operador de
+  reserva, concedido a outra conta.
+
+**Ainda não implementado**, por dependerem de fluxos inexistentes: as regras
+`different_actor_same_case` de ajuste, baixa, exceção de restrição e suporte;
+a sessão temporária de suporte; o plano de controle separado para identidades
+globais (hoje, o superusuário do Django Admin, de uso transitório).

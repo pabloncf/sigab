@@ -1,7 +1,7 @@
 # Modelo de domínio
 
 - Tarefa: SIGAB-011
-- Revisão: 2026-11-02, conferida com `backend/sigab/models.py` (migrações `0001` a `0003`)
+- Revisão: 2026-11-02, conferida com `backend/sigab/models.py` (migrações `0001` a `0005`)
 - Requisitos: RF-01, RF-03, RF-10, RF-12 e RF-60 do [DOC-0011 v0.1](fontes/DOC-0011-analise-de-requisitos-v0.1.md)
 - Base: [glossário](glossario.md), [decisão 0002 — papéis e escopos](decisoes/0002-papeis-e-escopos.md), [decisão 0004 — ciclo de vida do item](decisoes/0004-ciclo-de-vida-do-item-individual.md), [ADR 0002](adr/0002-tenancy-autorizacao.md), [ADR 0003](adr/0003-eventos-idempotencia.md), [ADR 0005](adr/0005-api-django-e-frontend-react.md)
 
@@ -106,7 +106,7 @@ Convenções comuns:
 |---|---|---|---|
 | `name` | texto 160 | sim | |
 | `timezone` | texto 64 | sim | padrão `America/Fortaleza`; usado só para apresentação, o banco grava UTC |
-| `status` | `active` \| `inactive` | sim | |
+| `status` | `active` \| `inactive` | sim | `inactive` = suspensa pelo plano de controle (`set_organization_status`, com motivo e auditoria): contas não autenticam, sessões terminam e nenhuma permissão vale; dados e histórico permanecem. Conflito com RN-07 registrado nas decisões pendentes |
 
 ### 4.2 Unit — unidade
 
@@ -163,7 +163,7 @@ Credencial de autenticação. Estende `AbstractUser` do Django (usuário, senha 
 |---|---|---|---|
 | `organization` | FK | não | nula só para conta de plataforma; é a fonte de autoridade do tenant |
 | `person` | FK Person | não | no máximo uma conta **não revogada** por pessoa (`uniq_open_account_per_person`); mesma organização (`clean`) |
-| `session_version` | inteiro | sim | previsto para invalidar sessões abertas; hoje nenhum código o lê nem o incrementa (D-10) |
+| `session_version` | inteiro | sim | incrementado ao suspender, revogar ou encerrar sessões; sessão aberta com versão anterior é encerrada (`SessionVersionMiddleware`) |
 | `revoked_at` | instante | não | preenchido na revogação; conta revogada é sempre inativa (`revoked_account_is_inactive`) |
 
 Situação derivada (`Account.status`): `active` (ativa), `suspended` (`is_active = false`, reversível) e `revoked` (`revoked_at` preenchido, definitiva). A revogação torna a senha inutilizável e revoga as concessões ativas. O `id` UUID é a chave interna; `username` é só identificador de login e pode ser a matrícula, sem ser chave.
@@ -176,7 +176,8 @@ Ciclos de vida independentes: suspender ou revogar a conta não altera a pessoa,
 |---|---|---|---|
 | `organization` | FK | não | nula = papel global |
 | `name` | texto 80 | sim | único na org. (`uniq_role_name_org`) |
-| `permissions` | lista JSON de códigos | sim | permissões explícitas; não há herança entre papéis |
+| `permissions` | lista JSON de códigos | sim | permissões explícitas, só códigos de tenant da matriz 0002 (`Role.clean`); não há herança entre papéis |
+| `allowed_scopes` | lista JSON | sim | escopos em que o papel pode ser concedido (`organization`, `unit`) |
 
 ### 4.8 Grant — concessão
 
@@ -192,8 +193,9 @@ Atribui um papel a uma conta num escopo.
 | `is_active` | booleano | sim | |
 | `granted_by` | FK Account | não | quem concedeu |
 | `revoked_at` | instante | não | revogação preserva a linha |
+| `valid_from`, `valid_until` | instante | não | vigência; fora dela a concessão não conta (`grant_validity_window`) |
 
-Avaliação (`sigab/permissions.py`): nega por padrão; concede se existir concessão ativa e não revogada, na organização da conta, cujo papel contenha a permissão e cujo escopo seja a organização ou a unidade do objeto.
+Avaliação (`sigab/permissions.py`): nega por padrão; concede se existir concessão ativa, não revogada e vigente, na organização ativa da conta, cujo papel contenha a permissão e cujo escopo seja a organização ou a unidade do objeto. Superusuário não recebe permissão de tenant. Escopo e unidade são coerentes por restrição de banco (`grant_scope_matches_unit`); escopo permitido do papel, autoconcessão e conflito de auditor independente são verificados em `Grant.clean` e `create_grant` (decisão 0002, revisão 1.2.0).
 
 ### 4.9 EquipmentType — tipo de equipamento (RF-10)
 
@@ -202,7 +204,7 @@ Avaliação (`sigab/permissions.py`): nega por padrão; concede se existir conce
 | `organization` | FK | sim | catálogo privado por organização |
 | `name` | texto 160 | sim | único na org. (`uniq_equipment_type_org`) |
 | `description` | texto | não | |
-| `classification` | `individual` \| `quantitative` | sim | “com registro” e “de estoque” no DOC-0011; imutável quando o tipo tem itens (`save`) |
+| `classification` | `individual` \| `quantitative` | sim | “com registro” e “de estoque” no DOC-0011; nunca muda depois de criada (RN-03, RF-16; `EquipmentType.save`) |
 | `is_active` | booleano | sim | |
 
 ### 4.10 Item — item individual (RF-12)
@@ -266,6 +268,16 @@ Operação confirmada sobre um item. Imutável depois de gravada.
 
 `MovementEvent` e `AuditEvent` são imutáveis (`ImmutableModel`): `save` sobre registro existente, `delete` e `update`/`delete` em lote falham. Contratos de evento e auditoria: [ADR 0006](adr/0006-eventos-auditoria-e-estornos.md). O log técnico não é tabela de domínio.
 
+### 4.14 AuthenticationFailure — tentativa de login malsucedida
+
+Dado técnico de limitação de tentativas (SIGAB-021), não auditoria e sem organização. Linhas com mais de um dia são apagadas a cada nova falha; uma autenticação bem-sucedida apaga as falhas daquele usuário.
+
+| Campo | Tipo | Obrig. | Regra |
+|---|---|---|---|
+| `username_digest` | HMAC-SHA256 | sim | do usuário digitado, normalizado; o texto não é guardado |
+| `ip_address` | IP | não | `REMOTE_ADDR` |
+| `occurred_at` | instante UTC | sim | |
+
 ## 5. Identificadores
 
 | Identificador | Entidade | Unicidade | Papel |
@@ -289,11 +301,11 @@ Identificadores de registro anulado não são reutilizados (decisão 0004, 10.9)
 |---|---|---|
 | I-01 | toda referência entre entidades fica na mesma organização | `clean()` e consultas filtradas nos serviços |
 | I-02 | a organização da requisição vem da conta autenticada | `has_permission`, views e serviços |
-| I-03 | sem concessão explícita, nenhuma permissão; papéis não herdam entre si | `has_permission` |
+| I-03 | sem concessão explícita e vigente, nenhuma permissão; papéis não herdam entre si; superusuário sem permissão de tenant; organização suspensa sem permissão | `has_permission` |
 | I-04 | concessão de unidade tem unidade | `Grant.clean` |
 | I-05 | pessoa, vínculo e conta têm ciclos independentes; no máximo uma conta não revogada por pessoa; revogação é definitiva | restrições `uniq_open_account_per_person` e `revoked_account_is_inactive`; serviços de conta |
 | I-06 | matrícula, CPF (quando preenchido), códigos, nome de tipo/papel, série e patrimônio únicos na org. | restrições do banco |
-| I-07 | classificação de tipo em uso não muda | `EquipmentType.save` |
+| I-07 | classificação de tipo nunca muda | `EquipmentType.save` |
 | I-08 | item usa somente tipo individual | `Item.clean` |
 | I-09 | local de guarda do item pertence à unidade do item | `Item.clean` |
 | I-10 | inapto exige motivo; apto não tem motivo | restrição `item_unfit_requires_reason` e `Item.clean` |
@@ -311,16 +323,16 @@ A imutabilidade (I-15) vale na camada de aplicação; operações SQL diretas e 
 
 | # | Divergência | Referência | Impacto |
 |---|---|---|---|
-| D-01 | `has_permission` concede tudo a `is_superuser`, em qualquer organização | decisão 0002: papel global não lê dados de negócio; suporte sem acesso implícito | conta superusuário atravessa o isolamento. Restringir superusuário ao Django Admin ou removê-lo da avaliação de tenant |
-| D-02 | códigos de permissão do código (`inventory.manage`, `movement.execute`) diferem da matriz (`item.create`, `movement.checkout`, `movement.return`) | [matriz 0002](decisoes/0002-papeis-e-escopos.json) | a separação entre saída e devolução da matriz não existe no código |
-| D-03 | item pode ser criado sem nenhum identificador (série, patrimônio e oficial vazios) | RF-12: tipo **+ número de identificação** + unidade | exigir ao menos um identificador, sem torná-lo chave |
+| D-01 | ~~`has_permission` concede tudo a `is_superuser`~~ | decisão 0002 | **resolvida** na SIGAB-022: superusuário não recebe permissão de tenant; o Django Admin continua acessível a ele como mecanismo transitório |
+| D-02 | ~~códigos agregados fora da matriz~~ | matriz 0002 | **resolvida** na SIGAB-022 (migração `0005`) |
+| D-03 | ~~item sem identificador~~ | RF-12, RN-02 | **resolvida** na SIGAB-027: a incorporação exige série ou patrimônio; itens criados pelo Django Admin ainda não passam por essa regra |
 | D-04 | `administrative_status` tem `inactive`, sem fluxo | decisão 0004: `retired` e `voided` | já registrado na decisão 0004, seção 9 |
 | D-05 | localização implícita em `availability` | decisão 0004, seção 7 | aceito no MVP |
 | D-06 | isolamento de referências por `clean()`, sem chave estrangeira composta no banco | ADR 0002 | gravação que não passe por `full_clean()` ou pelos serviços pode criar referência cruzada |
-| D-07 | `Grant` com escopo `organization` e `unit` preenchida não é rejeitado | — | dado ambíguo; hoje a unidade é ignorada |
+| D-07 | ~~`Grant` com escopo `organization` e unidade~~ | — | **resolvida**: restrição `grant_scope_matches_unit` |
 | D-08 | `official_identifier` sem restrição única | — | depende da regra do registro oficial (SIGAB-005) |
 | D-09 | “uma devolução por saída” garantida só no serviço | — | candidata a restrição única parcial em `related_movement` |
-| D-10 | `Account.session_version` não é usado | invariante “suspender conta encerra acesso” | suspensão depende de `is_active`, verificado a cada requisição; troca de senha já invalida sessões pelo hash de sessão do Django; o campo não tem uso e pode ser removido ou adotado para revogação explícita |
+| D-10 | ~~`session_version` sem uso~~ | — | **resolvida** na SIGAB-021 |
 | D-11 | auditoria do Django Admin grava só os nomes dos campos alterados (`changes.fields`) | RF-60: valor anterior e novo | cadastros feitos pelo Admin não têm valor anterior e novo; valores pessoais precisam de minimização antes de serem incluídos |
 | D-12 | `username` é único em todo o sistema; matrícula é única só na organização | RF-02: acesso por matrícula e senha | usar a matrícula como login colide entre organizações, e a mensagem de indisponibilidade sinaliza que o nome existe em algum lugar; definir identificador de login por organização |
 

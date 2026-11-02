@@ -96,6 +96,10 @@ textarea { min-height: 92px; resize: vertical; }
 .sub-list span { display: grid; gap: 4px; }
 .sub-list small { color: var(--muted); }
 .stack { display: grid; gap: 24px; }
+.actions-inline { display: flex !important; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.sub-list .sub-list { margin-top: 6px; padding-left: 12px; border-left: 2px solid var(--line); }
+.sub-list .sub-list li { padding: 8px 0; }
+.history-card h3 { margin: 22px 0 6px; font-size: .95rem; }
 .page-heading .stack { width: min(370px, 100%); gap: 12px; }
 .page-heading .stack .search-field { width: 100%; }
 .loading-state { width: 100%; padding: 30px; display: grid; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }

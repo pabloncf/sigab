@@ -8,18 +8,33 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError
 from django.db.models import Q
 from django.http import Http404, JsonResponse
+from django.utils.dateparse import parse_datetime
 from django.views import defaults
 from django.views.csrf import csrf_failure as django_csrf_failure
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from sigab.models import Item, Membership, Person, Unit
+from sigab.models import (
+    Account,
+    EquipmentType,
+    Item,
+    Membership,
+    MovementEvent,
+    Person,
+    Role,
+    StorageLocation,
+    Unit,
+)
 from sigab.observability import correlation_id_var
 from sigab.permissions import (
     ALL_UNITS,
+    CATALOG_MANAGE,
+    ITEM_CREATE,
     MANAGE_IDENTITY,
-    MOVE_ITEM,
+    MOVEMENT_CHECKOUT,
+    MOVEMENT_RETURN,
     SET_ITEM_CONDITION,
     VIEW_ITEM,
+    has_any_scope,
     has_permission,
     permitted_unit_ids,
 )
@@ -29,16 +44,28 @@ from sigab.services import (
     NotFoundError,
     checkout_item,
     create_account,
+    create_equipment_type,
+    create_grant,
     create_membership,
     create_person,
+    create_storage_location,
+    create_unit,
+    end_account_sessions,
+    incorporate_item,
     reactivate_account,
     return_item,
     revoke_account,
+    revoke_grant,
+    set_equipment_type_active,
     set_item_condition,
     set_membership_active,
     set_person_active,
+    set_storage_location_active,
+    set_unit_active,
     suspend_account,
+    update_equipment_type,
     update_person,
+    update_unit,
 )
 
 MAX_JSON_BODY_BYTES = 16 * 1024
@@ -211,7 +238,7 @@ def _item_summary(item):
     }
 
 
-def _item_resource(request, item, *, include_events=False):
+def _item_resource(request, item):
     organization = request.user.organization
     resource = {
         **_item_summary(item),
@@ -221,24 +248,41 @@ def _item_resource(request, item, *, include_events=False):
             "code": item.storage_location.code,
             "name": item.storage_location.name,
         },
+        "serial_number": item.serial_number,
+        "asset_number": item.asset_number,
+        "official_identifier": item.official_identifier,
         "permissions": {
-            "can_move": has_permission(request.user, MOVE_ITEM, organization, item.unit),
+            "can_checkout": has_permission(
+                request.user, MOVEMENT_CHECKOUT, organization, item.unit
+            ),
+            "can_return": has_permission(request.user, MOVEMENT_RETURN, organization, item.unit),
             "can_set_condition": has_permission(
                 request.user, SET_ITEM_CONDITION, organization, item.unit
             ),
         },
     }
-    if include_events:
-        resource["events"] = [
-            {
-                "id": str(event.id),
-                "type": event.event_type,
-                "occurred_at": event.occurred_at.isoformat(),
-                "actor": event.actor.username,
-            }
-            for event in item.events.select_related("actor").all()
-        ]
     return resource
+
+
+def _event_resource(event):
+    movement = event.movement
+    return {
+        "id": str(event.id),
+        "type": event.event_type,
+        "occurred_at": event.occurred_at.isoformat(),
+        "actor": event.actor.username,
+        "movement": {
+            "id": str(movement.id),
+            "type": movement.movement_type,
+            "recipient": (
+                {"id": str(movement.recipient_id), "name": str(movement.recipient)}
+                if movement.recipient_id
+                else None
+            ),
+            "condition": movement.condition_on_return or movement.new_condition or None,
+            "reason": movement.condition_reason,
+        },
+    }
 
 
 def _context(request):
@@ -273,6 +317,8 @@ def session_detail(request):
             "organization": {"id": str(organization.id), "name": organization.name},
             "permissions": {
                 "can_manage_identity": has_permission(request.user, MANAGE_IDENTITY, organization),
+                "can_manage_catalog": has_permission(request.user, CATALOG_MANAGE, organization),
+                "can_create_item": has_any_scope(request.user, ITEM_CREATE, organization),
             },
         }
     )
@@ -284,10 +330,32 @@ def session_logout(request):
     return _response(None)
 
 
-@api_view(methods={"GET"})
+@api_view(methods={"GET", "POST"})
 def item_list(request):
     organization = _organization(request)
+    if request.method == "POST":
+        payload = _parse_json(request)
+        item = incorporate_item(
+            _context(request),
+            equipment_type_id=_required_uuid(payload, "equipment_type_id"),
+            unit_id=_required_uuid(payload, "unit_id"),
+            storage_location_id=_required_uuid(payload, "storage_location_id"),
+            serial_number=_string(payload, "serial_number", max_length=100),
+            asset_number=_string(payload, "asset_number", max_length=100),
+            official_identifier=_string(payload, "official_identifier", max_length=100),
+            condition=_string(payload, "condition", max_length=16) or Item.Condition.FIT,
+            condition_reason=_string(payload, "condition_reason"),
+            confirmed=_required_confirmation(payload),
+        )
+        return _response(_item_resource(request, _item(request, item.pk)), status=201)
     items = Item.objects.filter(organization=organization)
+    holder = request.GET.get("holder")
+    if holder:
+        # RF-51: current possession of a person.
+        try:
+            items = items.filter(current_holder_id=UUID(holder))
+        except ValueError as exc:
+            raise ValidationError({"holder": "Informe um UUID válido."}) from exc
     unit_ids = permitted_unit_ids(request.user, VIEW_ITEM, organization)
     if unit_ids is not ALL_UNITS:
         items = items.filter(unit_id__in=unit_ids)
@@ -299,13 +367,25 @@ def item_list(request):
 
 @api_view(methods={"GET"})
 def item_detail(request, pk):
-    return _response(_item_resource(request, _item(request, pk), include_events=True))
+    return _response(_item_resource(request, _item(request, pk)))
+
+
+@api_view(methods={"GET"})
+def item_events(request, pk):
+    """Confirmed facts of the item in chronological order (RF-15, RF-53); read only."""
+    item = _item(request, pk)
+    events = (
+        MovementEvent.objects.filter(item=item, organization=item.organization)
+        .select_related("actor", "movement", "movement__recipient")
+        .order_by("occurred_at", "id")
+    )
+    return _paginated(request, events, _event_resource)
 
 
 @api_view(methods={"GET"})
 def recipient_list(request, pk):
     organization = _organization(request)
-    _item(request, pk, MOVE_ITEM)
+    _item(request, pk, MOVEMENT_CHECKOUT)
     people = (
         Person.objects.filter(
             organization=organization, is_active=True, memberships__is_active=True
@@ -330,7 +410,7 @@ def _movement_response(request, item, movement, created):
 
 @api_view(methods={"POST"})
 def item_checkout(request, pk):
-    item = _item(request, pk, MOVE_ITEM)
+    item = _item(request, pk, MOVEMENT_CHECKOUT)
     payload = _parse_json(request)
     movement, created = checkout_item(
         _context(request),
@@ -344,7 +424,7 @@ def item_checkout(request, pk):
 
 @api_view(methods={"POST"})
 def item_return(request, pk):
-    item = _item(request, pk, MOVE_ITEM)
+    item = _item(request, pk, MOVEMENT_RETURN)
     payload = _parse_json(request)
     movement, created = return_item(
         _context(request),
@@ -387,6 +467,22 @@ def _masked_cpf(cpf):
     return f"***.***.***-{cpf[-2:]}" if cpf else ""
 
 
+def _grant_resource(grant):
+    return {
+        "id": str(grant.id),
+        "role": {"id": str(grant.role_id), "name": grant.role.name},
+        "scope_type": grant.scope_type,
+        "unit": (
+            {"id": str(grant.unit_id), "code": grant.unit.code, "name": grant.unit.name}
+            if grant.unit_id
+            else None
+        ),
+        "valid_from": grant.valid_from.isoformat() if grant.valid_from else None,
+        "valid_until": grant.valid_until.isoformat() if grant.valid_until else None,
+        "active": grant.is_active and grant.revoked_at is None,
+    }
+
+
 def _account_resource(account):
     return {
         "id": str(account.id),
@@ -395,6 +491,11 @@ def _account_resource(account):
         "status": account.status,
         "last_login": account.last_login.isoformat() if account.last_login else None,
         "revoked_at": account.revoked_at.isoformat() if account.revoked_at else None,
+        "grants": [
+            _grant_resource(grant)
+            for grant in sorted(account.grants.all(), key=lambda g: g.created_at)
+            if grant.is_active and grant.revoked_at is None
+        ],
     }
 
 
@@ -443,7 +544,7 @@ def _person_resource(person):
 
 def _people(organization):
     return Person.objects.filter(organization=organization).prefetch_related(
-        "accounts", "memberships__main_unit"
+        "accounts__grants__role", "accounts__grants__unit", "memberships__main_unit"
     )
 
 
@@ -581,8 +682,250 @@ def account_action(request, pk, action):
     return _response(_person_resource(_person(request, account.person_id)))
 
 
+ACCOUNT_ACTIONS["end-sessions"] = end_account_sessions
+
+
+def _optional_datetime(payload, field):
+    value = payload.get(field)
+    if value in (None, ""):
+        return None
+    parsed = parse_datetime(value) if isinstance(value, str) else None
+    if parsed is None or parsed.tzinfo is None:
+        raise ValidationError({field: "Informe data e hora ISO 8601 com fuso."})
+    return parsed
+
+
 @api_view(methods={"GET"})
-def unit_list(request):
+def role_list(request):
     organization = _identity_organization(request)
-    units = Unit.objects.filter(organization=organization, is_active=True).order_by("code")
-    return _response([{"id": str(u.id), "code": u.code, "name": u.name} for u in units])
+    roles = Role.objects.filter(organization=organization).order_by("name")
+    return _response(
+        [
+            {
+                "id": str(role.id),
+                "name": role.name,
+                "permissions": sorted(role.permissions),
+                "allowed_scopes": role.allowed_scopes,
+            }
+            for role in roles
+        ]
+    )
+
+
+@api_view(methods={"POST"})
+def account_grants(request, pk):
+    _identity_organization(request)
+    payload = _parse_json(request)
+    grant = create_grant(
+        _context(request),
+        account_id=pk,
+        role_id=_required_uuid(payload, "role_id"),
+        scope_type=_required_string(payload, "scope_type", max_length=20),
+        unit_id=_required_uuid(payload, "unit_id") if payload.get("unit_id") else None,
+        valid_from=_optional_datetime(payload, "valid_from"),
+        valid_until=_optional_datetime(payload, "valid_until"),
+        reason=_required_string(payload, "reason"),
+    )
+    return _account_or_person_response(request, grant.account, status=201)
+
+
+@api_view(methods={"POST"})
+def grant_revoke(request, pk):
+    _identity_organization(request)
+    payload = _parse_json(request)
+    grant = revoke_grant(
+        _context(request),
+        grant_id=pk,
+        confirmed=_required_confirmation(payload),
+        reason=_required_string(payload, "reason"),
+    )
+    return _account_or_person_response(request, grant.account)
+
+
+def _account_or_person_response(request, account, status=200):
+    if account.person_id:
+        return _response(_person_resource(_person(request, account.person_id)), status=status)
+    account = Account.objects.prefetch_related("grants__role", "grants__unit").get(pk=account.pk)
+    return _response(_account_resource(account), status=status)
+
+
+# Organization structure and catalog (SIGAB-024/026).
+
+
+def _can_read_structure(request, organization):
+    return any(
+        (
+            has_permission(request.user, MANAGE_IDENTITY, organization),
+            has_permission(request.user, CATALOG_MANAGE, organization),
+            has_any_scope(request.user, ITEM_CREATE, organization),
+        )
+    )
+
+
+def _location_resource(location):
+    return {
+        "id": str(location.id),
+        "code": location.code,
+        "name": location.name,
+        "is_active": location.is_active,
+    }
+
+
+def _unit_resource(unit):
+    return {
+        "id": str(unit.id),
+        "code": unit.code,
+        "name": unit.name,
+        "is_active": unit.is_active,
+        "locations": [
+            _location_resource(location)
+            for location in sorted(unit.locations.all(), key=lambda loc: loc.code)
+        ],
+    }
+
+
+def _units(organization):
+    return Unit.objects.filter(organization=organization).prefetch_related("locations")
+
+
+def _catalog_object(model, request, pk):
+    organization = _organization(request)
+    if not has_permission(request.user, CATALOG_MANAGE, organization):
+        raise PermissionDenied
+    instance = model.objects.filter(pk=pk, organization=organization).first()
+    if not instance:
+        raise Http404
+    return instance
+
+
+@api_view(methods={"GET", "POST"})
+def unit_list(request):
+    organization = _organization(request)
+    if request.method == "POST":
+        payload = _parse_json(request)
+        unit = create_unit(
+            _context(request),
+            code=_required_string(payload, "code", max_length=40),
+            name=_required_string(payload, "name", max_length=160),
+        )
+        return _response(_unit_resource(_units(organization).get(pk=unit.pk)), status=201)
+    if not _can_read_structure(request, organization):
+        raise PermissionDenied
+    return _response([_unit_resource(unit) for unit in _units(organization).order_by("code")])
+
+
+@api_view(methods={"PATCH"})
+def unit_detail(request, pk):
+    unit = _catalog_object(Unit, request, pk)
+    payload = _parse_json(request)
+    update_unit(
+        _context(request), unit_id=unit.id, name=_required_string(payload, "name", max_length=160)
+    )
+    return _response(_unit_resource(_units(unit.organization).get(pk=unit.pk)))
+
+
+@api_view(methods={"POST"})
+def unit_status(request, pk):
+    unit = _catalog_object(Unit, request, pk)
+    payload = _parse_json(request)
+    set_unit_active(
+        _context(request),
+        unit_id=unit.id,
+        is_active=_boolean(payload, "is_active"),
+        confirmed=_required_confirmation(payload),
+        reason=_string(payload, "reason"),
+    )
+    return _response(_unit_resource(_units(unit.organization).get(pk=unit.pk)))
+
+
+@api_view(methods={"POST"})
+def unit_locations(request, pk):
+    unit = _catalog_object(Unit, request, pk)
+    payload = _parse_json(request)
+    create_storage_location(
+        _context(request),
+        unit_id=unit.id,
+        code=_required_string(payload, "code", max_length=40),
+        name=_required_string(payload, "name", max_length=120),
+    )
+    return _response(_unit_resource(_units(unit.organization).get(pk=unit.pk)), status=201)
+
+
+@api_view(methods={"POST"})
+def location_status(request, pk):
+    location = _catalog_object(StorageLocation, request, pk)
+    payload = _parse_json(request)
+    set_storage_location_active(
+        _context(request),
+        location_id=location.id,
+        is_active=_boolean(payload, "is_active"),
+        confirmed=_required_confirmation(payload),
+        reason=_string(payload, "reason"),
+    )
+    return _response(_unit_resource(_units(location.organization).get(pk=location.unit_id)))
+
+
+def _type_resource(equipment_type):
+    return {
+        "id": str(equipment_type.id),
+        "name": equipment_type.name,
+        "description": equipment_type.description,
+        "classification": equipment_type.classification,
+        "classification_label": equipment_type.get_classification_display(),
+        "is_active": equipment_type.is_active,
+    }
+
+
+@api_view(methods={"GET", "POST"})
+def equipment_type_list(request):
+    organization = _organization(request)
+    if request.method == "POST":
+        payload = _parse_json(request)
+        equipment_type = create_equipment_type(
+            _context(request),
+            name=_required_string(payload, "name", max_length=160),
+            classification=_required_string(payload, "classification", max_length=16),
+            description=_string(payload, "description", max_length=2000),
+        )
+        return _response(_type_resource(equipment_type), status=201)
+    if not (
+        has_permission(request.user, CATALOG_MANAGE, organization)
+        or has_any_scope(request.user, ITEM_CREATE, organization)
+    ):
+        raise PermissionDenied
+    types = EquipmentType.objects.filter(organization=organization).order_by("name")
+    return _response([_type_resource(t) for t in types])
+
+
+@api_view(methods={"PATCH"})
+def equipment_type_detail(request, pk):
+    equipment_type = _catalog_object(EquipmentType, request, pk)
+    payload = _parse_json(request)
+    if "classification" in payload:
+        raise ValidationError({"classification": "A classificação não pode ser alterada."})
+    unknown = sorted(set(payload) - {"name", "description"})
+    if unknown:
+        raise ValidationError({field: "Campo não editável." for field in unknown})
+    equipment_type = update_equipment_type(
+        _context(request),
+        type_id=equipment_type.id,
+        name=_string(payload, "name", max_length=160) or equipment_type.name,
+        description=_string(payload, "description", max_length=2000)
+        if "description" in payload
+        else equipment_type.description,
+    )
+    return _response(_type_resource(equipment_type))
+
+
+@api_view(methods={"POST"})
+def equipment_type_status(request, pk):
+    equipment_type = _catalog_object(EquipmentType, request, pk)
+    payload = _parse_json(request)
+    equipment_type = set_equipment_type_active(
+        _context(request),
+        type_id=equipment_type.id,
+        is_active=_boolean(payload, "is_active"),
+        confirmed=_required_confirmation(payload),
+        reason=_string(payload, "reason"),
+    )
+    return _response(_type_resource(equipment_type))

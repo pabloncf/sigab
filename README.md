@@ -46,9 +46,22 @@ Acesse `http://localhost:5173` e entre com a conta criada no passo 1. O Vite enc
 
 ### 3. Dados iniciais
 
-- **Pessoas, vínculos e contas:** menu “Pessoas” do frontend. Pessoa é cadastrada sem conta; a conta é criada depois, na ficha da pessoa, e pode ser suspensa, reativada ou revogada.
-- **Unidade, local de guarda, tipo de equipamento, item e papéis:** `http://127.0.0.1:8000/admin/`, mecanismo administrativo transitório.
-- **Saída, devolução e condição do item:** tela “Acervo” do frontend. Os templates Django em `http://127.0.0.1:8000/` permanecem como fallback.
+O primeiro administrador recebe os papéis “Administrador de acesso” e “Gestor de acervo” da [matriz de papéis](docs/decisoes/0002-papeis-e-escopos.md). Com ele:
+
+1. **Cadastros:** crie unidades, locais de guarda e tipos de equipamento.
+2. **Acervo → Incorporar item:** registre os itens individuais.
+3. **Pessoas:** cadastre pessoas e vínculos; crie a conta de quem vai operar e conceda o papel “Operador de reserva” na unidade. Ninguém concede papel a si mesmo, por isso a saída e a devolução são feitas pela conta do operador.
+4. **Acervo:** com a conta do operador, registre saída, devolução e condição.
+
+O Django Admin (`http://127.0.0.1:8000/admin/`) continua disponível como mecanismo administrativo transitório, e os templates Django em `http://127.0.0.1:8000/` como fallback.
+
+Para suspender ou reativar uma organização pelo plano de controle:
+
+```bash
+cd backend
+uv run python manage.py set_organization_status \
+  --organization-id UUID_DA_ORGANIZACAO --status inactive --reason "Motivo"
+```
 
 Também há um comando para criar conta sem interface (a senha é pedida sem eco):
 

@@ -15,7 +15,7 @@ from sigab.models import (
     Role,
     Unit,
 )
-from sigab.permissions import MANAGE_IDENTITY, MOVE_ITEM
+from sigab.permissions import MANAGE_IDENTITY, MOVEMENT_CHECKOUT
 
 PASSWORD = "Senha-forte-123"
 
@@ -311,7 +311,6 @@ def test_suspension_blocks_login_without_touching_person_or_history(identity):
     assert session.login(username="pessoa.sintetica", password=PASSWORD)
     person_before = Person.objects.filter(pk=person["id"]).values().get()
     memberships_before = list(Membership.objects.filter(person_id=person["id"]).values())
-    audit_before = AuditEvent.objects.count()
 
     response = _json(
         identity["client"],
@@ -325,10 +324,14 @@ def test_suspension_blocks_login_without_touching_person_or_history(identity):
     assert not Client().login(username="pessoa.sintetica", password=PASSWORD)
     assert Person.objects.filter(pk=person["id"]).values().get() == person_before
     assert list(Membership.objects.filter(person_id=person["id"]).values()) == memberships_before
-    assert AuditEvent.objects.count() == audit_before + 1
-    assert AuditEvent.objects.latest("occurred_at").changes == {
-        "status": {"from": "active", "to": "suspended"}
-    }
+    suspension = AuditEvent.objects.get(action="account.suspend")
+    assert suspension.changes == {"status": {"from": "active", "to": "suspended"}}
+    assert (
+        AuditEvent.objects.filter(occurred_at__gte=suspension.occurred_at)
+        .exclude(action__in=["account.suspend", "auth.login"])
+        .count()
+        == 0
+    )
 
     reactivated = _json(
         identity["client"],
@@ -346,7 +349,7 @@ def test_revocation_is_final_and_allows_new_account(identity):
     account_id = _create_account(identity, person["id"]).json()["data"]["accounts"][0]["id"]
     account = Account.objects.get(pk=account_id)
     role = Role.objects.create(
-        organization=identity["organization"], name="Operador 2", permissions=[MOVE_ITEM]
+        organization=identity["organization"], name="Operador 2", permissions=[MOVEMENT_CHECKOUT]
     )
     grant = Grant.objects.create(
         organization=identity["organization"],

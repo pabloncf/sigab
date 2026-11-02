@@ -58,10 +58,10 @@ Responsáveis por papel: **Backend** (Tech Lead/Backend), **Implantação** (que
 
 | ID | P | Ameaça | Preventivo | Detectivo | Estado | Resp. | Teste |
 |---|---|---|---|---|---|---|---|
-| A-01 | P0 | ler ou alterar item, pessoa ou movimentação de outra organização trocando o UUID na URL ou no corpo | consultas sempre filtradas por `organization` da conta; objeto externo responde 404 | auditoria por organização | impl. | Backend | `test_direct_item_route_hides_cross_tenant_item`, `test_api_lists_only_authorized_tenant_items`, `test_condition_change_hides_cross_tenant_item`, `test_tenant_dashboard_does_not_leak_items` |
-| A-02 | P0 | gravar referência a objeto de outra organização (local, pessoa, tipo) | `clean()` e serviços verificam a organização de cada referência | — | parcial: sem chave estrangeira composta no banco (D-06) | Backend | `test_cross_tenant_references_are_rejected`; previsto: teste de devolução e saída com destinatário de outra organização pela API |
+| A-01 | P0 | ler ou alterar item, pessoa ou movimentação de outra organização trocando o UUID na URL ou no corpo | consultas sempre filtradas por `organization` da conta; objeto externo responde 404 idêntico ao inexistente | auditoria por organização | impl. | Backend | `test_isolation.py`: todas as rotas da API, com guarda que falha se uma rota nova não tiver caso |
+| A-02 | P0 | gravar referência a objeto de outra organização (local, pessoa, tipo) | `clean()` e serviços verificam a organização de cada referência | — | parcial: sem chave estrangeira composta no banco (D-06) | Backend | `test_cross_tenant_references_are_rejected`, `test_creation_with_foreign_reference_fails`, `test_checkout_to_foreign_person_fails` |
 | A-03 | P0 | organização enviada pelo cliente usada como autoridade | organização derivada de `Account.organization`; a API não aceita campo de organização | — | impl. | Backend | previsto: `test_api_ignores_client_supplied_organization` |
-| A-04 | P0 | superusuário lê e altera dados de negócio de qualquer organização (`has_permission` retorna verdadeiro para `is_superuser`) | superusuário restrito ao plano de controle (Django Admin de implantação), sem permissão em serviços operacionais; decisão 0002 | auditoria de toda ação de superusuário | **ausente** (D-01) | Backend | previsto: `test_superuser_has_no_operational_permission_in_tenant` |
+| A-04 | P0 | superusuário lê e altera dados de negócio de qualquer organização | superusuário sem permissão de tenant em `has_permission` (decisão 0002, revisão 1.2.0) | auditoria de ações administrativas | parcial: API e serviços fechados; o Django Admin transitório ainda mostra dados ao superusuário | Backend | `test_superuser_has_no_operational_permission_in_tenant` |
 | A-05 | P1 | enumeração de registros externos por diferença de resposta | 404 idêntico para inexistente e de outra organização; UUID não sequencial | — | impl. | Backend | coberto por A-01 |
 
 ### 3.2 Abuso interno
@@ -74,15 +74,15 @@ Responsáveis por papel: **Backend** (Tech Lead/Backend), **Implantação** (que
 | I-04 | P0 | dupla saída do mesmo item por confirmações concorrentes | `select_for_update` e atualização condicional | — | impl. | Backend | `test_concurrent_checkout_accepts_exactly_one` (PostgreSQL) |
 | I-05 | P1 | repetição da mesma requisição gera duas movimentações | chave de idempotência única por organização | — | impl. | Backend | `test_checkout_is_idempotent_and_prevents_second_checkout`, `test_api_checkout_is_validated_and_idempotent` |
 | I-06 | P1 | operador registra saída para si mesmo ou em conluio | regra de produto ainda não decidida | auditoria; relatório de saídas por operador (futuro) | ausente | Produto | previsto após decisão |
-| I-07 | P1 | saída e devolução usam a mesma permissão (`movement.execute`), contrariando a matriz 0002 | alinhar códigos à matriz (D-02) | — | ausente | Backend | previsto: testes de negação separados para saída e devolução |
-| I-08 | P1 | gestor concede a si mesmo papel mais amplo | concessões hoje só pelo Django Admin de superusuário; `granted_by` registrado | auditoria de concessão | parcial: sem fluxo operacional nem separação de funções | Produto, Backend | previsto com o fluxo de gestão de acesso |
+| I-07 | P1 | saída e devolução com a mesma permissão | `movement.checkout` e `movement.return` separados (matriz 0002) | — | impl. | Backend | `test_checkout_and_return_are_separate_permissions` |
+| I-08 | P1 | gestor concede a si mesmo papel mais amplo | `no_self_grant`; motivo obrigatório; `granted_by` registrado | auditoria `grant.create`/`grant.revoke` com motivo | impl. | Backend | `test_no_self_grant`, `test_grant_requires_reason_and_is_audited`, `test_independent_auditor_conflict` |
 | I-09 | P1 | correção feita apagando ou editando o histórico | estorno compensatório com motivo (ADR 0006) | histórico mostra original e estorno | parcial: estorno não implementado (SIGAB-034) | Backend | previsto na SIGAB-034 |
 
 ### 3.3 Furto de credencial e sessão
 
 | ID | P | Ameaça | Preventivo | Detectivo | Estado | Resp. | Teste |
 |---|---|---|---|---|---|---|---|
-| C-01 | P0 | força bruta ou *credential stuffing* em `/entrar/` e `/admin/` | limite de taxa no proxy e bloqueio progressivo por conta e IP na aplicação; validadores de senha do Django | auditoria de falhas de login com alerta por volume | **ausente** (há só os validadores de senha) | Implantação, Backend | previsto: `test_login_is_throttled_after_repeated_failures`, `test_failed_login_is_audited_without_password` |
+| C-01 | P0 | força bruta ou *credential stuffing* em `/entrar/` e `/admin/` | bloqueio por usuário (5 falhas) e por IP (20 falhas) em 15 min, na aplicação; validadores de senha | auditoria `auth.login` de sucesso e falha | parcial: limite também no proxy e uso de IP real atrás de proxy dependem da implantação | Backend, Implantação | `test_login_is_throttled_after_repeated_failures`, `test_throttle_by_ip_covers_many_usernames`, `test_login_failure_is_audited_without_secrets` |
 | C-02 | P0 | sessão capturada por tráfego sem TLS | `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, HSTS e redirecionamento HTTPS fora de `DEBUG`; TLS no proxy | — | **parcial**: `HttpOnly`, `SameSite=Lax` e expiração de 8 h existem; `Secure` e HSTS não | Backend, Implantação | previsto: `manage.py check --deploy` sem alertas no CI com configuração de produção |
 | C-03 | P0 | implantação sem `DJANGO_SECRET_KEY` ou sem `DJANGO_DEBUG=false` sobe com chave pública e páginas de depuração | `DEBUG` falso por padrão; inicialização falha sem chave quando `DEBUG` é falso | — | **ausente**: padrões atuais são `unsafe-development-key` e `DEBUG=true` | Backend | previsto: teste de configuração que falha sem chave em modo produção |
 | C-04 | P0 | conta de servidor desligado continua ativa | suspensão imediata (`is_active`), verificada a cada requisição; troca de senha invalida sessões (hash de sessão do Django) | revisão periódica de contas ativas × vínculos ativos | parcial: suspensão e revogação pela aplicação; sem revisão periódica | Produto, Backend | `test_suspended_account_cannot_login`, `test_suspension_blocks_login_without_touching_person_or_history`, `test_revocation_is_final_and_allows_new_account` |
@@ -117,8 +117,8 @@ Ameaças P0 cujo controle está ausente ou parcial, em ordem sugerida:
 | Ordem | Ameaças | Ação | Responsável |
 |---|---|---|---|
 | 1 | C-03, V-03, C-02 | configuração de produção segura por padrão: `DEBUG` falso, falha sem chave, cookies `Secure`, HSTS; `check --deploy` no CI | Backend |
-| 2 | A-04 | remover o atalho de superusuário em `has_permission` e restringi-lo ao plano de controle | Backend |
-| 3 | C-01 | limite de tentativas de login e auditoria de sucesso e falha | Backend, Implantação |
+| 2 | A-04 | ~~remover o atalho de superusuário~~ feito na SIGAB-022; falta tirar dados de negócio do Django Admin do superusuário | Backend |
+| 3 | C-01 | ~~limite de tentativas e auditoria de login~~ feito na SIGAB-021; falta limite no proxy | Implantação |
 | 4 | T-03, V-02, A-03 | testes previstos para controles já existentes | Backend |
 | 5 | T-02 | papel de banco sem `UPDATE`/`DELETE`, junto com a decisão de implantação | Implantação |
 | 6 | A-02 | chaves estrangeiras compostas ou verificação no banco para referências entre organizações | Backend |

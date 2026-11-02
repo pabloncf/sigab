@@ -9,15 +9,29 @@ from django.utils import timezone
 from .models import (
     Account,
     AuditEvent,
+    EquipmentType,
+    Grant,
     Item,
     Membership,
     Movement,
     MovementEvent,
     Organization,
     Person,
+    Role,
+    StorageLocation,
     Unit,
 )
-from .permissions import MANAGE_IDENTITY, MOVE_ITEM, SET_ITEM_CONDITION, has_permission
+from .permissions import (
+    AUDIT_EXPORT,
+    CATALOG_MANAGE,
+    ITEM_CREATE,
+    MANAGE_IDENTITY,
+    MOVEMENT_CHECKOUT,
+    MOVEMENT_RETURN,
+    MUTATING_PERMISSIONS,
+    SET_ITEM_CONDITION,
+    has_permission,
+)
 
 
 class ConflictError(ValidationError):
@@ -71,7 +85,12 @@ def record_incorporation(ctx, item):
         occurred_at=now,
         metadata={"schema": "item.incorporated.v1"},
     )
-    audit(ctx, "item.incorporate", item, {"availability": item.availability})
+    audit(
+        ctx,
+        "item.incorporate",
+        item,
+        {"availability": item.availability, "condition": item.condition},
+    )
     return movement
 
 
@@ -116,7 +135,7 @@ def checkout_item(
     ).first()
     if not item or not recipient:
         raise ValidationError("Item ou destinatário inválido.")
-    if not has_permission(ctx.actor, MOVE_ITEM, ctx.organization, item.unit):
+    if not has_permission(ctx.actor, MOVEMENT_CHECKOUT, ctx.organization, item.unit):
         raise PermissionDenied
     if not recipient.memberships.filter(organization=ctx.organization, is_active=True).exists():
         raise ValidationError("O destinatário não possui vínculo ativo.")
@@ -196,7 +215,7 @@ def return_item(
         return existing, False
     if not item:
         raise ValidationError("Item inválido.")
-    if not has_permission(ctx.actor, MOVE_ITEM, ctx.organization, item.unit):
+    if not has_permission(ctx.actor, MOVEMENT_RETURN, ctx.organization, item.unit):
         raise PermissionDenied
     checkout = (
         Movement.objects.filter(
@@ -550,7 +569,8 @@ def suspend_account(ctx, *, account_id, confirmed, reason=""):
     if previous != "active":
         raise ConflictError("Somente conta ativa pode ser suspensa.")
     account.is_active = False
-    account.save(update_fields=["is_active"])
+    account.session_version += 1
+    account.save(update_fields=["is_active", "session_version"])
     _audit_account_status(ctx, "account.suspend", account, previous, reason)
     return account
 
@@ -582,7 +602,8 @@ def revoke_account(ctx, *, account_id, confirmed, reason=""):
     account.is_active = False
     account.revoked_at = now
     account.set_unusable_password()
-    account.save(update_fields=["is_active", "revoked_at", "password"])
+    account.session_version += 1
+    account.save(update_fields=["is_active", "revoked_at", "password", "session_version"])
     revoked_grants = account.grants.filter(is_active=True, revoked_at__isnull=True).update(
         is_active=False, revoked_at=now, updated_at=now
     )
@@ -590,3 +611,323 @@ def revoke_account(ctx, *, account_id, confirmed, reason=""):
         ctx, "account.revoke", account, previous, reason, {"revoked_grants": revoked_grants}
     )
     return account
+
+
+@transaction.atomic
+def end_account_sessions(ctx, *, account_id, confirmed, reason=""):
+    """Invalidate every open session of the account without changing its status."""
+    _require_identity_manager(ctx)
+    _require_confirmation(confirmed)
+    account = _account_for_update(ctx, account_id)
+    account.session_version += 1
+    account.save(update_fields=["session_version"])
+    audit(ctx, "account.end_sessions", account, {}, reason=reason.strip())
+    return account
+
+
+# Grants (SIGAB-022, decision 0002): explicit, scoped, time-bound and conflict-checked.
+
+
+def _scopes_overlap(scope_type, unit_id, other):
+    return (
+        scope_type == Grant.Scope.ORGANIZATION
+        or other.scope_type == Grant.Scope.ORGANIZATION
+        or other.unit_id == unit_id
+    )
+
+
+def _check_grant_conflicts(account, role, scope_type, unit_id):
+    """Independent auditor: audit.export never coexists with mutation in the same scope."""
+    permissions = set(role.permissions)
+    now = timezone.now()
+    current = (
+        account.grants.filter(is_active=True, revoked_at__isnull=True)
+        .exclude(valid_until__lte=now)
+        .select_related("role")
+    )
+    for grant in current:
+        if not _scopes_overlap(scope_type, unit_id, grant):
+            continue
+        other = set(grant.role.permissions)
+        if (AUDIT_EXPORT in permissions and other & MUTATING_PERMISSIONS) or (
+            AUDIT_EXPORT in other and permissions & MUTATING_PERMISSIONS
+        ):
+            raise ConflictError(
+                "Conflito de funções: auditor independente não acumula papel que altera dados "
+                "no mesmo escopo."
+            )
+
+
+@transaction.atomic
+def create_grant(
+    ctx,
+    *,
+    account_id,
+    role_id,
+    scope_type,
+    unit_id=None,
+    valid_from=None,
+    valid_until=None,
+    reason,
+):
+    _require_identity_manager(ctx)
+    reason = reason.strip()
+    if not reason:
+        raise ValidationError({"reason": "Informe o motivo da alteração de perfil."})
+    account = (
+        Account.objects.select_for_update()
+        .filter(id=account_id, organization=ctx.organization, is_superuser=False)
+        .first()
+    )
+    if not account:
+        raise NotFoundError
+    if account.pk == ctx.actor.pk:
+        raise ConflictError("Uma conta não pode conceder papel a si mesma.")
+    if account.status == "revoked":
+        raise ConflictError("Conta revogada não recebe concessões.")
+    role = Role.objects.filter(id=role_id, organization=ctx.organization).first()
+    if not role:
+        raise ValidationError({"role_id": "Papel inválido."})
+    unit = None
+    if unit_id:
+        unit = Unit.objects.filter(
+            id=unit_id, organization=ctx.organization, is_active=True
+        ).first()
+        if not unit:
+            raise ValidationError({"unit_id": "Unidade inválida."})
+    grant = Grant(
+        organization=ctx.organization,
+        account=account,
+        role=role,
+        scope_type=scope_type,
+        unit=unit,
+        valid_from=valid_from,
+        valid_until=valid_until,
+        granted_by=ctx.actor,
+    )
+    grant.full_clean()
+    _check_grant_conflicts(account, role, scope_type, unit.id if unit else None)
+    grant.save()
+    audit(
+        ctx,
+        "grant.create",
+        grant,
+        {
+            "account_id": str(account.id),
+            "role_id": str(role.id),
+            "scope_type": scope_type,
+            "unit_id": str(unit.id) if unit else None,
+        },
+        reason=reason,
+    )
+    return grant
+
+
+@transaction.atomic
+def revoke_grant(ctx, *, grant_id, confirmed, reason):
+    _require_identity_manager(ctx)
+    _require_confirmation(confirmed)
+    reason = reason.strip()
+    if not reason:
+        raise ValidationError({"reason": "Informe o motivo da alteração de perfil."})
+    grant = (
+        Grant.objects.select_for_update().filter(id=grant_id, organization=ctx.organization).first()
+    )
+    if not grant:
+        raise NotFoundError
+    if grant.account_id == ctx.actor.pk:
+        raise ConflictError("Uma conta não pode revogar a própria concessão.")
+    if grant.revoked_at or not grant.is_active:
+        raise ConflictError("A concessão já está revogada.")
+    now = timezone.now()
+    grant.is_active = False
+    grant.revoked_at = now
+    grant.save(update_fields=["is_active", "revoked_at", "updated_at"])
+    audit(ctx, "grant.revoke", grant, {"account_id": str(grant.account_id)}, reason=reason)
+    return grant
+
+
+# Organization structure and catalog (SIGAB-024/026): catalog.manage at organization scope.
+
+
+def _require_catalog_manager(ctx):
+    if not has_permission(ctx.actor, CATALOG_MANAGE, ctx.organization):
+        raise PermissionDenied
+
+
+def _set_active(ctx, instance, is_active, confirmed, reason, label):
+    _require_confirmation(confirmed)
+    if instance.is_active == is_active:
+        raise ConflictError(f"{label} já está nessa situação.")
+    instance.is_active = is_active
+    instance.save(update_fields=["is_active", "updated_at"])
+    action = "activate" if is_active else "deactivate"
+    audit(
+        ctx,
+        f"{instance._meta.model_name}.{action}",
+        instance,
+        {"is_active": {"from": not is_active, "to": is_active}},
+        reason=reason.strip(),
+    )
+    return instance
+
+
+def _locked(model, ctx, pk):
+    instance = (
+        model.objects.select_for_update().filter(id=pk, organization=ctx.organization).first()
+    )
+    if not instance:
+        raise NotFoundError
+    return instance
+
+
+@transaction.atomic
+def create_unit(ctx, *, code, name):
+    _require_catalog_manager(ctx)
+    unit = Unit(organization=ctx.organization, code=code.strip(), name=name.strip())
+    unit.full_clean()
+    unit.save()
+    audit(ctx, "unit.create", unit, {"code": unit.code})
+    return unit
+
+
+@transaction.atomic
+def update_unit(ctx, *, unit_id, name):
+    _require_catalog_manager(ctx)
+    unit = _locked(Unit, ctx, unit_id)
+    previous = unit.name
+    unit.name = name.strip()
+    unit.full_clean()
+    if unit.name != previous:
+        unit.save(update_fields=["name", "updated_at"])
+        audit(ctx, "unit.update", unit, {"name": {"from": previous, "to": unit.name}})
+    return unit
+
+
+@transaction.atomic
+def set_unit_active(ctx, *, unit_id, is_active, confirmed, reason=""):
+    """Deactivation blocks new links to the unit; items, people and history remain."""
+    _require_catalog_manager(ctx)
+    return _set_active(ctx, _locked(Unit, ctx, unit_id), is_active, confirmed, reason, "A unidade")
+
+
+@transaction.atomic
+def create_storage_location(ctx, *, unit_id, code, name):
+    _require_catalog_manager(ctx)
+    unit = Unit.objects.filter(id=unit_id, organization=ctx.organization, is_active=True).first()
+    if not unit:
+        raise ValidationError({"unit_id": "Unidade inválida."})
+    location = StorageLocation(
+        organization=ctx.organization, unit=unit, code=code.strip(), name=name.strip()
+    )
+    location.full_clean()
+    location.save()
+    audit(ctx, "storagelocation.create", location, {"unit_id": str(unit.id), "code": location.code})
+    return location
+
+
+@transaction.atomic
+def set_storage_location_active(ctx, *, location_id, is_active, confirmed, reason=""):
+    _require_catalog_manager(ctx)
+    location = _locked(StorageLocation, ctx, location_id)
+    return _set_active(ctx, location, is_active, confirmed, reason, "O local de guarda")
+
+
+@transaction.atomic
+def create_equipment_type(ctx, *, name, classification, description=""):
+    _require_catalog_manager(ctx)
+    equipment_type = EquipmentType(
+        organization=ctx.organization,
+        name=name.strip(),
+        classification=classification,
+        description=description.strip(),
+    )
+    equipment_type.full_clean()
+    equipment_type.save()
+    audit(ctx, "equipmenttype.create", equipment_type, {"classification": classification})
+    return equipment_type
+
+
+@transaction.atomic
+def update_equipment_type(ctx, *, type_id, name, description):
+    """Name and description only: the classification is immutable (RN-03, RF-16)."""
+    _require_catalog_manager(ctx)
+    equipment_type = _locked(EquipmentType, ctx, type_id)
+    changed = {}
+    for field, value in (("name", name.strip()), ("description", description.strip())):
+        if getattr(equipment_type, field) != value:
+            changed[field] = {"from": getattr(equipment_type, field), "to": value}
+            setattr(equipment_type, field, value)
+    if changed:
+        equipment_type.full_clean()
+        equipment_type.save(update_fields=[*changed, "updated_at"])
+        audit(ctx, "equipmenttype.update", equipment_type, changed)
+    return equipment_type
+
+
+@transaction.atomic
+def set_equipment_type_active(ctx, *, type_id, is_active, confirmed, reason=""):
+    _require_catalog_manager(ctx)
+    equipment_type = _locked(EquipmentType, ctx, type_id)
+    return _set_active(ctx, equipment_type, is_active, confirmed, reason, "O tipo")
+
+
+# Individual item (SIGAB-027): T01 of decision 0004.
+
+
+@transaction.atomic
+def incorporate_item(
+    ctx,
+    *,
+    equipment_type_id,
+    unit_id,
+    storage_location_id,
+    confirmed,
+    serial_number="",
+    asset_number="",
+    official_identifier="",
+    condition=Item.Condition.FIT,
+    condition_reason="",
+):
+    """Register an individual item in the reserve with its declared condition."""
+    _require_confirmation(confirmed)
+    unit = Unit.objects.filter(id=unit_id, organization=ctx.organization, is_active=True).first()
+    if not unit:
+        raise ValidationError({"unit_id": "Unidade inválida."})
+    if not has_permission(ctx.actor, ITEM_CREATE, ctx.organization, unit):
+        raise PermissionDenied
+    equipment_type = EquipmentType.objects.filter(
+        id=equipment_type_id, organization=ctx.organization, is_active=True
+    ).first()
+    if not equipment_type:
+        raise ValidationError({"equipment_type_id": "Tipo inválido."})
+    location = StorageLocation.objects.filter(
+        id=storage_location_id, organization=ctx.organization, unit=unit, is_active=True
+    ).first()
+    if not location:
+        raise ValidationError({"storage_location_id": "Local de guarda inválido para a unidade."})
+    serial_number, asset_number = serial_number.strip(), asset_number.strip()
+    if not serial_number and not asset_number:
+        # RF-12/RN-02: the item is identified by a number unique in the organization.
+        raise ValidationError("Informe o número de série ou o patrimônio.")
+    reason = _condition_reason(condition, condition_reason)
+    item = Item(
+        organization=ctx.organization,
+        equipment_type=equipment_type,
+        unit=unit,
+        storage_location=location,
+        serial_number=serial_number,
+        asset_number=asset_number,
+        official_identifier=official_identifier.strip(),
+        condition=condition,
+        condition_reason=reason if condition == Item.Condition.UNFIT else "",
+        availability=(
+            Item.Availability.AVAILABLE
+            if condition == Item.Condition.FIT
+            else Item.Availability.UNAVAILABLE
+        ),
+    )
+    item.full_clean()
+    item.save()
+    record_incorporation(ctx, item)
+    return item

@@ -7,6 +7,19 @@ interface AppShellProps {
   children: ReactNode;
 }
 
+function areas(session: Session) {
+  return [
+    { href: "/", label: "Acervo" },
+    ...(session.permissions.can_manage_identity ? [{ href: "/pessoas", label: "Pessoas" }] : []),
+    ...(session.permissions.can_manage_catalog ? [{ href: "/cadastros", label: "Cadastros" }] : [])
+  ];
+}
+
+function currentArea(session: Session) {
+  const match = areas(session).find((area) => area.href !== "/" && window.location.pathname.startsWith(area.href));
+  return match?.href ?? "/";
+}
+
 export function AppShell({ session, children }: AppShellProps) {
   async function handleLogout() {
     await postJson<null>("/session/logout/");
@@ -23,10 +36,11 @@ export function AppShell({ session, children }: AppShellProps) {
             <small>Gestão de acervo</small>
           </span>
         </a>
-        {session.permissions.can_manage_identity && (
+        {(session.permissions.can_manage_identity || session.permissions.can_manage_catalog) && (
           <nav className="main-nav" aria-label="Áreas">
-            <a href="/" aria-current={window.location.pathname.startsWith("/pessoas") ? undefined : "page"}>Acervo</a>
-            <a href="/pessoas" aria-current={window.location.pathname.startsWith("/pessoas") ? "page" : undefined}>Pessoas</a>
+            {areas(session).map((area) => (
+              <a key={area.href} href={area.href} aria-current={currentArea(session) === area.href ? "page" : undefined}>{area.label}</a>
+            ))}
           </nav>
         )}
         <div className="account">

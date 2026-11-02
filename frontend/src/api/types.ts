@@ -1,7 +1,7 @@
 export interface Session {
   user: { id: string; username: string };
   organization: { id: string; name: string };
-  permissions: { can_manage_identity: boolean };
+  permissions: { can_manage_identity: boolean; can_manage_catalog: boolean; can_create_item: boolean };
 }
 
 export interface Page<T> {
@@ -26,13 +26,24 @@ export interface ItemSummary {
 export interface ItemDetail extends ItemSummary {
   unit: { id: string; code: string; name: string };
   storage_location: { id: string; code: string; name: string };
-  permissions: { can_move: boolean; can_set_condition: boolean };
-  events: Array<{
+  serial_number: string;
+  asset_number: string;
+  official_identifier: string;
+  permissions: { can_checkout: boolean; can_return: boolean; can_set_condition: boolean };
+}
+
+export interface ItemEvent {
+  id: string;
+  type: string;
+  occurred_at: string;
+  actor: string;
+  movement: {
     id: string;
     type: string;
-    occurred_at: string;
-    actor: string;
-  }>;
+    recipient: { id: string; name: string } | null;
+    condition: "fit" | "unfit" | null;
+    reason: string;
+  };
 }
 
 export interface Recipient {
@@ -63,6 +74,16 @@ export interface Membership {
   main_unit: { id: string; code: string; name: string };
 }
 
+export interface GrantInfo {
+  id: string;
+  role: { id: string; name: string };
+  scope_type: "organization" | "unit";
+  unit: { id: string; code: string; name: string } | null;
+  valid_from: string | null;
+  valid_until: string | null;
+  active: boolean;
+}
+
 export interface AccountInfo {
   id: string;
   username: string;
@@ -70,6 +91,38 @@ export interface AccountInfo {
   status: "active" | "suspended" | "revoked";
   last_login: string | null;
   revoked_at: string | null;
+  grants: GrantInfo[];
+}
+
+export interface RoleOption {
+  id: string;
+  name: string;
+  permissions: string[];
+  allowed_scopes: Array<"organization" | "unit">;
+}
+
+export interface LocationInfo {
+  id: string;
+  code: string;
+  name: string;
+  is_active: boolean;
+}
+
+export interface UnitInfo {
+  id: string;
+  code: string;
+  name: string;
+  is_active: boolean;
+  locations: LocationInfo[];
+}
+
+export interface EquipmentTypeInfo {
+  id: string;
+  name: string;
+  description: string;
+  classification: "individual" | "quantitative";
+  classification_label: string;
+  is_active: boolean;
 }
 
 export interface PersonDetail {
@@ -83,8 +136,4 @@ export interface PersonDetail {
   accounts: AccountInfo[];
 }
 
-export interface UnitOption {
-  id: string;
-  code: string;
-  name: string;
-}
+export type UnitOption = UnitInfo;

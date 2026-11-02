@@ -12,7 +12,7 @@ from sigab.models import (
     StorageLocation,
     Unit,
 )
-from sigab.permissions import MOVE_ITEM, SET_ITEM_CONDITION, VIEW_ITEM
+from sigab.permissions import MOVEMENT_CHECKOUT, MOVEMENT_RETURN, SET_ITEM_CONDITION, VIEW_ITEM
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ def api_world(db):
     role = Role.objects.create(
         organization=organization,
         name="Operador API",
-        permissions=[MOVE_ITEM, SET_ITEM_CONDITION, VIEW_ITEM],
+        permissions=[MOVEMENT_CHECKOUT, MOVEMENT_RETURN, SET_ITEM_CONDITION, VIEW_ITEM],
     )
     Grant.objects.create(
         organization=organization,

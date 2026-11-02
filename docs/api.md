@@ -1,7 +1,7 @@
 # Convenções da API
 
 - Tarefa: SIGAB-014
-- Revisão: 2026-11-02, conferida com `backend/sigab/api/`
+- Revisão: 2026-11-02 (SIGAB-014; rotas e autenticação revistas na SIGAB-021 a 030), conferida com `backend/sigab/api/`
 - Base: [ADR 0005](adr/0005-api-django-e-frontend-react.md) (fronteira React/API), [ADR 0006](adr/0006-eventos-auditoria-e-estornos.md) (eventos e auditoria), [modelo de ameaças](modelo-de-ameacas.md)
 - Requisitos: RF-20, RF-21 e RF-60 do [DOC-0011 v0.1](fontes/DOC-0011-analise-de-requisitos-v0.1.md)
 
@@ -18,7 +18,11 @@
 - Sessão Django em cookie `HttpOnly` (`SameSite=Lax`, expira em 8 h). Login e logout de formulário em `/entrar/` e `/sair/`; logout da SPA em `POST /api/v1/session/logout/`.
 - `GET /api/v1/session/` devolve a conta, a organização e as permissões de interface (`permissions.can_manage_identity`) e grava o cookie `csrftoken`.
 - Toda escrita (`POST`, `PATCH`) exige o cabeçalho `X-CSRFToken` com o valor do cookie. Sem ele, a resposta é `403` no formato de erro da seção 5.
-- Conta inativa ou revogada é tratada como não autenticada a partir da requisição seguinte.
+- Conta inativa ou revogada, ou de organização suspensa, é tratada como não autenticada a partir da requisição seguinte.
+- Sessões são revogáveis: suspender, revogar ou “encerrar sessões” de uma conta incrementa `session_version`, e toda sessão aberta com a versão anterior é encerrada na próxima requisição. Trocar a senha também encerra as sessões (hash de sessão do Django).
+- Senhas são guardadas só como hash PBKDF2-SHA256 do Django e validadas pelos validadores de força configurados.
+- Limite de tentativas: 5 falhas para o mesmo usuário ou 20 para o mesmo IP em 15 minutos bloqueiam novas tentativas, inclusive com a senha certa, com a mesma mensagem genérica de credencial inválida. O usuário digitado é guardado só como HMAC; o IP vem de `REMOTE_ADDR` até que um proxy confiável seja definido.
+- Login com sucesso e com falha gera `AuditEvent` `auth.login` com `result` `success` ou `failure`, sem senha nem usuário digitado.
 - Sem CORS: frontend e API na mesma origem.
 
 ## 3. Autorização e organização
@@ -37,13 +41,16 @@ Toda escrita passa por três camadas:
 2. **Regra de domínio** (`services.py`): tenant, permissão, estado atual, `full_clean()` e restrições do banco, sob `transaction.atomic`.
 3. **Banco**: restrições únicas e de verificação; violação concorrente vira `409`.
 
-Confirmação explícita (RF-21): operações que mudam estado operacional ou situação exigem `"confirmed": true` no corpo. Hoje: saída, devolução, condição do item, situação de pessoa e de vínculo, e suspensão, reativação e revogação de conta.
+Confirmação explícita (RF-21): operações que mudam estado operacional ou situação exigem `"confirmed": true` no corpo. Hoje: incorporação, saída, devolução e condição do item; situação de pessoa, vínculo, unidade, local e tipo; suspensão, reativação, revogação e encerramento de sessões de conta; revogação de concessão.
 
 Estratégia de idempotência por tipo de escrita:
 
 | Escrita | Estratégia | Repetição da mesma requisição | Mesma chave com outro conteúdo |
 |---|---|---|---|
 | saída, devolução, condição do item | `idempotency_key` (UUID) obrigatório, único por organização no banco | `200` com a movimentação original e `"created": false` | `409` |
+| incorporação de item | chave natural: número de série e patrimônio únicos na organização (RN-02), ao menos um obrigatório | `400` (número já usado) | — |
+| unidade, local de guarda, tipo | chave natural: código ou nome único na organização | `400` | — |
+| concessão de papel | sem chave; repetir cria outra concessão equivalente, visível e revogável | — | — |
 | situação de pessoa, vínculo e conta | transição de estado: repetir a mesma transição falha porque o estado já mudou | `409` com mensagem de estado (“já está nessa situação”) | — |
 | cadastro de pessoa | sem chave. A duplicidade é barrada por CPF único na organização, quando informado | pode criar outro registro se o CPF não for informado; o frontend desabilita o botão durante o envio | — |
 | cadastro de vínculo e de conta | chave natural única: matrícula na organização; uma conta não revogada por pessoa | `400` (matrícula) ou `409` (conta) | — |
@@ -97,26 +104,37 @@ Coleções que crescem com o cadastro (`/items/`, `/people/`) aceitam `limit` (p
 
 ## 7. Recursos atuais
 
+Permissões da [matriz 0002](decisoes/0002-papeis-e-escopos.md) (versão 1.2.0). “Unidade” significa a unidade de lotação do objeto; concessão de organização alcança todas.
+
 | Método e rota | Permissão | Uso |
 |---|---|---|
-| `GET /session/` | autenticado | conta, organização e permissões de interface |
+| `GET /session/` | autenticado | conta, organização e flags de interface (`can_manage_identity`, `can_manage_catalog`, `can_create_item`) |
 | `POST /session/logout/` | autenticado | encerra a sessão |
-| `GET /items/` | `item.view` no escopo | itens visíveis, paginado |
-| `GET /items/<id>/` | `item.view` na unidade | item com histórico de eventos |
-| `GET /items/<id>/recipients/` | `movement.execute` na unidade | pessoas ativas com vínculo ativo |
-| `POST /items/<id>/checkout/` | `movement.execute` | saída (T02) |
-| `POST /items/<id>/return/` | `movement.execute` | devolução (T03/T04) |
+| `GET /items/` | `item.view` no escopo | itens visíveis, paginado; `?holder=<pessoa>` dá a posse atual (RF-51) |
+| `POST /items/` | `item.create` na unidade | incorporação (T01) com condição declarada |
+| `GET /items/<id>/` | `item.view` na unidade | situação atual, identificadores e flags de ação |
+| `GET /items/<id>/events/` | `item.view` na unidade | histórico cronológico e paginado, somente leitura (RF-15, RF-53) |
+| `GET /items/<id>/recipients/` | `movement.checkout` na unidade | pessoas ativas com vínculo ativo |
+| `POST /items/<id>/checkout/` | `movement.checkout` | saída (T02), [contrato](contratos/saida-individual.md) |
+| `POST /items/<id>/return/` | `movement.return` | devolução (T03/T04) |
 | `POST /items/<id>/condition/` | `item.condition.set` | declarar inapto ou liberar (T05/T06) |
-| `GET`, `POST /people/` | `identity.manage` (organização) | listar e cadastrar pessoa, sem conta |
-| `GET`, `PATCH /people/<id>/` | `identity.manage` | ficha e edição de dados cadastrais |
+| `GET`, `POST /people/` | `identity.manage` | listar e cadastrar pessoa, sem conta |
+| `GET`, `PATCH /people/<id>/` | `identity.manage` | ficha, contas e concessões; edição cadastral |
 | `POST /people/<id>/status/` | `identity.manage` | desativar ou reativar pessoa |
 | `POST /people/<id>/memberships/` | `identity.manage` | novo vínculo |
 | `POST /memberships/<id>/status/` | `identity.manage` | desativar ou reativar vínculo |
 | `POST /people/<id>/account/` | `identity.manage` | criar conta de acesso |
-| `POST /accounts/<id>/suspend/`, `/reactivate/`, `/revoke/` | `identity.manage` | ciclo de vida da conta |
-| `GET /units/` | `identity.manage` | unidades ativas para o cadastro de vínculo |
+| `POST /accounts/<id>/suspend/`, `/reactivate/`, `/revoke/`, `/end-sessions/` | `identity.manage` | ciclo de vida e sessões da conta |
+| `POST /accounts/<id>/grants/` | `identity.manage` | conceder papel em escopo e vigência, com motivo (RF-04) |
+| `POST /grants/<id>/revoke/` | `identity.manage` | revogar concessão, com motivo |
+| `GET /roles/` | `identity.manage` | papéis da organização com permissões e escopos permitidos |
+| `GET /units/` | `identity.manage`, `catalog.manage` ou `item.create` | unidades com locais de guarda |
+| `POST /units/`, `PATCH /units/<id>/`, `POST /units/<id>/status/` | `catalog.manage` | cadastro, nome e situação da unidade |
+| `POST /units/<id>/locations/`, `POST /locations/<id>/status/` | `catalog.manage` | locais de guarda |
+| `GET /equipment-types/` | `catalog.manage` ou `item.create` | catálogo de tipos |
+| `POST /equipment-types/`, `PATCH /equipment-types/<id>/`, `POST /equipment-types/<id>/status/` | `catalog.manage` | cadastro, nome e descrição, situação; a classificação nunca muda (RN-03) |
 
-Códigos de permissão ainda diferem da matriz da decisão 0002 (`movement.execute` × `movement.checkout`/`movement.return`): divergência D-02 do [modelo de domínio](modelo-de-dominio.md).
+Toda rota nova precisa de caso em `backend/sigab/tests/test_isolation.py`; um teste falha quando alguma rota não tem.
 
 ## 8. Dados pessoais na API
 

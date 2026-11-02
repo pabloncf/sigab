@@ -170,6 +170,10 @@ class Account(AbstractUser):
             raise ValidationError("Conta e pessoa devem pertencer à mesma organização.")
 
 
+def default_allowed_scopes():
+    return ["organization", "unit"]
+
+
 class Role(TimestampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(
@@ -177,11 +181,25 @@ class Role(TimestampedModel):
     )
     name = models.CharField(max_length=80)
     permissions = models.JSONField(default=list)
+    # Scopes in which the role may be granted (decision 0002, "Escopo permitido").
+    allowed_scopes = models.JSONField(default=default_allowed_scopes)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["organization", "name"], name="uniq_role_name_org")
         ]
+
+    def clean(self):
+        from .permissions import TENANT_PERMISSIONS
+
+        if (
+            not isinstance(self.permissions, list)
+            or not set(self.permissions) <= TENANT_PERMISSIONS
+        ):
+            raise ValidationError({"permissions": "Papel contém permissão fora da matriz."})
+        scopes = set(self.allowed_scopes or [])
+        if not scopes or not scopes <= {"organization", "unit"}:
+            raise ValidationError({"allowed_scopes": "Escopo permitido inválido."})
 
 
 class Grant(TimestampedModel):
@@ -202,15 +220,40 @@ class Grant(TimestampedModel):
         Account, null=True, on_delete=models.PROTECT, related_name="grants_made"
     )
     revoked_at = models.DateTimeField(null=True, blank=True)
+    valid_from = models.DateTimeField(null=True, blank=True)
+    valid_until = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(Q(scope_type="organization") & Q(unit__isnull=True))
+                | (Q(scope_type="unit") & Q(unit__isnull=False)),
+                name="grant_scope_matches_unit",
+            ),
+            models.CheckConstraint(
+                condition=Q(valid_from__isnull=True)
+                | Q(valid_until__isnull=True)
+                | Q(valid_until__gt=models.F("valid_from")),
+                name="grant_validity_window",
+            ),
+        ]
 
     def clean(self):
-        related = [self.account.organization_id, self.role.organization_id or self.organization_id]
+        related = [self.account.organization_id, self.role.organization_id]
         if self.unit_id:
             related.append(self.unit.organization_id)
         if any(org_id != self.organization_id for org_id in related):
             raise ValidationError("Concessão contém referência de outra organização.")
         if self.scope_type == self.Scope.UNIT and not self.unit_id:
-            raise ValidationError("Escopo de unidade exige uma unidade.")
+            raise ValidationError({"unit": "Escopo de unidade exige uma unidade."})
+        if self.scope_type == self.Scope.ORGANIZATION and self.unit_id:
+            raise ValidationError({"unit": "Escopo de organização não aceita unidade."})
+        if self.scope_type not in (self.role.allowed_scopes or []):
+            raise ValidationError({"scope_type": "O papel não pode ser concedido neste escopo."})
+        if self.valid_from and self.valid_until and self.valid_until <= self.valid_from:
+            raise ValidationError(
+                {"valid_until": "O fim da vigência deve ser posterior ao início."}
+            )
 
 
 class EquipmentType(TimestampedModel):
@@ -233,13 +276,14 @@ class EquipmentType(TimestampedModel):
         ]
 
     def save(self, *args, **kwargs):
+        # RN-03/RF-16: the classification never changes after creation (in use or not).
         if (
             self.pk
-            and EquipmentType.objects.filter(pk=self.pk, items__isnull=False)
+            and EquipmentType.objects.filter(pk=self.pk)
             .exclude(classification=self.classification)
             .exists()
         ):
-            raise ValidationError("A classificação de um tipo em uso não pode ser alterada.")
+            raise ValidationError("A classificação de um tipo não pode ser alterada.")
         super().save(*args, **kwargs)
 
 
@@ -432,3 +476,22 @@ class AuditEvent(ImmutableModel):
     class Meta:
         ordering = ["occurred_at", "id"]
         indexes = [models.Index(fields=["organization", "occurred_at"])]
+
+
+class AuthenticationFailure(models.Model):
+    """Failed login attempt, kept only to rate-limit authentication (SIGAB-021).
+
+    Technical throttling data, not audit: the username is stored as a keyed hash because
+    people sometimes type a password into the username field.
+    """
+
+    id = models.BigAutoField(primary_key=True)
+    username_digest = models.CharField(max_length=64)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    occurred_at = models.DateTimeField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["username_digest", "occurred_at"]),
+            models.Index(fields=["ip_address", "occurred_at"]),
+        ]

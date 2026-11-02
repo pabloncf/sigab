@@ -24,6 +24,7 @@ MIDDLEWARE = [
     "sigab.middleware.CorrelationIdMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "sigab.authentication.SessionVersionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -66,6 +67,7 @@ else:
     }
 
 AUTH_USER_MODEL = "sigab.Account"
+AUTHENTICATION_BACKENDS = ["sigab.authentication.ThrottledModelBackend"]
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

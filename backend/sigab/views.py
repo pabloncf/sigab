@@ -6,7 +6,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import CheckoutForm, ConditionForm, ReturnForm
 from .models import Item
-from .permissions import MOVE_ITEM, SET_ITEM_CONDITION, VIEW_ITEM, has_permission
+from .permissions import (
+    MOVEMENT_CHECKOUT,
+    MOVEMENT_RETURN,
+    SET_ITEM_CONDITION,
+    VIEW_ITEM,
+    has_permission,
+)
 from .services import CommandContext, checkout_item, return_item, set_item_condition
 
 
@@ -60,7 +66,7 @@ def item_detail(request, pk):
 
 @login_required
 def checkout(request, pk):
-    item = _item(request, pk, MOVE_ITEM)
+    item = _item(request, pk, MOVEMENT_CHECKOUT)
     form = CheckoutForm(request.POST or None, organization=request.user.organization)
     if request.method == "POST" and form.is_valid():
         ctx = CommandContext(request.user, request.user.organization, request.correlation_id)
@@ -88,7 +94,7 @@ def checkout(request, pk):
 
 @login_required
 def checkin(request, pk):
-    item = _item(request, pk, MOVE_ITEM)
+    item = _item(request, pk, MOVEMENT_RETURN)
     form = ReturnForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         ctx = CommandContext(request.user, request.user.organization, request.correlation_id)

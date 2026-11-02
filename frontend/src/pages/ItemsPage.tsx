@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError, apiPage } from "../api/client";
 import type { ItemSummary, Session } from "../api/types";
 import { ErrorState, LoadingState } from "../components/Feedback";
+import { IncorporateItemDialog } from "../components/IncorporateItemDialog";
 import { StatusBadge } from "../components/StatusBadge";
 
 const PAGE_LIMIT = 500;
@@ -12,6 +13,7 @@ export function ItemsPage({ session }: { session: Session }) {
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [incorporating, setIncorporating] = useState(false);
 
   async function loadItems() {
     setLoading(true);
@@ -46,10 +48,13 @@ export function ItemsPage({ session }: { session: Session }) {
           <h1>{session.organization.name}</h1>
           <p>Consulte a situação atual e registre movimentações dentro do seu escopo.</p>
         </div>
-        <label className="search-field">
-          <span>Buscar item</span>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Número, tipo ou responsável" />
-        </label>
+        <div className="stack">
+          <label className="search-field">
+            <span>Buscar item</span>
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Número, tipo ou responsável" />
+          </label>
+          {session.permissions.can_create_item && <button className="button button-primary" type="button" onClick={() => setIncorporating(true)}>Incorporar item</button>}
+        </div>
       </section>
 
       {loading ? <LoadingState /> : error ? <ErrorState message={error} onRetry={() => void loadItems()} /> : (
@@ -75,6 +80,8 @@ export function ItemsPage({ session }: { session: Session }) {
           )}
         </section>
       )}
+
+      {incorporating && <IncorporateItemDialog onClose={() => setIncorporating(false)} onCreated={(item) => window.location.assign(`/items/${item.id}`)} />}
     </>
   );
 }

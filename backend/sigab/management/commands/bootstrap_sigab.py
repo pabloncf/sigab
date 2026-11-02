@@ -6,8 +6,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from sigab.models import Account, AuditEvent, Grant, Organization, Role
-from sigab.permissions import ADMIN_PERMISSIONS
+from sigab.models import Account, AuditEvent, Grant, Organization
+from sigab.roles import INITIAL_ADMINISTRATOR_ROLES, create_tenant_roles
 
 
 class Command(BaseCommand):
@@ -40,21 +40,23 @@ class Command(BaseCommand):
                 codename__startswith="delete_"
             )
         )
-        role = Role.objects.create(
-            organization=organization, name="Administrador inicial", permissions=ADMIN_PERMISSIONS
-        )
-        Grant.objects.create(
-            organization=organization,
-            account=account,
-            role=role,
-            scope_type=Grant.Scope.ORGANIZATION,
-            granted_by=account,
-        )
+        roles = create_tenant_roles(organization)
+        # The bootstrap is the controlled control-plane flow: the initial grants have no
+        # tenant grantor, which is why granted_by stays empty.
+        grants = [
+            Grant.objects.create(
+                organization=organization,
+                account=account,
+                role=roles[key],
+                scope_type=Grant.Scope.ORGANIZATION,
+            )
+            for key in INITIAL_ADMINISTRATOR_ROLES
+        ]
         correlation_id = str(uuid.uuid4())
         for action, instance in [
             ("organization.create", organization),
             ("account.create", account),
-            ("grant.create", role),
+            *[("grant.create", grant) for grant in grants],
         ]:
             AuditEvent.objects.create(
                 organization=organization,

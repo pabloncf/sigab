@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
-import { ApiError, apiRequest, postJson } from "../api/client";
-import type { ItemDetail, MovementResult, Recipient } from "../api/types";
+import { ApiError, apiPage, apiRequest, postJson } from "../api/client";
+import type { ItemDetail, ItemEvent, MovementResult, Recipient } from "../api/types";
 import { ErrorState, LoadingState } from "../components/Feedback";
 import { StatusBadge } from "../components/StatusBadge";
 
 type Action = "checkout" | "return" | "condition";
+
+const HISTORY_PAGE = 20;
 
 const EVENT_LABELS: Record<string, string> = {
   "item.incorporated": "Item incorporado",
@@ -15,6 +17,8 @@ const EVENT_LABELS: Record<string, string> = {
 
 export function ItemDetailPage({ itemId }: { itemId: string }) {
   const [item, setItem] = useState<ItemDetail | null>(null);
+  const [events, setEvents] = useState<ItemEvent[]>([]);
+  const [eventCount, setEventCount] = useState(0);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [action, setAction] = useState<Action | null>(null);
   // One key per opened dialog: resubmitting after a network failure replays, never duplicates.
@@ -29,6 +33,9 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
     setError("");
     try {
       setItem(await apiRequest<ItemDetail>(`/items/${itemId}/`));
+      const page = await apiPage<ItemEvent>(`/items/${itemId}/events/?limit=${HISTORY_PAGE}`);
+      setEvents(page.rows);
+      setEventCount(page.count);
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : "Erro inesperado.");
     } finally {
@@ -37,6 +44,16 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
   }
 
   useEffect(() => { void loadItem(); }, [itemId]);
+
+  async function loadMoreEvents() {
+    try {
+      const page = await apiPage<ItemEvent>(`/items/${itemId}/events/?limit=${HISTORY_PAGE}&offset=${events.length}`);
+      setEvents([...events, ...page.rows]);
+      setEventCount(page.count);
+    } catch (requestError) {
+      setError(requestError instanceof ApiError ? requestError.message : "Erro inesperado.");
+    }
+  }
 
   async function openAction(nextAction: Action) {
     setError("");
@@ -110,23 +127,26 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
             <div><dt>Unidade</dt><dd>{item.unit.code} · {item.unit.name}</dd></div>
             <div><dt>Local de guarda</dt><dd>{item.storage_location.code} · {item.storage_location.name}</dd></div>
             <div><dt>Responsável</dt><dd>{item.current_holder?.name ?? "Nenhum"}</dd></div>
+            <div><dt>Série · Patrimônio</dt><dd>{item.serial_number || "—"} · {item.asset_number || "—"}</dd></div>
+            {item.official_identifier && <div><dt>Registro oficial</dt><dd>{item.official_identifier}</dd></div>}
           </dl>
           <div className="actions">
-            {item.permissions.can_move && item.availability === "available" && item.condition === "fit" && <button className="button button-primary" onClick={() => void openAction("checkout")}>Registrar saída</button>}
-            {item.permissions.can_move && item.availability === "in_custody" && <button className="button button-primary" onClick={() => void openAction("return")}>Registrar devolução</button>}
+            {item.permissions.can_checkout && item.availability === "available" && item.condition === "fit" && <button className="button button-primary" onClick={() => void openAction("checkout")}>Registrar saída</button>}
+            {item.permissions.can_return && item.availability === "in_custody" && <button className="button button-primary" onClick={() => void openAction("return")}>Registrar devolução</button>}
             {canChangeCondition && <button className="button button-secondary" onClick={() => void openAction("condition")}>{item.condition === "unfit" ? "Liberar como apto" : "Declarar inapto"}</button>}
           </div>
         </section>
 
         <section className="history-card">
           <h2>Histórico imutável</h2>
-          {item.events.length === 0 ? <p className="muted">Sem eventos registrados.</p> : (
+          {events.length === 0 ? <p className="muted">Sem eventos registrados.</p> : (
             <ol className="timeline">
-              {[...item.events].reverse().map((event) => (
-                <li key={event.id}><span className="timeline-dot" /><div><strong>{EVENT_LABELS[event.type] ?? event.type}</strong><small>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(event.occurred_at))} · {event.actor}</small></div></li>
+              {events.map((event) => (
+                <li key={event.id}><span className="timeline-dot" /><div><strong>{EVENT_LABELS[event.type] ?? event.type}</strong><small>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(event.occurred_at))} · {event.actor}{event.movement.recipient && ` · ${event.movement.recipient.name}`}{event.movement.condition && ` · ${event.movement.condition === "fit" ? "apto" : "inapto"}`}</small>{event.movement.reason && <small>{event.movement.reason}</small>}</div></li>
               ))}
             </ol>
           )}
+          {events.length < eventCount && <button className="button button-secondary" onClick={() => void loadMoreEvents()}>Carregar eventos seguintes ({eventCount - events.length})</button>}
         </section>
       </div>
 
