@@ -1,3 +1,4 @@
+# Local development only: insecure key and password, DEBUG on. Not a production deployment.
 services:
   db:
     image: postgres:17
@@ -7,6 +8,33 @@ services:
       POSTGRES_PASSWORD: local-only
     ports: ["5432:5432"]
     volumes: ["sigab-postgres:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sigab -d sigab"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://sigab:local-only@db:5432/sigab
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+    ports: ["8000:8000"]
+    # docs/ sits beside the code as in the repository: tests read the approved role matrix.
+    volumes: ["./backend:/app", "./docs:/docs:ro"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      SIGAB_BACKEND_URL: http://backend:8000
+    ports: ["5173:5173"]
+    # The anonymous volume keeps the Linux node_modules installed in the image.
+    volumes: ["./frontend:/app", "/app/node_modules"]
+    depends_on: [backend]
 
 volumes:
   sigab-postgres:

@@ -10,7 +10,30 @@ frontend/  React, TypeScript, estilos e build Vite
 docs/      decisões e documentação do produto
 ```
 
-## Primeiros passos
+## Rodar com Docker (desenvolvimento)
+
+Só exige Docker. Sobe PostgreSQL 17, Django e Vite com o código montado: alterações no backend reiniciam o `runserver` e no frontend recarregam o navegador.
+
+```bash
+docker compose up -d --build
+docker compose exec backend python manage.py bootstrap_sigab \
+  --organization "Organização de demonstração" \
+  --username admin --email admin@example.invalid
+```
+
+Acesse `http://localhost:5173`. As migrações rodam a cada início do backend. Comandos úteis:
+
+```bash
+docker compose logs -f backend frontend          # acompanhar
+docker compose exec backend uv run --no-sync pytest -q   # testes no PostgreSQL do container
+docker compose exec backend python manage.py makemigrations
+docker compose down                               # parar (os dados ficam no volume)
+docker compose down -v                            # parar e apagar o banco local
+```
+
+Ao mudar `pyproject.toml`/`uv.lock` ou `package.json`/`bun.lock`, reconstrua com `docker compose up -d --build`. A configuração é só para desenvolvimento local (chave e senha inseguras, `DEBUG` ligado); imagem de produção é tarefa de infraestrutura e ainda não existe. A porta 5432 continua publicada, então `docker compose up -d db` segue servindo a suíte local descrita em [Testes e verificação](#testes-e-verificação).
+
+## Primeiros passos (sem Docker)
 
 Pré-requisitos:
 
