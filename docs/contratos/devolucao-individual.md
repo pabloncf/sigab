@@ -4,6 +4,7 @@
 - Revisão: 2026-11-02, conferida com `return_item` em `backend/sigab/services.py` e `POST /api/v1/items/{id}/return/`
 - Requisitos: RF-21, RF-22, RF-23 e RF-60 do [DOC-0011 v0.1](../fontes/DOC-0011-analise-de-requisitos-v0.1.md)
 - Base: transições T03 e T04 da [decisão 0004](../decisoes/0004-ciclo-de-vida-do-item-individual.md), [contrato da saída](saida-individual.md), [ADR 0006](../adr/0006-eventos-auditoria-e-estornos.md)
+- Lançamento de fato do livro de contingência: objeto opcional `contingency`, ver [contrato do lançamento de contingência](lancamento-de-contingencia.md) (SIGAB-046)
 
 ## 1. Comando
 

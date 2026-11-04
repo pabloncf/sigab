@@ -122,7 +122,7 @@ Permissões da [matriz 0002](decisoes/0002-papeis-e-escopos.md) (versão 1.2.0).
 | `GET /audit/` | `audit.view` na organização | trilha de auditoria com `sequence`, filtros `action`, `result`, `actor`, `object_id`, `from`, `to`; somente leitura |
 | `GET /items/<id>/recipients/` | `movement.checkout` na unidade | pessoas ativas com vínculo ativo |
 | `POST /items/<id>/checkout/` | `movement.checkout` | saída (T02), [contrato](contratos/saida-individual.md) |
-| `POST /items/<id>/return/` | `movement.return` | devolução (T03/T04) |
+| `POST /items/<id>/return/` | `movement.return` | devolução (T03/T04), [contrato](contratos/devolucao-individual.md) |
 | `POST /items/<id>/condition/` | `item.condition.set` | declarar inapto ou liberar (T05/T06) |
 | `GET`, `POST /people/` | `identity.manage` | listar e cadastrar pessoa, sem conta |
 | `GET`, `PATCH /people/<id>/` | `identity.manage` | ficha, contas e concessões; edição cadastral |
@@ -139,6 +139,8 @@ Permissões da [matriz 0002](decisoes/0002-papeis-e-escopos.md) (versão 1.2.0).
 | `POST /units/<id>/locations/`, `POST /locations/<id>/status/` | `catalog.manage` | locais de guarda |
 | `GET /equipment-types/` | `catalog.manage` ou `item.create` | catálogo de tipos |
 | `POST /equipment-types/`, `PATCH /equipment-types/<id>/`, `POST /equipment-types/<id>/status/` | `catalog.manage` | cadastro, nome e descrição, situação; a classificação nunca muda (RN-03) |
+
+Saída e devolução aceitam o objeto opcional `contingency` (`occurred_at` ISO 8601 com fuso e `paper_reference` de até 64 caracteres) para lançar fato do livro de contingência (SIGAB-046, ADR 0004). Os eventos do histórico e do feed trazem `movement.origin`, `movement.paper_reference` e `movement.recorded_at`; `occurred_at` é o instante do fato. Divergência com o estado atual responde 409 com mensagem iniciada por "Divergência".
 
 Toda rota nova precisa de caso em `backend/sigab/tests/test_isolation.py`; um teste falha quando alguma rota não tem.
 

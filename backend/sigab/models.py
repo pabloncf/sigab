@@ -388,6 +388,10 @@ class Movement(TimestampedModel):
         CONDITION_CHANGE = "condition_change", "Alteração de condição"
         REVERSAL = "reversal", "Estorno"
 
+    class Origin(models.TextChoices):
+        SYSTEM = "system", "Sistema"
+        CONTINGENCY = "contingency", "Contingência"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(
         Organization, on_delete=models.PROTECT, related_name="movements"
@@ -413,6 +417,11 @@ class Movement(TimestampedModel):
         "self", null=True, blank=True, on_delete=models.PROTECT, related_name="reversal"
     )
     reason = models.CharField(max_length=500, blank=True)
+    # Contingency (SIGAB-046, ADR 0004): a fact recorded on paper while the system was down.
+    # `declared_occurred_at` is when it happened; `confirmed_at` stays the registration instant.
+    origin = models.CharField(max_length=16, choices=Origin, default=Origin.SYSTEM)
+    declared_occurred_at = models.DateTimeField(null=True, blank=True)
+    paper_reference = models.CharField(max_length=64, blank=True)
 
     objects = AppendOnlyQuerySet.as_manager()
 
@@ -420,6 +429,21 @@ class Movement(TimestampedModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["organization", "idempotency_key"], name="uniq_movement_idempotency_org"
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(origin="system")
+                    & Q(declared_occurred_at__isnull=True)
+                    & Q(paper_reference="")
+                )
+                | (
+                    Q(origin="contingency")
+                    & Q(movement_type__in=["checkout", "return"])
+                    & Q(declared_occurred_at__isnull=False)
+                    & Q(declared_occurred_at__lte=models.F("confirmed_at"))
+                    & ~Q(paper_reference="")
+                ),
+                name="contingency_has_fact_instant_and_reference",
             ),
             models.CheckConstraint(
                 condition=(Q(movement_type="reversal") & Q(reverses__isnull=False) & ~Q(reason=""))

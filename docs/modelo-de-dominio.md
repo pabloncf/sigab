@@ -243,6 +243,9 @@ Operação confirmada sobre um item. Imutável depois de gravada.
 | `condition_reason` | texto 200 | se inapto | |
 | `reverses` | FK Movement, única | em `reversal` | movimentação estornada; no máximo um estorno por movimentação |
 | `reason` | texto 500 | em `reversal` | motivo do estorno (RN-09); `reversal_has_original_and_reason` garante tipo, referência e motivo juntos |
+| `origin` | `system` \| `contingency` | sim | `contingency` = lançamento de fato registrado no livro em papel (SIGAB-046, ADR 0004); só em `checkout` e `return` |
+| `declared_occurred_at` | instante UTC | em `contingency` | instante do fato conforme o livro; ≤ `confirmed_at`, que segue sendo o instante do lançamento |
+| `paper_reference` | texto 64 | em `contingency` | folha/linha do livro; `contingency_has_fact_instant_and_reference` garante os três campos juntos |
 
 ### 4.12 MovementEvent — evento de domínio
 
@@ -250,7 +253,7 @@ Operação confirmada sobre um item. Imutável depois de gravada.
 |---|---|---|---|
 | `organization`, `movement`, `item`, `actor` | FK | sim | |
 | `event_type` | texto 32 | sim | `item.incorporated`, `item.checked_out`, `item.returned`, `item.condition_changed`, `item.movement_reversed` |
-| `occurred_at` | instante UTC | sim | |
+| `occurred_at` | instante UTC | sim | instante do fato: em lançamento de contingência, o `declared_occurred_at` da movimentação |
 | `schema_version` | inteiro | sim | versão do contrato de `metadata` |
 | `metadata` | JSON | sim | mínimo e versionado; sem dados pessoais desnecessários |
 | `compensates` | FK MovementEvent, única | no estorno | evento original compensado |

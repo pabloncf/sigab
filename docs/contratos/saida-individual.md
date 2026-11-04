@@ -4,6 +4,7 @@
 - Revisão: 2026-11-02, conferida com `checkout_item` em `backend/sigab/services.py` e `POST /api/v1/items/{id}/checkout/`
 - Requisitos: RF-20, RF-21, RF-51, RF-60 e RN-10 do [DOC-0011 v0.1](../fontes/DOC-0011-analise-de-requisitos-v0.1.md)
 - Base: transição T02 da [decisão 0004](../decisoes/0004-ciclo-de-vida-do-item-individual.md), [ADR 0003](../adr/0003-eventos-idempotencia.md), [ADR 0006](../adr/0006-eventos-auditoria-e-estornos.md), [convenções da API](../api.md)
+- Lançamento de fato do livro de contingência: objeto opcional `contingency`, ver [contrato do lançamento de contingência](lancamento-de-contingencia.md) (SIGAB-046)
 
 ## 1. Comando
 

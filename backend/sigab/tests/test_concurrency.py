@@ -6,10 +6,17 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from django.db import IntegrityError, close_old_connections, connection, connections
+from django.utils import timezone
 
 from sigab.management.commands.verify_audit_chain import verify_chain
 from sigab.models import Account, AuditEvent, Item, Movement, MovementEvent, Organization
-from sigab.services import CommandContext, ConflictError, checkout_item, return_item
+from sigab.services import (
+    CommandContext,
+    ConflictError,
+    Contingency,
+    checkout_item,
+    return_item,
+)
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -92,4 +99,29 @@ def test_two_simultaneous_returns_close_the_checkout_once(world):
     item = Item.objects.get(pk=world["item"].pk)
     assert item.availability == Item.Availability.AVAILABLE and item.current_holder is None
     assert Movement.objects.filter(item=item, movement_type="return").count() == 1
+    assert verify_chain(world["org"]) is None
+
+
+def test_live_checkout_racing_a_contingency_entry_accepts_exactly_one(world):
+    """Mixing paper and system in one reserve is forbidden (ADR 0004); the bank still holds."""
+    fact = timezone.now()
+    live_key, paper_key = uuid.uuid4(), uuid.uuid4()
+
+    def operation(ctx, key):
+        contingency = Contingency(fact, "F01/L01") if key == paper_key else None
+        return checkout_item(
+            ctx,
+            item_id=world["item"].id,
+            recipient_id=world["person"].id,
+            idempotency_key=key,
+            confirmed=True,
+            contingency=contingency,
+        )
+
+    outcomes = _race(world, operation, [live_key, paper_key])
+
+    assert outcomes == ["accepted", "conflict"]
+    item = Item.objects.get(pk=world["item"].pk)
+    assert item.availability == Item.Availability.IN_CUSTODY
+    assert Movement.objects.filter(item=item, movement_type="checkout").count() == 1
     assert verify_chain(world["org"]) is None

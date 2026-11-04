@@ -31,7 +31,7 @@ Envelope (campos estruturados de `MovementEvent`):
 | `id` | UUID |
 | `organization`, `item`, `movement`, `actor` | chaves estrangeiras, todas da mesma organização |
 | `event_type` | fato no passado, `item.<verbo_no_particípio>` |
-| `occurred_at` | instante UTC do fato |
+| `occurred_at` | instante UTC do fato; no lançamento de contingência (SIGAB-046), o instante declarado no livro, e não o do lançamento, que fica em `Movement.confirmed_at` e no evento de auditoria |
 | `schema_version` | versão do contrato de `metadata`; igual ao sufixo de `metadata.schema` |
 | `metadata` | objeto pequeno com `schema` = `<event_type>.v<N>` e apenas os campos do contrato |
 

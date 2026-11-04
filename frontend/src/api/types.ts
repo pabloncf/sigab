@@ -52,6 +52,9 @@ export interface ItemEvent {
     reason: string;
     reverses: string | null;
     reversed: boolean;
+    origin: "system" | "contingency";
+    paper_reference: string;
+    recorded_at: string;
   };
 }
 

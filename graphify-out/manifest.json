@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "docs/decisoes-pendentes.md": {
-    "mtime": 1793644794.8755734,
-    "ast_hash": "ebb6d97774a5da0e468ac011be5ac444",
+    "mtime": 1793757059.7044303,
+    "ast_hash": "9bf628a26c017dbbf18bb7d4ef438154",
     "semantic_hash": ""
   },
   "docs/glossario.md": {
@@ -55,8 +55,8 @@
     "semantic_hash": ""
   },
   "docs/modelo-de-dominio.md": {
-    "mtime": 1793643373.8657696,
-    "ast_hash": "cb52b6b089251bab365e6d9d0c63bdc7",
+    "mtime": 1793757011.8769944,
+    "ast_hash": "330446c892e130b274d1d8e97f6484af",
     "semantic_hash": ""
   },
   "docs/plano-incremental.md": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "docs/adr/0004-conectividade-e-contingencia.md": {
-    "mtime": 1792416756.3579876,
-    "ast_hash": "10906cd1658ff6eca45c70f42982ca64",
+    "mtime": 1793757011.878131,
+    "ast_hash": "277b7e4677902a8590096a2d72c661c5",
     "semantic_hash": ""
   },
   "docs/decisoes/0003-modelo-de-estoque-e-municao.md": {
@@ -145,8 +145,8 @@
     "semantic_hash": ""
   },
   "frontend/src/api/types.ts": {
-    "mtime": 1793643154.8150737,
-    "ast_hash": "5ed542095efffdbf43066e4daf550fda",
+    "mtime": 1793756905.6520731,
+    "ast_hash": "ab9569c6d29c4ef9c8534255dd59ada0",
     "semantic_hash": ""
   },
   "frontend/src/components/AppShell.tsx": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/ItemDetailPage.tsx": {
-    "mtime": 1793643154.8155584,
-    "ast_hash": "0a0dca625f7cc1c06e1188b843fcecce",
+    "mtime": 1793756910.2957995,
+    "ast_hash": "cd95af41c50308f9e2beb381a9bc0414",
     "semantic_hash": ""
   },
   "frontend/src/pages/ItemsPage.tsx": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "backend/sigab/api/views.py": {
-    "mtime": 1793643154.802823,
-    "ast_hash": "a94289dcba1054feae31e72d93ea5d86",
+    "mtime": 1793756799.5625126,
+    "ast_hash": "8420c56581b39f34101f452f5a0fa8bf",
     "semantic_hash": ""
   },
   "backend/sigab/apps.py": {
@@ -325,8 +325,8 @@
     "semantic_hash": ""
   },
   "backend/sigab/models.py": {
-    "mtime": 1793643082.9986832,
-    "ast_hash": "e26e6f74a773f731a5f0a0498ee29892",
+    "mtime": 1793756726.8994567,
+    "ast_hash": "78570b01fa9b71f691c9b80edbc3da27",
     "semantic_hash": ""
   },
   "backend/sigab/permissions.py": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "backend/sigab/services.py": {
-    "mtime": 1793643140.4322615,
-    "ast_hash": "033ff0fbc7c16a9b31f5820646a42e46",
+    "mtime": 1793756995.3898056,
+    "ast_hash": "9667b29846d77fb9b370566e63330767",
     "semantic_hash": ""
   },
   "backend/sigab/tests/__init__.py": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "docs/adr/0006-eventos-auditoria-e-estornos.md": {
-    "mtime": 1793643332.3509662,
-    "ast_hash": "cb6f33d58dc10c2c8439364350332120",
+    "mtime": 1793757011.8774614,
+    "ast_hash": "0205663d581901835ec8e1508d09c507",
     "semantic_hash": ""
   },
   "backend/sigab/authentication.py": {
@@ -500,8 +500,8 @@
     "semantic_hash": ""
   },
   "docs/api.md": {
-    "mtime": 1793643349.9441836,
-    "ast_hash": "adfb4cd4a1db695083dd5dbf283ae5c7",
+    "mtime": 1793757011.8786433,
+    "ast_hash": "65d3e41ef25b07b6f72d52469ef081b5",
     "semantic_hash": ""
   },
   "docs/banco-e-migracoes.md": {
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "docs/contratos/saida-individual.md": {
-    "mtime": 1793641243.3479252,
-    "ast_hash": "9684e77e820c9bc99781a5db06d19127",
+    "mtime": 1793757059.7034419,
+    "ast_hash": "982ed16372208d52c53dd0fe893ee4d7",
     "semantic_hash": ""
   },
   "docs/integracao-continua.md": {
@@ -555,8 +555,8 @@
     "semantic_hash": ""
   },
   "backend/sigab/tests/test_concurrency.py": {
-    "mtime": 1793642279.4509745,
-    "ast_hash": "b89d4cac3726a7919ebca0933764ed8d",
+    "mtime": 1793756976.948585,
+    "ast_hash": "80197e613a9667dc8a29d3318ef720a5",
     "semantic_hash": ""
   },
   "backend/sigab/tests/test_reversal.py": {
@@ -575,8 +575,8 @@
     "semantic_hash": ""
   },
   "docs/contratos/devolucao-individual.md": {
-    "mtime": 1793643242.2739222,
-    "ast_hash": "86f0828515f02c6d02c40957b2e3509b",
+    "mtime": 1793757059.7039175,
+    "ast_hash": "1073da0b9b9b44c25ef1e93bf0fc548d",
     "semantic_hash": ""
   },
   "docs/decisoes/0005-restricao-operacional.md": {
@@ -620,13 +620,28 @@
     "semantic_hash": ""
   },
   "docs/validacao/tarefas-041-a-045.md": {
-    "mtime": 1793644997.959174,
-    "ast_hash": "c27eae263c883fce0749ddfb81cb3e7d",
+    "mtime": 1793645030.9637346,
+    "ast_hash": "f40f265d9b0b16013d4b97598a626ae0",
     "semantic_hash": ""
   },
   "docs/validacao/restauracao-sintetica-2026-11-02.json": {
     "mtime": 1793644997.9478745,
     "ast_hash": "621ad764d3c7c1e0f23a67afa8a7a3f8",
+    "semantic_hash": ""
+  },
+  "backend/sigab/migrations/0008_movement_contingency.py": {
+    "mtime": 1793756803.670677,
+    "ast_hash": "6d583f24f148afa6879f273c12d17d80",
+    "semantic_hash": ""
+  },
+  "backend/sigab/tests/test_contingency.py": {
+    "mtime": 1793756995.3900158,
+    "ast_hash": "7a765a3f54dcdd56c80fc47db4f5507b",
+    "semantic_hash": ""
+  },
+  "docs/contratos/lancamento-de-contingencia.md": {
+    "mtime": 1793757058.7539074,
+    "ast_hash": "f5b68877c18ad79195c1a5f247911654",
     "semantic_hash": ""
   }
 }

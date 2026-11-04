@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from uuid import UUID
 
 from django.contrib.auth.password_validation import validate_password
@@ -40,6 +41,10 @@ class ConflictError(ValidationError):
     pass
 
 
+class DivergenceError(ConflictError):
+    """A paper record that contradicts the system; it is investigated, never forced (ADR 0004)."""
+
+
 class NotFoundError(Exception):
     """The object does not exist in the caller's organization (or is not visible)."""
 
@@ -49,6 +54,14 @@ class CommandContext:
     actor: object
     organization: Organization
     correlation_id: str
+
+
+@dataclass(frozen=True)
+class Contingency:
+    """Line of the reserve's contingency book being reconciled (SIGAB-046, ADR 0004)."""
+
+    occurred_at: datetime
+    paper_reference: str
 
 
 def audit(ctx, action, instance, changes=None, result="success", reason=""):
@@ -113,23 +126,99 @@ def _existing(ctx, idempotency_key, movement_type, **expected):
     return existing
 
 
+def _origin_fields(contingency):
+    """Movement fields that tell a system registration from a reconciled paper record."""
+    if contingency is None:
+        return {"origin": Movement.Origin.SYSTEM}
+    reference = (contingency.paper_reference or "").strip()
+    if not reference:
+        raise ValidationError({"paper_reference": "Informe a folha e a linha do livro."})
+    if len(reference) > 64:
+        raise ValidationError({"paper_reference": "Use no máximo 64 caracteres."})
+    occurred_at = contingency.occurred_at
+    if not isinstance(occurred_at, datetime) or timezone.is_naive(occurred_at):
+        raise ValidationError({"occurred_at": "Informe data e hora com fuso."})
+    return {
+        "origin": Movement.Origin.CONTINGENCY,
+        "declared_occurred_at": occurred_at,
+        "paper_reference": reference,
+    }
+
+
+def _is_contingency(origin):
+    return origin["origin"] == Movement.Origin.CONTINGENCY
+
+
+def _state_conflict(origin, message):
+    if _is_contingency(origin):
+        return DivergenceError(f"Divergência com o estado atual: {message}")
+    return ConflictError(message)
+
+
+def _check_contingency_fact(ctx, item, origin, now):
+    """The paper fact must fit after everything already recorded for the item (ADR 0004)."""
+    if not _is_contingency(origin):
+        return
+    occurred_at = origin["declared_occurred_at"]
+    if occurred_at > now:
+        raise ValidationError({"occurred_at": "O instante do fato não pode estar no futuro."})
+    # Reversed facts and the reversals themselves correct registrations, not the item's past,
+    # so a wrongly reconciled line can be reversed and reconciled again.
+    latest = (
+        MovementEvent.objects.filter(item=item, movement__reversal__isnull=True)
+        .exclude(movement__movement_type=Movement.Type.REVERSAL)
+        .order_by("-occurred_at")
+        .first()
+    )
+    if latest and occurred_at <= latest.occurred_at:
+        raise DivergenceError(
+            "Divergência: o item tem registro igual ou posterior ao instante informado. "
+            "Consulte o histórico antes de lançar."
+        )
+    # One book per reserve: a sheet/line is reconciled once. Guards against human error;
+    # retries of the same request are replays through the idempotency key.
+    if Movement.objects.filter(
+        organization=ctx.organization,
+        origin=Movement.Origin.CONTINGENCY,
+        paper_reference=origin["paper_reference"],
+        item__storage_location_id=item.storage_location_id,
+        reversal__isnull=True,
+    ).exists():
+        raise DivergenceError("Divergência: esta folha/linha já foi lançada nesta reserva.")
+
+
+def _movement_audit(ctx, action, movement, origin, changes, reason=""):
+    if _is_contingency(origin):
+        action = f"{action}.contingency"
+        changes = {
+            **changes,
+            "occurred_at": origin["declared_occurred_at"].isoformat(),
+            "paper_reference": origin["paper_reference"],
+        }
+    audit(ctx, action, movement, changes, reason=reason)
+
+
 @transaction.atomic
 def checkout_item(
-    ctx, *, item_id: UUID, recipient_id: UUID, idempotency_key: UUID, confirmed: bool
+    ctx,
+    *,
+    item_id: UUID,
+    recipient_id: UUID,
+    idempotency_key: UUID,
+    confirmed: bool,
+    contingency: Contingency | None = None,
 ):
     if not confirmed:
         raise ValidationError("A confirmação explícita é obrigatória.")
-    existing = _existing(
-        ctx, idempotency_key, Movement.Type.CHECKOUT, item_id=item_id, recipient_id=recipient_id
-    )
+    origin = _origin_fields(contingency)
+    expected = {"item_id": item_id, "recipient_id": recipient_id, **origin}
+    existing = _existing(ctx, idempotency_key, Movement.Type.CHECKOUT, **expected)
     if existing:
         return existing, False
     item = (
         Item.objects.select_for_update().filter(id=item_id, organization=ctx.organization).first()
     )
-    existing = _existing(
-        ctx, idempotency_key, Movement.Type.CHECKOUT, item_id=item_id, recipient_id=recipient_id
-    )
+    existing = _existing(ctx, idempotency_key, Movement.Type.CHECKOUT, **expected)
     if existing:
         return existing, False
     recipient = Person.objects.filter(
@@ -146,8 +235,9 @@ def checkout_item(
         or item.availability != Item.Availability.AVAILABLE
         or item.condition != Item.Condition.FIT
     ):
-        raise ConflictError("O item não está disponível para saída.")
+        raise _state_conflict(origin, "O item não está disponível para saída.")
     now = timezone.now()
+    _check_contingency_fact(ctx, item, origin, now)
     movement = Movement.objects.create(
         organization=ctx.organization,
         movement_type=Movement.Type.CHECKOUT,
@@ -156,6 +246,7 @@ def checkout_item(
         recipient=recipient,
         idempotency_key=idempotency_key,
         confirmed_at=now,
+        **origin,
     )
     updated = Item.objects.filter(
         pk=item.pk,
@@ -170,11 +261,15 @@ def checkout_item(
         item=item,
         event_type="item.checked_out",
         actor=ctx.actor,
-        occurred_at=now,
+        occurred_at=origin.get("declared_occurred_at", now),
         metadata={"recipient_id": str(recipient.id), "schema": "item.checked_out.v1"},
     )
-    audit(
-        ctx, "item.checkout", movement, {"item_id": str(item.id), "recipient_id": str(recipient.id)}
+    _movement_audit(
+        ctx,
+        "item.checkout",
+        movement,
+        origin,
+        {"item_id": str(item.id), "recipient_id": str(recipient.id)},
     )
     return movement, True
 
@@ -219,20 +314,19 @@ def return_item(
     idempotency_key: UUID,
     confirmed: bool,
     reason: str = "",
+    contingency: Contingency | None = None,
 ):
     if not confirmed:
         raise ValidationError("A confirmação explícita é obrigatória.")
-    existing = _existing(
-        ctx, idempotency_key, Movement.Type.RETURN, item_id=item_id, condition_on_return=condition
-    )
+    origin = _origin_fields(contingency)
+    expected = {"item_id": item_id, "condition_on_return": condition, **origin}
+    existing = _existing(ctx, idempotency_key, Movement.Type.RETURN, **expected)
     if existing:
         return existing, False
     item = (
         Item.objects.select_for_update().filter(id=item_id, organization=ctx.organization).first()
     )
-    existing = _existing(
-        ctx, idempotency_key, Movement.Type.RETURN, item_id=item_id, condition_on_return=condition
-    )
+    existing = _existing(ctx, idempotency_key, Movement.Type.RETURN, **expected)
     if existing:
         return existing, False
     if not item:
@@ -241,10 +335,11 @@ def return_item(
         raise PermissionDenied
     checkout = _open_checkout(ctx, item)
     if item.availability != Item.Availability.IN_CUSTODY or not checkout:
-        raise ConflictError("O item não possui saída aberta.")
+        raise _state_conflict(origin, "O item não possui saída aberta.")
     reason = _condition_reason(condition, reason)
     item_reason = reason if condition == Item.Condition.UNFIT else ""
     now = timezone.now()
+    _check_contingency_fact(ctx, item, origin, now)
     movement = Movement.objects.create(
         organization=ctx.organization,
         movement_type=Movement.Type.RETURN,
@@ -256,6 +351,7 @@ def return_item(
         confirmed_at=now,
         condition_on_return=condition,
         condition_reason=reason,
+        **origin,
     )
     availability = (
         Item.Availability.AVAILABLE
@@ -277,13 +373,14 @@ def return_item(
         item=item,
         event_type="item.returned",
         actor=ctx.actor,
-        occurred_at=now,
+        occurred_at=origin.get("declared_occurred_at", now),
         metadata={"condition": condition, "schema": "item.returned.v1"},
     )
-    audit(
+    _movement_audit(
         ctx,
         "item.return",
         movement,
+        origin,
         {"item_id": str(item.id), "condition": condition},
         reason=reason,
     )

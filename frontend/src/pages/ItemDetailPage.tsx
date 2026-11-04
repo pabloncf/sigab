@@ -8,6 +8,8 @@ type Action = "checkout" | "return" | "condition" | "reverse";
 
 const HISTORY_PAGE = 20;
 
+const formatInstant = (value: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+
 const EVENT_LABELS: Record<string, string> = {
   "item.incorporated": "Item incorporado",
   "item.checked_out": "Saída registrada",
@@ -22,6 +24,8 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
   const [eventCount, setEventCount] = useState(0);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [action, setAction] = useState<Action | null>(null);
+  // Reconciliation of the paper book after an outage (SIGAB-046, ADR 0004).
+  const [contingency, setContingency] = useState(false);
   // One key per opened dialog: resubmitting after a network failure replays, never duplicates.
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [error, setError] = useState("");
@@ -68,6 +72,7 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
       }
     }
     setIdempotencyKey(crypto.randomUUID());
+    setContingency(false);
     setAction(nextAction);
   }
 
@@ -91,6 +96,13 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
       body.reason = form.get("reason");
     }
     if (action === "reverse") body.reason = form.get("reason");
+    if (contingency && (action === "checkout" || action === "return")) {
+      // datetime-local has no zone: it is read in the browser's zone and sent in UTC.
+      body.contingency = {
+        occurred_at: new Date(String(form.get("occurred_at"))).toISOString(),
+        paper_reference: form.get("paper_reference")
+      };
+    }
     const url = action === "reverse" ? `/movements/${item.reversible_movement_id}/reverse/` : `/items/${itemId}/${action}/`;
 
     try {
@@ -146,7 +158,7 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
           {events.length === 0 ? <p className="muted">Sem eventos registrados.</p> : (
             <ol className="timeline">
               {events.map((event) => (
-                <li key={event.id}><span className="timeline-dot" /><div><strong>{EVENT_LABELS[event.type] ?? event.type}{event.movement.reversed && <span className="status-badge warning"> estornado</span>}</strong><small>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(event.occurred_at))} · {event.actor}{event.movement.recipient && ` · ${event.movement.recipient.name}`}{event.movement.condition && ` · ${event.movement.condition === "fit" ? "apto" : "inapto"}`}</small>{event.movement.reason && <small>{event.movement.reason}</small>}</div></li>
+                <li key={event.id}><span className="timeline-dot" /><div><strong>{EVENT_LABELS[event.type] ?? event.type}{event.movement.reversed && <span className="status-badge warning"> estornado</span>}</strong><small>{formatInstant(event.occurred_at)} · {event.actor}{event.movement.recipient && ` · ${event.movement.recipient.name}`}{event.movement.condition && ` · ${event.movement.condition === "fit" ? "apto" : "inapto"}`}</small>{event.movement.origin === "contingency" && <small>Contingência · {event.movement.paper_reference} · lançado em {formatInstant(event.movement.recorded_at)}</small>}{event.movement.reason && <small>{event.movement.reason}</small>}</div></li>
               ))}
             </ol>
           )}
@@ -163,6 +175,8 @@ export function ItemDetailPage({ itemId }: { itemId: string }) {
               {action === "checkout" && <label><span>Destinatário</span><select name="recipient_id" required defaultValue=""><option value="" disabled>Selecione uma pessoa</option>{recipients.map((recipient) => <option value={recipient.id} key={recipient.id}>{recipient.name}</option>)}</select></label>}
               {action === "return" && <><label><span>Condição na devolução</span><select name="condition" required defaultValue="fit"><option value="fit">Apto</option><option value="unfit">Inapto</option></select></label><label><span>Motivo, se inapto</span><textarea name="reason" maxLength={200} /></label></>}
               {action === "reverse" && <><p className="muted">O registro original continua no histórico, marcado como estornado. Use para corrigir erro de registro, não para registrar um fato novo.</p><label><span>Motivo do estorno</span><textarea name="reason" maxLength={500} required /></label></>}
+              {(action === "checkout" || action === "return") && <label className="confirmation"><input type="checkbox" checked={contingency} onChange={(event) => setContingency(event.target.checked)} /><span>Lançar registro do livro de contingência (fato ocorrido no papel)</span></label>}
+              {contingency && (action === "checkout" || action === "return") && <><label><span>Data e hora do fato, conforme o livro</span><input type="datetime-local" name="occurred_at" required /></label><label><span>Folha/linha do livro</span><input name="paper_reference" maxLength={64} required placeholder="Ex.: F03/L07" /></label></>}
               {action === "condition" && <label><span>{item.condition === "fit" ? "Motivo de inapto" : "Referência da conferência"}</span><textarea name="reason" maxLength={200} required /></label>}
               <label className="confirmation"><input type="checkbox" name="confirmed" required /><span>Confirmo a operação após conferir o item.</span></label>
               <div className="dialog-actions"><button className="button button-quiet" type="button" onClick={() => setAction(null)}>Cancelar</button><button className="button button-primary" disabled={submitting}>{submitting ? "Registrando…" : "Confirmar"}</button></div>

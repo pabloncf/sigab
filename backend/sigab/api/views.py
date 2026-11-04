@@ -47,6 +47,8 @@ from sigab.services import (
     REVERSIBLE_TYPES,
     CommandContext,
     ConflictError,
+    Contingency,
+    DivergenceError,
     NotFoundError,
     checkout_item,
     create_account,
@@ -126,6 +128,9 @@ def api_view(*, methods):
             except PermissionDenied:
                 _audit_refusal(request, kwargs, "denied")
                 return _error("Acesso negado.", status=403)
+            except DivergenceError as exc:
+                _audit_refusal(request, kwargs, "divergence")
+                return _error(_validation_message(exc), status=409)
             except ConflictError as exc:
                 _audit_refusal(request, kwargs, "conflict")
                 return _error(_validation_message(exc), status=409)
@@ -324,6 +329,9 @@ def _event_resource(event):
             "reason": movement.reason or movement.condition_reason,
             "reverses": str(movement.reverses_id) if movement.reverses_id else None,
             "reversed": hasattr(movement, "reversal"),
+            "origin": movement.origin,
+            "paper_reference": movement.paper_reference,
+            "recorded_at": movement.confirmed_at.isoformat(),
         },
     }
 
@@ -465,6 +473,22 @@ def _movement_response(request, item, movement, created):
     )
 
 
+def _contingency(payload):
+    """Optional paper record being reconciled (SIGAB-046); absent for a live registration."""
+    value = payload.get("contingency")
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ValidationError({"contingency": "Informe um objeto."})
+    occurred_at = _optional_datetime(value, "occurred_at")
+    if occurred_at is None:
+        raise ValidationError({"occurred_at": "Campo obrigatório."})
+    return Contingency(
+        occurred_at=occurred_at,
+        paper_reference=_required_string(value, "paper_reference", max_length=64),
+    )
+
+
 @api_view(methods={"POST"})
 def item_checkout(request, pk):
     item = _item(request, pk, MOVEMENT_CHECKOUT)
@@ -475,6 +499,7 @@ def item_checkout(request, pk):
         recipient_id=_required_uuid(payload, "recipient_id"),
         idempotency_key=_required_uuid(payload, "idempotency_key"),
         confirmed=_required_confirmation(payload),
+        contingency=_contingency(payload),
     )
     return _movement_response(request, item, movement, created)
 
@@ -490,6 +515,7 @@ def item_return(request, pk):
         reason=_string(payload, "reason"),
         idempotency_key=_required_uuid(payload, "idempotency_key"),
         confirmed=_required_confirmation(payload),
+        contingency=_contingency(payload),
     )
     return _movement_response(request, item, movement, created)
 

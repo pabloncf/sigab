@@ -411,7 +411,7 @@ Requisitos relacionados: RF-02; RNF-04
 Dependências originais: SIGAB-013;SIGAB-020
 
 Observações: MFA administrativo pode ser tarefa posterior se a stack ainda não suportar.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-1,Identidade,21,1005,13,20,,,,
-Task,To Do,[SIGAB-022] Implementar papéis e permissões com escopo,"Aplicar autorização no servidor por organização e unidade, com negação por padrão.
+Task,Done,[SIGAB-022] Implementar papéis e permissões com escopo,"Aplicar autorização no servidor por organização e unidade, com negação por padrão.
 
 ID original: SIGAB-022
 
@@ -429,7 +429,7 @@ Requisitos relacionados: Seção 3; RNF-05
 
 Dependências originais: SIGAB-004;SIGAB-021
 
-Observações: Bloqueado até matriz mínima de autorização.",Highest,sigab,tipo-desenvolvimento,origem-bloqueado,sprint-sprint-1,Autorização,22,1006,4,21,,,,
+Observações: Bloqueado até matriz mínima de autorização. Matriz 0002 decidida; autorização implementada e coberta por backend/sigab/tests/test_authorization.py e test_isolation.py. MFA administrativo e different_actor_same_case seguem em docs/decisoes-pendentes.md.",Highest,sigab,tipo-desenvolvimento,origem-bloqueado,sprint-sprint-1,Autorização,22,1006,4,21,,,,
 Task,Done,[SIGAB-023] Implementar organizações,"Criar organização, situação operacional e primeiro administrador por fluxo controlado.
 
 ID original: SIGAB-023
@@ -677,7 +677,7 @@ Requisitos relacionados: RF-60; RF-62; RNF-03
 Dependências originais: SIGAB-012;SIGAB-016
 
 Observações: Definir retenção com jurídico.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-1,Auditoria,35,1011,12,16,,,,
-Task,To Do,[SIGAB-036] Implementar feed de atividade,"Criar projeção consultável dos eventos sem substituir a auditoria técnica.
+Task,Done,[SIGAB-036] Implementar feed de atividade,"Criar projeção consultável dos eventos sem substituir a auditoria técnica.
 
 ID original: SIGAB-036
 
@@ -695,7 +695,7 @@ Requisitos relacionados: RF-61
 
 Dependências originais: SIGAB-035
 
-Observações: Pode ser adiado sem comprometer o fluxo principal.",Medium,sigab,tipo-desenvolvimento,origem-backlog,sprint-sprint-3,Auditoria,36,1011,35,,,,,
+Observações: Pode ser adiado sem comprometer o fluxo principal. Implementado em GET /api/v1/activity/ e tela Atividade; coberto por test_activity_and_search.py e test_isolation.py. Não é feed público.",Medium,sigab,tipo-desenvolvimento,origem-backlog,sprint-sprint-3,Auditoria,36,1011,35,,,,,
 Task,Done,[SIGAB-037] Implementar posse atual da pessoa,"Consultar itens atualmente vinculados à pessoa dentro do escopo autorizado.
 
 ID original: SIGAB-037
@@ -867,7 +867,7 @@ Requisitos relacionados: Seção 1.2
 Dependências originais: SIGAB-002;SIGAB-043;SIGAB-044
 
 Observações: Roteiro e ata preparados em docs/validacao/tarefas-041-a-045.md; sessão com usuário-alvo ainda não realizada. A demonstração não substitui observação do processo real.",Highest,sigab,tipo-validacao,origem-bloqueado,sprint-apos-sprint-3,Entrega,45,1017,2,43,44,,,
-Task,To Do,[SIGAB-046] Registrar movimentação de contingência,"Registrar no sistema as saídas e devoluções ocorridas em papel durante a contingência, preservando o instante do fato, a referência ao documento e a rastreabilidade.
+Task,Done,[SIGAB-046] Registrar movimentação de contingência,"Registrar no sistema as saídas e devoluções ocorridas em papel durante a contingência, preservando o instante do fato, a referência ao documento e a rastreabilidade.
 
 ID original: SIGAB-046
 
@@ -885,4 +885,4 @@ Requisitos relacionados: RNF-01; RNF-02; RF-20 a RF-23; RF-60
 
 Dependências originais: SIGAB-006;SIGAB-012;SIGAB-030;SIGAB-033;SIGAB-035
 
-Observações: Bloqueia o uso com acervo real (ADR 0004). Não implementa operação offline nem sincronização.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-3,Movimentação,46,1010,6,12,30,33,35,
+Observações: Bloqueia o uso com acervo real (ADR 0004). Não implementa operação offline nem sincronização. Implementado em 2026-11-03; ver docs/contratos/lancamento-de-contingencia.md. Modelo do livro e conferência por segunda pessoa seguem pendentes de validação com a organização.",Highest,sigab,tipo-desenvolvimento,origem-pronto,sprint-sprint-3,Movimentação,46,1010,6,12,30,33,35,
