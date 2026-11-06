@@ -20,13 +20,13 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793644997.958997,
-    "ast_hash": "535a6f99e943d622256b37957e91f722",
+    "mtime": 1793758883.3905547,
+    "ast_hash": "97743e10178eb42050ba9eb685d24352",
     "semantic_hash": ""
   },
   "compose.yaml": {
-    "mtime": 1792086330.7147949,
-    "ast_hash": "eebf546244dca31774c5e0062171abf6",
+    "mtime": 1793758883.3934386,
+    "ast_hash": "9119aa986d9c96f112fe1fe95b29ac11",
     "semantic_hash": ""
   },
   "docs/adr/0001-stack-e-frontend.md": {
@@ -45,7 +45,7 @@
     "semantic_hash": ""
   },
   "docs/decisoes-pendentes.md": {
-    "mtime": 1793757059.7044303,
+    "mtime": 1793758883.3957303,
     "ast_hash": "9bf628a26c017dbbf18bb7d4ef438154",
     "semantic_hash": ""
   },
@@ -55,7 +55,7 @@
     "semantic_hash": ""
   },
   "docs/modelo-de-dominio.md": {
-    "mtime": 1793757011.8769944,
+    "mtime": 1793758883.3959937,
     "ast_hash": "330446c892e130b274d1d8e97f6484af",
     "semantic_hash": ""
   },
@@ -100,7 +100,7 @@
     "semantic_hash": ""
   },
   "docs/adr/0004-conectividade-e-contingencia.md": {
-    "mtime": 1793757011.878131,
+    "mtime": 1793758883.3937452,
     "ast_hash": "277b7e4677902a8590096a2d72c661c5",
     "semantic_hash": ""
   },
@@ -135,7 +135,7 @@
     "semantic_hash": ""
   },
   "frontend/src/App.tsx": {
-    "mtime": 1793643202.311141,
+    "mtime": 1793758362.0309193,
     "ast_hash": "caccb2390bc6cfcdeb302a5862232af8",
     "semantic_hash": ""
   },
@@ -145,7 +145,7 @@
     "semantic_hash": ""
   },
   "frontend/src/api/types.ts": {
-    "mtime": 1793756905.6520731,
+    "mtime": 1793758883.397178,
     "ast_hash": "ab9569c6d29c4ef9c8534255dd59ada0",
     "semantic_hash": ""
   },
@@ -170,7 +170,7 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/ItemDetailPage.tsx": {
-    "mtime": 1793756910.2957995,
+    "mtime": 1793758883.397497,
     "ast_hash": "cd95af41c50308f9e2beb381a9bc0414",
     "semantic_hash": ""
   },
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "frontend/vite.config.ts": {
-    "mtime": 1793638233.8822649,
-    "ast_hash": "e5607db922605f2281bb050309b2b09f",
+    "mtime": 1793758883.3979464,
+    "ast_hash": "428ec5fc3c5400f9fc7d88afba521121",
     "semantic_hash": ""
   },
   "docs/adr/0005-api-django-e-frontend-react.md": {
@@ -270,7 +270,7 @@
     "semantic_hash": ""
   },
   "backend/sigab/api/views.py": {
-    "mtime": 1793756799.5625126,
+    "mtime": 1793758883.39148,
     "ast_hash": "8420c56581b39f34101f452f5a0fa8bf",
     "semantic_hash": ""
   },
@@ -325,7 +325,7 @@
     "semantic_hash": ""
   },
   "backend/sigab/models.py": {
-    "mtime": 1793756726.8994567,
+    "mtime": 1793758883.3919573,
     "ast_hash": "78570b01fa9b71f691c9b80edbc3da27",
     "semantic_hash": ""
   },
@@ -335,7 +335,7 @@
     "semantic_hash": ""
   },
   "backend/sigab/services.py": {
-    "mtime": 1793756995.3898056,
+    "mtime": 1793758883.3924563,
     "ast_hash": "9667b29846d77fb9b370566e63330767",
     "semantic_hash": ""
   },
@@ -355,7 +355,7 @@
     "semantic_hash": ""
   },
   "backend/sigab/urls.py": {
-    "mtime": 1792439438.14647,
+    "mtime": 1793758350.38413,
     "ast_hash": "0e87dad13febd70be203a6b5c73b171c",
     "semantic_hash": ""
   },
@@ -370,8 +370,8 @@
     "semantic_hash": ""
   },
   "backend/templates/registration/login.html": {
-    "mtime": 1792086122.5099146,
-    "ast_hash": "9963f8c757232eb5c74d1a3226906d28",
+    "mtime": 1793922157.4466202,
+    "ast_hash": "88108d13c6d4829f89809f3614ee3774",
     "semantic_hash": ""
   },
   "backend/templates/sigab/dashboard.html": {
@@ -390,7 +390,7 @@
     "semantic_hash": ""
   },
   "docs/adr/0006-eventos-auditoria-e-estornos.md": {
-    "mtime": 1793757011.8774614,
+    "mtime": 1793758883.394115,
     "ast_hash": "0205663d581901835ec8e1508d09c507",
     "semantic_hash": ""
   },
@@ -500,7 +500,7 @@
     "semantic_hash": ""
   },
   "docs/api.md": {
-    "mtime": 1793757011.8786433,
+    "mtime": 1793758883.3944657,
     "ast_hash": "65d3e41ef25b07b6f72d52469ef081b5",
     "semantic_hash": ""
   },
@@ -510,7 +510,7 @@
     "semantic_hash": ""
   },
   "docs/contratos/saida-individual.md": {
-    "mtime": 1793757059.7034419,
+    "mtime": 1793758883.3954647,
     "ast_hash": "982ed16372208d52c53dd0fe893ee4d7",
     "semantic_hash": ""
   },
@@ -555,7 +555,7 @@
     "semantic_hash": ""
   },
   "backend/sigab/tests/test_concurrency.py": {
-    "mtime": 1793756976.948585,
+    "mtime": 1793758883.3928838,
     "ast_hash": "80197e613a9667dc8a29d3318ef720a5",
     "semantic_hash": ""
   },
@@ -575,7 +575,7 @@
     "semantic_hash": ""
   },
   "docs/contratos/devolucao-individual.md": {
-    "mtime": 1793757059.7039175,
+    "mtime": 1793758883.394829,
     "ast_hash": "1073da0b9b9b44c25ef1e93bf0fc548d",
     "semantic_hash": ""
   },
@@ -630,17 +630,17 @@
     "semantic_hash": ""
   },
   "backend/sigab/migrations/0008_movement_contingency.py": {
-    "mtime": 1793756803.670677,
+    "mtime": 1793758883.3917248,
     "ast_hash": "6d583f24f148afa6879f273c12d17d80",
     "semantic_hash": ""
   },
   "backend/sigab/tests/test_contingency.py": {
-    "mtime": 1793756995.3900158,
+    "mtime": 1793758883.393168,
     "ast_hash": "7a765a3f54dcdd56c80fc47db4f5507b",
     "semantic_hash": ""
   },
   "docs/contratos/lancamento-de-contingencia.md": {
-    "mtime": 1793757058.7539074,
+    "mtime": 1793758883.3951685,
     "ast_hash": "f5b68877c18ad79195c1a5f247911654",
     "semantic_hash": ""
   }

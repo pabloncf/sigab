@@ -1,2 +1,144 @@
-{% extends "base.html" %}{% block content %}<div class="card"><h1>Entrar</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button>Entrar</button></form></div>{% endblock %}
-
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Entrar | SIGAB</title>
+  <style>
+    :root { font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; color: #18302b; background: #f2f5f2; font-synthesis: none; text-rendering: optimizeLegibility; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, input { font: inherit; }
+    a { color: inherit; }
+    button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #a96b22; outline-offset: 4px; }
+    .login-page { min-height: 100dvh; display: flex; flex-direction: column; }
+    .page-header, .page-footer { width: min(1280px, 100%); margin-inline: auto; padding: 28px clamp(24px, 5vw, 64px); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
+    .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #174c3d; border-radius: 50%; font-weight: 800; }
+    .brand-copy { display: grid; gap: 2px; }
+    .brand-copy strong { font-size: 18px; letter-spacing: .04em; }
+    .brand-copy small, .access-label { font-size: 12px; color: #53665e; }
+    main { flex: 1; width: min(1152px, 100%); margin: auto; padding: 48px clamp(24px, 5vw, 64px) 64px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); align-items: center; gap: clamp(48px, 7vw, 112px); }
+    .intro { max-width: 460px; }
+    .eyebrow { margin: 0 0 24px; color: #174c3d; font-size: 12px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    .intro h2 { margin: 0; font-size: clamp(36px, 4.2vw, 54px); line-height: 1.12; font-weight: 600; letter-spacing: -.045em; }
+    .intro-description { margin: 24px 0 36px; max-width: 35ch; color: #53665e; font-size: 17px; line-height: 1.7; }
+    .scope { margin: 0; padding-top: 24px; border-top: 1px solid #ccd8d0; display: grid; gap: 16px; }
+    .scope div { display: grid; grid-template-columns: 105px 1fr; gap: 16px; font-size: 13px; line-height: 1.5; }
+    .scope dt { font-weight: 700; color: #174c3d; }
+    .scope dd { margin: 0; color: #53665e; }
+    .login-card { padding: clamp(24px, 3vw, 40px); background: #fff; border: 1px solid #d9e1dd; border-radius: 10px; box-shadow: 0 16px 48px rgb(24 48 43 / 5%); }
+    h1 { margin: 0 0 10px; font-size: 28px; line-height: 1.2; letter-spacing: -.035em; }
+    .form-description { margin: 0 0 30px; color: #53665e; font-size: 14px; line-height: 1.6; }
+    .field { margin-bottom: 22px; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 700; }
+    input { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid #aabcb2; border-radius: 8px; background: #fff; color: #18302b; }
+    input[aria-invalid="true"] { border-color: #9a3c3c; }
+    .password-control { position: relative; }
+    .password-control input { padding-right: 85px; }
+    .password-toggle { position: absolute; right: 5px; top: 4px; min-height: 40px; padding: 8px; border: 0; border-radius: 4px; color: #174c3d; background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }
+    .password-toggle:hover { background: #edf4f1; }
+    .submit { width: 100%; min-height: 48px; padding: 12px 20px; border: 1px solid #174c3d; border-radius: 8px; background: #174c3d; color: #fff; font-weight: 700; cursor: pointer; transition: background-color .15s ease; }
+    .submit:hover { background: #103a2f; }
+    .submit:disabled { cursor: wait; opacity: .75; }
+    .feedback { padding: 14px; margin-bottom: 22px; color: #762e2e; background: #f9eeec; border: 1px solid #e2b4b1; border-radius: 8px; font-size: 14px; line-height: 1.5; }
+    .errorlist { list-style: none; padding: 0; margin: 0; }
+    .field-errors { margin-top: 8px; font-size: 13px; line-height: 1.5; color: #762e2e; }
+    .help { margin-top: 26px; padding-top: 22px; border-top: 1px solid #d9e1dd; font-size: 13px; line-height: 1.6; }
+    .help summary { cursor: pointer; color: #174c3d; font-weight: 600; }
+    .help p { color: #53665e; margin: 12px 0 0; }
+    .page-footer { color: #53665e; font-size: 12px; line-height: 1.6; }
+    .page-footer p { margin: 0; }
+    @media (max-width: 760px) {
+      .page-header { padding-block: 24px; }
+      main { grid-template-columns: minmax(0, 420px); justify-content: center; gap: 32px; padding-block: 24px 40px; }
+      .intro .eyebrow, .intro-description, .scope { display: none; }
+      .intro h2 { font-size: 30px; max-width: 18ch; }
+      .page-footer { padding-top: 0; flex-direction: column; align-items: flex-start; gap: 6px; }
+    }
+    @media (max-width: 400px) { .access-label { display: none; } }
+    @media (prefers-reduced-motion: reduce) { .submit { transition: none; } }
+  </style>
+</head>
+<body>
+  <div class="login-page">
+    <header class="page-header">
+      <a class="brand" href="/" aria-label="SIGAB, início">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span class="brand-copy"><strong>SIGAB</strong><small>Gestão de acervo</small></span>
+      </a>
+      <span class="access-label">Acesso institucional</span>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="intro-title">
+        <p class="eyebrow">Gestão de acervo bélico</p>
+        <h2 id="intro-title">Seu acervo.<br>Sob controle.</h2>
+        <p class="intro-description">Consulte itens, acompanhe movimentações e mantenha o histórico da sua organização em um só lugar.</p>
+        <dl class="scope">
+          <div><dt>Acervo</dt><dd>Situação e localização de cada item.</dd></div>
+          <div><dt>Movimentações</dt><dd>Registro de saídas e devoluções.</dd></div>
+          <div><dt>Histórico</dt><dd>Rastreabilidade das operações.</dd></div>
+        </dl>
+      </section>
+      <section class="login-card" aria-labelledby="login-title">
+        <h1 id="login-title">Entrar</h1>
+        <p class="form-description">Use sua conta institucional para acessar o SIGAB.</p>
+        {% if form.non_field_errors %}<div class="feedback" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        {% for message in messages %}<div class="feedback" role="status">{{ message }}</div>{% endfor %}
+        <form method="post" id="login-form">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}">
+          <div class="field">
+            <label for="id_username">Usuário</label>
+            <input id="id_username" name="username" type="text" value="{{ form.username.value|default_if_none:'' }}" maxlength="150" autocomplete="username" autocapitalize="none" spellcheck="false" required{% if form.username.errors %} aria-invalid="true" aria-describedby="username-errors"{% endif %}>
+            {% if form.username.errors %}<div class="field-errors" id="username-errors">{{ form.username.errors }}</div>{% endif %}
+          </div>
+          <div class="field">
+            <label for="id_password">Senha</label>
+            <div class="password-control">
+              <input id="id_password" name="password" type="password" autocomplete="current-password" required{% if form.password.errors %} aria-invalid="true" aria-describedby="password-errors"{% endif %}>
+              <button class="password-toggle" type="button" id="password-toggle" aria-controls="id_password" aria-label="Mostrar senha" aria-pressed="false" hidden>Mostrar</button>
+            </div>
+            {% if form.password.errors %}<div class="field-errors" id="password-errors">{{ form.password.errors }}</div>{% endif %}
+          </div>
+          <button class="submit" type="submit" id="login-submit">Entrar</button>
+        </form>
+        <details class="help">
+          <summary>Precisa de ajuda para entrar?</summary>
+          <p>Se esqueceu sua senha ou ainda não tem uma conta, procure o administrador do SIGAB na sua organização.</p>
+        </details>
+      </section>
+    </main>
+    <footer class="page-footer">
+      <p>SIGAB · Sistema de gestão de acervo bélico</p>
+      <p>Acesso exclusivo a usuários autorizados.</p>
+    </footer>
+  </div>
+  <script>
+    const password = document.getElementById('id_password');
+    const toggle = document.getElementById('password-toggle');
+    const submit = document.getElementById('login-submit');
+    toggle.hidden = false;
+    toggle.addEventListener('click', () => {
+      const visible = password.type === 'password';
+      password.type = visible ? 'text' : 'password';
+      toggle.textContent = visible ? 'Ocultar' : 'Mostrar';
+      toggle.setAttribute('aria-label', visible ? 'Ocultar senha' : 'Mostrar senha');
+      toggle.setAttribute('aria-pressed', String(visible));
+    });
+    document.getElementById('login-form').addEventListener('submit', () => {
+      submit.disabled = true;
+      submit.textContent = 'Entrando…';
+    });
+    window.addEventListener('pageshow', () => {
+      submit.disabled = false;
+      submit.textContent = 'Entrar';
+      password.type = 'password';
+      toggle.textContent = 'Mostrar';
+      toggle.setAttribute('aria-label', 'Mostrar senha');
+      toggle.setAttribute('aria-pressed', 'false');
+    });
+  </script>
+</body>
+</html>

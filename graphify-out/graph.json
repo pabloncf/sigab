@@ -8678,7 +8678,7 @@
       "label": "backend",
       "file_type": "code",
       "source_file": "frontend/vite.config.ts",
-      "source_location": "L6",
+      "source_location": "L10",
       "_origin": "ast",
       "id": "frontend_vite_config_backend",
       "community": 40,
@@ -9207,8 +9207,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "readme",
-      "community": 67,
-      "community_name": "README.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "readme.md"
     },
     {
@@ -9234,21 +9234,32 @@
       "norm_label": "estrutura"
     },
     {
-      "label": "Primeiros passos",
+      "label": "Rodar com Docker (desenvolvimento)",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "readme_primeiros_passos",
+      "id": "readme_rodar_com_docker_desenvolvimento",
       "community": 54,
       "community_name": "SIGAB",
-      "norm_label": "primeiros passos"
+      "norm_label": "rodar com docker (desenvolvimento)"
+    },
+    {
+      "label": "Primeiros passos (sem Docker)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L36",
+      "_origin": "ast",
+      "id": "readme_primeiros_passos_sem_docker",
+      "community": 54,
+      "community_name": "SIGAB",
+      "norm_label": "primeiros passos (sem docker)"
     },
     {
       "label": "1. Backend",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L21",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "readme_1_backend",
       "community": 54,
@@ -9259,7 +9270,7 @@
       "label": "2. Frontend",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L35",
+      "source_location": "L58",
       "_origin": "ast",
       "id": "readme_2_frontend",
       "community": 54,
@@ -9270,7 +9281,7 @@
       "label": "3. Dados iniciais",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L47",
+      "source_location": "L70",
       "_origin": "ast",
       "id": "readme_3_dados_iniciais",
       "community": 54,
@@ -9281,7 +9292,7 @@
       "label": "Testes e verifica\u00e7\u00e3o",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L75",
+      "source_location": "L98",
       "_origin": "ast",
       "id": "readme_testes_e_verifica\u00e7\u00e3o",
       "community": 54,
@@ -9292,7 +9303,7 @@
       "label": "Graphify",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L101",
+      "source_location": "L124",
       "_origin": "ast",
       "id": "readme_graphify",
       "community": 54,
@@ -9303,7 +9314,7 @@
       "label": "Opera\u00e7\u00e3o e backup",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L114",
+      "source_location": "L137",
       "_origin": "ast",
       "id": "readme_opera\u00e7\u00e3o_e_backup",
       "community": 54,
@@ -9314,7 +9325,7 @@
       "label": "Evid\u00eancias da entrega",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L125",
+      "source_location": "L148",
       "_origin": "ast",
       "id": "readme_evid\u00eancias_da_entrega",
       "community": 54,
@@ -9328,8 +9339,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0001_stack_e_frontend",
-      "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "0001-stack-e-frontend.md"
     },
     {
@@ -9339,8 +9350,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0001_stack_e_frontend_adr_0001_mon\u00f3lito_django_e_templates_server_side",
-      "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "adr 0001 \u2014 monolito django e templates server-side"
     },
     {
@@ -9350,8 +9361,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0002_tenancy_autorizacao",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 84,
+      "community_name": "0002-tenancy-autorizacao.md",
       "norm_label": "0002-tenancy-autorizacao.md"
     },
     {
@@ -9361,8 +9372,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0002_tenancy_autorizacao_adr_0002_tenancy_compartilhada_e_autoriza\u00e7\u00e3o_expl\u00edcita",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 84,
+      "community_name": "0002-tenancy-autorizacao.md",
       "norm_label": "adr 0002 \u2014 tenancy compartilhada e autorizacao explicita"
     },
     {
@@ -9372,8 +9383,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0003_eventos_idempotencia",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "0003-eventos-idempotencia.md"
     },
     {
@@ -9383,8 +9394,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0003_eventos_idempotencia_adr_0003_eventos_proje\u00e7\u00e3o_atual_e_idempot\u00eancia",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "adr 0003 \u2014 eventos, projecao atual e idempotencia"
     },
     {
@@ -9394,8 +9405,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0004_conectividade_e_contingencia",
-      "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "0004-conectividade-e-contingencia.md"
     },
     {
@@ -9406,7 +9417,7 @@
       "_origin": "ast",
       "id": "docs_adr_0004_conectividade_e_contingencia_adr_0004_conectividade_online_conting\u00eancia_em_papel_e_reconcilia\u00e7\u00e3o",
       "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community_name": "ADR 0004 \u2014 Conectividade online, conting\u00eancia em papel e reconcilia\u00e7\u00e3o",
       "norm_label": "adr 0004 \u2014 conectividade online, contingencia em papel e reconciliacao"
     },
     {
@@ -9417,7 +9428,7 @@
       "_origin": "ast",
       "id": "docs_adr_0004_conectividade_e_contingencia_contexto",
       "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community_name": "ADR 0004 \u2014 Conectividade online, conting\u00eancia em papel e reconcilia\u00e7\u00e3o",
       "norm_label": "contexto"
     },
     {
@@ -9428,7 +9439,7 @@
       "_origin": "ast",
       "id": "docs_adr_0004_conectividade_e_contingencia_decis\u00e3o",
       "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community_name": "ADR 0004 \u2014 Conectividade online, conting\u00eancia em papel e reconcilia\u00e7\u00e3o",
       "norm_label": "decisao"
     },
     {
@@ -9439,7 +9450,7 @@
       "_origin": "ast",
       "id": "docs_adr_0004_conectividade_e_contingencia_preven\u00e7\u00e3o_de_dupla_entrega",
       "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community_name": "ADR 0004 \u2014 Conectividade online, conting\u00eancia em papel e reconcilia\u00e7\u00e3o",
       "norm_label": "prevencao de dupla entrega"
     },
     {
@@ -9450,7 +9461,7 @@
       "_origin": "ast",
       "id": "docs_adr_0004_conectividade_e_contingencia_procedimento_de_conting\u00eancia",
       "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community_name": "ADR 0004 \u2014 Conectividade online, conting\u00eancia em papel e reconcilia\u00e7\u00e3o",
       "norm_label": "procedimento de contingencia"
     },
     {
@@ -9461,7 +9472,7 @@
       "_origin": "ast",
       "id": "docs_adr_0004_conectividade_e_contingencia_consequ\u00eancias",
       "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community_name": "ADR 0004 \u2014 Conectividade online, conting\u00eancia em papel e reconcilia\u00e7\u00e3o",
       "norm_label": "consequencias"
     },
     {
@@ -9471,8 +9482,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0005_api_django_e_frontend_react",
-      "community": 59,
-      "community_name": "0004-conectividade-e-contingencia.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "0005-api-django-e-frontend-react.md"
     },
     {
@@ -9592,8 +9603,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0006_eventos_auditoria_e_estornos",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "0006-eventos-auditoria-e-estornos.md"
     },
     {
@@ -9835,7 +9846,7 @@
       "_origin": "ast",
       "id": "docs_backup_e_restauracao",
       "community": 67,
-      "community_name": "README.md",
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "backup-e-restauracao.md"
     },
     {
@@ -9846,7 +9857,7 @@
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_backup_e_ensaio_de_restaura\u00e7\u00e3o_sigab_042",
       "community": 67,
-      "community_name": "README.md",
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "backup e ensaio de restauracao \u2014 sigab-042"
     },
     {
@@ -9857,7 +9868,7 @@
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_c\u00f3pia_protegida",
       "community": 67,
-      "community_name": "README.md",
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "copia protegida"
     },
     {
@@ -9868,7 +9879,7 @@
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_ensaio_isolado",
       "community": 67,
-      "community_name": "README.md",
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "ensaio isolado"
     },
     {
@@ -9879,7 +9890,7 @@
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_teste_reproduz\u00edvel",
       "community": 67,
-      "community_name": "README.md",
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "teste reproduzivel"
     },
     {
@@ -9890,7 +9901,7 @@
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_crit\u00e9rios_ainda_pendentes",
       "community": 67,
-      "community_name": "README.md",
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "criterios ainda pendentes"
     },
     {
@@ -9900,8 +9911,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_banco_e_migracoes",
-      "community": 57,
-      "community_name": "Banco e migra\u00e7\u00f5es",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "banco-e-migracoes.md"
     },
     {
@@ -10021,8 +10032,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_contratos_devolucao_individual",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "devolucao-individual.md"
     },
     {
@@ -10131,8 +10142,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_contratos_lancamento_de_contingencia",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "lancamento-de-contingencia.md"
     },
     {
@@ -10219,8 +10230,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_contratos_saida_individual",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "saida-individual.md"
     },
     {
@@ -10363,7 +10374,7 @@
       "_origin": "ast",
       "id": "docs_decisoes_0001_segmento_inicial",
       "community": 65,
-      "community_name": "0001-segmento-inicial.md",
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "0001-segmento-inicial.md"
     },
     {
@@ -10615,8 +10626,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_decisoes_0003_modelo_de_estoque_e_municao",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 65,
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "0003-modelo-de-estoque-e-municao.md"
     },
     {
@@ -10824,8 +10835,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_decisoes_0004_ciclo_de_vida_do_item_individual",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 76,
+      "community_name": "0006-eventos-auditoria-e-estornos.md",
       "norm_label": "0004-ciclo-de-vida-do-item-individual.md"
     },
     {
@@ -11430,7 +11441,7 @@
       "_origin": "ast",
       "id": "docs_glossario",
       "community": 65,
-      "community_name": "0001-segmento-inicial.md",
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "glossario.md"
     },
     {
@@ -11594,8 +11605,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_integracao_continua",
-      "community": 62,
-      "community_name": "Integra\u00e7\u00e3o cont\u00ednua",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "integracao-continua.md"
     },
     {
@@ -12100,8 +12111,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_notas_regulatorias_0001_guardas_municipais",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 65,
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "0001-guardas-municipais.md"
     },
     {
@@ -12475,7 +12486,7 @@
       "_origin": "ast",
       "id": "docs_pesquisas_0001_formulario_armamento_temporario",
       "community": 65,
-      "community_name": "0001-segmento-inicial.md",
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "0001-formulario-armamento-temporario.md"
     },
     {
@@ -12760,8 +12771,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_requisitos",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 65,
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "requisitos.md"
     },
     {
@@ -12771,8 +12782,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_requisitos_requisitos_e_rastreabilidade",
-      "community": 84,
-      "community_name": "Requisitos e rastreabilidade",
+      "community": 65,
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "requisitos e rastreabilidade"
     },
     {
@@ -12782,8 +12793,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "docs_requisitos_estado_individual_ciclo_de_vida_do_item",
-      "community": 84,
-      "community_name": "Requisitos e rastreabilidade",
+      "community": 65,
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "estado individual: ciclo de vida do item"
     },
     {
@@ -12793,8 +12804,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_seguranca_e_privacidade",
-      "community": 67,
-      "community_name": "README.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "seguranca-e-privacidade.md"
     },
     {
@@ -12804,8 +12815,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_seguranca_e_privacidade_seguran\u00e7a_e_privacidade",
-      "community": 67,
-      "community_name": "README.md",
+      "community": 85,
+      "community_name": "Seguran\u00e7a e privacidade",
       "norm_label": "seguranca e privacidade"
     },
     {
@@ -12815,8 +12826,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "docs_seguranca_e_privacidade_modelo_de_amea\u00e7as",
-      "community": 67,
-      "community_name": "README.md",
+      "community": 85,
+      "community_name": "Seguran\u00e7a e privacidade",
       "norm_label": "modelo de ameacas"
     },
     {
@@ -12871,7 +12882,7 @@
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045",
       "community": 67,
-      "community_name": "README.md",
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "tarefas-041-a-045.md"
     },
     {
@@ -12881,8 +12892,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_entrega_e_valida\u00e7\u00e3o_das_tarefas_041_a_045",
-      "community": 76,
-      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
+      "community": 67,
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "entrega e validacao das tarefas 041 a 045"
     },
     {
@@ -12892,8 +12903,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_sigab_041_informa\u00e7\u00f5es_necess\u00e1rias",
-      "community": 76,
-      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
+      "community": 67,
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "sigab-041: informacoes necessarias"
     },
     {
@@ -12903,8 +12914,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_rastreabilidade_da_sigab_043",
-      "community": 76,
-      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
+      "community": 67,
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "rastreabilidade da sigab-043"
     },
     {
@@ -12914,8 +12925,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_sigab_045_roteiro_da_sess\u00e3o_com_usu\u00e1rio_alvo",
-      "community": 76,
-      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
+      "community": 67,
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "sigab-045: roteiro da sessao com usuario-alvo"
     },
     {
@@ -12925,8 +12936,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_ata_aguardando_sess\u00e3o",
-      "community": 76,
-      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
+      "community": 67,
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "ata \u2014 aguardando sessao"
     },
     {
@@ -12936,8 +12947,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_verifica\u00e7\u00f5es_executadas_em_2026_11_02",
-      "community": 76,
-      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
+      "community": 67,
+      "community_name": "backup-e-restauracao.md",
       "norm_label": "verificacoes executadas em 2026-11-02"
     },
     {
@@ -12948,7 +12959,7 @@
       "_origin": "ast",
       "id": "docs_visao_do_produto",
       "community": 65,
-      "community_name": "0001-segmento-inicial.md",
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "visao-do-produto.md"
     },
     {
@@ -12959,7 +12970,7 @@
       "_origin": "ast",
       "id": "docs_visao_do_produto_vis\u00e3o_do_produto",
       "community": 65,
-      "community_name": "0001-segmento-inicial.md",
+      "community_name": "0001-guardas-municipais.md",
       "norm_label": "visao do produto"
     },
     {
@@ -40540,7 +40551,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "frontend/vite.config.ts",
-      "source_location": "L6",
+      "source_location": "L10",
       "weight": 1.0,
       "_origin": "ast",
       "source": "frontend_vite_config",
@@ -40985,7 +40996,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L117",
+      "source_location": "L140",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -40996,7 +41007,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L99",
+      "source_location": "L122",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41007,7 +41018,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L116",
+      "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41018,7 +41029,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L99",
+      "source_location": "L122",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41029,7 +41040,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L123",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41040,7 +41051,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L49",
+      "source_location": "L72",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41051,7 +41062,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L123",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41062,7 +41073,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L77",
+      "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41073,7 +41084,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L123",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41084,7 +41095,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L123",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41095,7 +41106,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L99",
+      "source_location": "L122",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41106,7 +41117,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L123",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41117,7 +41128,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L127",
+      "source_location": "L150",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41150,7 +41161,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L125",
+      "source_location": "L148",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
@@ -41161,7 +41172,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L101",
+      "source_location": "L124",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
@@ -41172,7 +41183,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L114",
+      "source_location": "L137",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
@@ -41183,18 +41194,29 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L13",
+      "source_location": "L36",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
-      "target": "readme_primeiros_passos",
+      "target": "readme_primeiros_passos_sem_docker",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L75",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "readme_sigab",
+      "target": "readme_rodar_com_docker_desenvolvimento",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L98",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
@@ -41205,10 +41227,10 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L21",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "readme_primeiros_passos",
+      "source": "readme_primeiros_passos_sem_docker",
       "target": "readme_1_backend",
       "confidence_score": 1.0
     },
@@ -41216,10 +41238,10 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L35",
+      "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "readme_primeiros_passos",
+      "source": "readme_primeiros_passos_sem_docker",
       "target": "readme_2_frontend",
       "confidence_score": 1.0
     },
@@ -41227,10 +41249,10 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L47",
+      "source_location": "L70",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "readme_primeiros_passos",
+      "source": "readme_primeiros_passos_sem_docker",
       "target": "readme_3_dados_iniciais",
       "confidence_score": 1.0
     },
@@ -45790,5 +45812,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6af1cd65d105eeb1bbf2adc29b1ff99ca06a0c80"
+  "built_at_commit": "89a4434400e2a2ae5d950bab9f7ffcb93e70d4b1"
 }

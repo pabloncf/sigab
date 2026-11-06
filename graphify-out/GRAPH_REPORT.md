@@ -1,16 +1,16 @@
-# Graph Report - sigab  (2026-11-03)
+# Graph Report - sigab  (2026-11-05)
 
 ## Corpus Check
-- 120 files · ~75,175 words
+- 120 files · ~76,410 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1176 nodes · 2844 edges · 85 communities (69 shown, 16 thin omitted)
+- 1177 nodes · 2845 edges · 86 communities (70 shown, 16 thin omitted)
 - Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 224 edges (avg confidence: 0.54)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6af1cd65`
+- Built from commit: `89a44344`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -52,7 +52,6 @@
 - test_observability.py
 - test_items.py
 - test_isolation.py
-- decisoes-pendentes.md
 - 3. Ameaças
 - test_catalog.py
 - test_api_conventions.py
@@ -64,15 +63,15 @@
 - Observabilidade mínima
 - Banco e migrações
 - test_audit.py
-- 0004-conectividade-e-contingencia.md
+- ADR 0004 — Conectividade online, contingência em papel e reconciliação
 - 0005_atomic_permission_codes.py
 - Item
 - Integração contínua
 - validate_cpf
 - 0003_person_cpf_account_revocation.py
-- 0001-segmento-inicial.md
+- 0001-guardas-municipais.md
 - test_reversal.py
-- README.md
+- backup-e-restauracao.md
 - Decisão de domínio 0005 — Restrição operacional da pessoa
 - Contrato da devolução de item individual
 - Política de dados pessoais
@@ -81,14 +80,15 @@
 - test-backup.sh
 - 0006_movement_reversal.py
 - Contrato do lançamento de contingência
-- Entrega e validação das tarefas 041 a 045
+- 0006-eventos-auditoria-e-estornos.md
 - restore-test.sh
 - Decisões pendentes
 - roles.py
 - backup.sh
 - world
 - 0008_movement_contingency.py
-- Requisitos e rastreabilidade
+- 0002-tenancy-autorizacao.md
+- Segurança e privacidade
 
 ## God Nodes (most connected - your core abstractions)
 1. `Account` - 44 edges
@@ -117,7 +117,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (85 total, 16 thin omitted)
+## Communities (86 total, 16 thin omitted)
 
 ### Community 0 - "test_flow.py"
 Cohesion: 0.14
@@ -268,24 +268,24 @@ Cohesion: 0.22
 Nodes (9): 1. Comando, 2. Dados e origem de cada um, 3. Pré-condições, 4. Efeitos, 5. Repetição, 6. Concorrência, 7. Respostas, 8. Critérios de aceite e evidências (+1 more)
 
 ### Community 54 - "SIGAB"
-Cohesion: 0.20
-Nodes (10): 1. Backend, 2. Frontend, 3. Dados iniciais, Estrutura, Evidências da entrega, Graphify, Operação e backup, Primeiros passos (+2 more)
+Cohesion: 0.18
+Nodes (11): 1. Backend, 2. Frontend, 3. Dados iniciais, Estrutura, Evidências da entrega, Graphify, Operação e backup, Primeiros passos (sem Docker) (+3 more)
 
 ### Community 56 - "Observabilidade mínima"
 Cohesion: 0.25
 Nodes (8): Fora do escopo, Formato do log, Identificador de requisição, O que nunca é registrado, Observabilidade mínima, Separação, Testes, Tratamento centralizado de erros
 
 ### Community 57 - "Banco e migrações"
-Cohesion: 0.29
+Cohesion: 0.33
 Nodes (6): Banco e migrações, Bancos, Convenções, Do banco vazio à versão atual, Migrações atuais, Verificação em ambiente descartável
 
 ### Community 58 - "test_audit.py"
 Cohesion: 0.11
 Nodes (26): Command, BaseCommand, Return None when the chain is intact, else a description of the first break., verify_chain(), audit_record_hash(), SHA-256 over the canonical content of an audit event and the previous hash., admin(), _audited() (+18 more)
 
-### Community 59 - "0004-conectividade-e-contingencia.md"
-Cohesion: 0.22
-Nodes (7): ADR 0001 — Monólito Django e templates server-side, ADR 0004 — Conectividade online, contingência em papel e reconciliação, Consequências, Contexto, Decisão, Prevenção de dupla entrega, Procedimento de contingência
+### Community 59 - "ADR 0004 — Conectividade online, contingência em papel e reconciliação"
+Cohesion: 0.33
+Nodes (6): ADR 0004 — Conectividade online, contingência em papel e reconciliação, Consequências, Contexto, Decisão, Prevenção de dupla entrega, Procedimento de contingência
 
 ### Community 60 - "0005_atomic_permission_codes.py"
 Cohesion: 0.60
@@ -296,16 +296,20 @@ Cohesion: 0.18
 Nodes (17): AdministrativeStatus, Availability, Condition, Item, _checkout(), _post(), django_db, fixture (+9 more)
 
 ### Community 62 - "Integração contínua"
-Cohesion: 0.29
+Cohesion: 0.33
 Nodes (6): Ensaio periódico de restauração, Etapas, Integração contínua, Pendências, Reprodutibilidade, Segredos
+
+### Community 65 - "0001-guardas-municipais.md"
+Cohesion: 0.27
+Nodes (3): Estado individual: ciclo de vida do item, Requisitos e rastreabilidade, Visão do produto
 
 ### Community 66 - "test_reversal.py"
 Cohesion: 0.36
 Nodes (16): _checkout(), flows(), _item(), _post(), django_db, fixture, _return(), _reverse() (+8 more)
 
-### Community 67 - "README.md"
-Cohesion: 0.20
-Nodes (7): Backup e ensaio de restauração — SIGAB-042, Critérios ainda pendentes, Cópia protegida, Ensaio isolado, Teste reproduzível, Modelo de ameaças, Segurança e privacidade
+### Community 67 - "backup-e-restauracao.md"
+Cohesion: 0.15
+Nodes (11): Backup e ensaio de restauração — SIGAB-042, Critérios ainda pendentes, Cópia protegida, Ensaio isolado, Teste reproduzível, Ata — aguardando sessão, Entrega e validação das tarefas 041 a 045, Rastreabilidade da SIGAB-043 (+3 more)
 
 ### Community 68 - "Decisão de domínio 0005 — Restrição operacional da pessoa"
 Cohesion: 0.20
@@ -335,10 +339,6 @@ Nodes (7): AGE_IDENTITY, BACKUP_DIR, DATABASE_URL, PGDATABASE, REPORT_PATH, REST
 Cohesion: 0.29
 Nodes (7): 1. Comando, 2. Dados, 3. Regras, 4. Efeitos, 5. Fora deste contrato, 6. Critérios de aceite e evidências, Contrato do lançamento de contingência
 
-### Community 76 - "Entrega e validação das tarefas 041 a 045"
-Cohesion: 0.33
-Nodes (6): Ata — aguardando sessão, Entrega e validação das tarefas 041 a 045, Rastreabilidade da SIGAB-043, SIGAB-041: informações necessárias, SIGAB-045: roteiro da sessão com usuário-alvo, Verificações executadas em 2026-11-02
-
 ### Community 77 - "restore-test.sh"
 Cohesion: 0.40
 Nodes (3): DATABASE_URL, PGDATABASE, restore-test.sh script
@@ -352,7 +352,7 @@ Cohesion: 0.67
 Nodes (3): api_world(), fixture, world()
 
 ## Knowledge Gaps
-- **359 isolated node(s):** `sigab`, `Migration`, `Migration`, `Migration`, `Migration` (+354 more)
+- **360 isolated node(s):** `sigab`, `Migration`, `Migration`, `Migration`, `Migration` (+355 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
