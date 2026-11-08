@@ -21,6 +21,25 @@ docker compose exec backend python manage.py bootstrap_sigab \
   --username admin --email admin@example.invalid
 ```
 
+Para ver o sistema já povoado, gere dados sintéticos de demonstração (só com `DEBUG` ligado; roda uma vez por banco):
+
+```bash
+docker compose exec backend python manage.py seed_demo
+```
+
+Cria os batalhões “Demonstração Alfa” e “Bravo” com unidades, reservas, tipos, pessoas, itens e movimentações em todos os estados (em posse, devolvido, inapto, liberado, estornado e lançado em contingência). Para recomeçar do zero, use `docker compose down -v`.
+
+Credenciais de teste (somente para o banco local de desenvolvimento):
+
+| Login | Senha | Organização | Papéis |
+|---|---|---|---|
+| `alfa.admin` | `Demo-sigab-2026` | Batalhão Demonstração Alfa | Administrador de acesso e Gestor de acervo (organização) |
+| `alfa.operador` | `Demo-sigab-2026` | Batalhão Demonstração Alfa | Operador de reserva (1ª e 2ª Companhia) |
+| `bravo.admin` | `Demo-sigab-2026` | Batalhão Demonstração Bravo | Administrador de acesso e Gestor de acervo (organização) |
+| `bravo.operador` | `Demo-sigab-2026` | Batalhão Demonstração Bravo | Operador de reserva (Sede) |
+
+Use as contas `alfa.*` e `bravo.*` para conferir o isolamento: uma organização não enxerga os dados da outra. A senha pode ser trocada com `seed_demo --password <senha>`.
+
 Acesse `http://localhost:5173`. As migrações rodam a cada início do backend. Comandos úteis:
 
 ```bash
