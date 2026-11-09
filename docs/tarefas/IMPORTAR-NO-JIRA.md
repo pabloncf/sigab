@@ -2,6 +2,8 @@
 
 O arquivo `tarefas-15-10-26/tarefas.csv` está preparado para o importador CSV administrativo do Jira Cloud. Ele contém primeiro os Epics e depois as Tasks, como exigido para reconstruir a hierarquia.
 
+O lote seguinte está em [tarefas-06-11-26/tarefas.csv](tarefas-06-11-26/tarefas.csv), com SIGAB-047 a SIGAB-073. Consulte o [guia do incremento](tarefas-06-11-26/README.md) para ordem sugerida e dependências do lote anterior. Ele contém apenas novas tarefas e épicos do incremento; não reimporte o lote inicial para adicionar essas tarefas.
+
 ## Mapeamento
 
 | Coluna CSV | Campo Jira |
@@ -18,6 +20,8 @@ O arquivo `tarefas-15-10-26/tarefas.csv` está preparado para o importador CSV a
 | Is Blocked By | vínculo `is blocked by` — mapear todas as colunas repetidas |
 
 Use o importador administrativo, não a criação simplificada em massa, para preservar hierarquia e vínculos. Valide antes de iniciar a importação.
+
+`Work item ID` é um identificador local do arquivo, não uma chave real do Jira. No lote de 06/11, `Is Blocked By` contém somente referências a tarefas do próprio arquivo. As dependências de SIGAB-001 a SIGAB-046 constam nas descrições e devem ser vinculadas às chaves reais existentes após a importação. Os novos épicos usam IDs locais 2001–2008 e nomes com o sufixo do incremento, sem recriar os épicos originais. A reimportação do mesmo arquivo não deve ser tratada como atualização idempotente.
 
 Os valores de status usados são `To Do` e `Done`. Caso o workflow do projeto use nomes diferentes, faça o mapeamento de valores na etapa oferecida pelo Jira. As prioridades são `Highest`, `High` e `Medium`.
 

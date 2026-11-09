@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793758883.3905547,
-    "ast_hash": "97743e10178eb42050ba9eb685d24352",
+    "mtime": 1793975374.6977792,
+    "ast_hash": "b668363fa963328b5a22cf96ade0c080",
     "semantic_hash": ""
   },
   "compose.yaml": {
@@ -642,6 +642,16 @@
   "docs/contratos/lancamento-de-contingencia.md": {
     "mtime": 1793758883.3951685,
     "ast_hash": "f5b68877c18ad79195c1a5f247911654",
+    "semantic_hash": ""
+  },
+  "backend/sigab/management/commands/seed_demo.py": {
+    "mtime": 1793975330.4926414,
+    "ast_hash": "623b99eeed807227a925863d10214445",
+    "semantic_hash": ""
+  },
+  "backend/sigab/tests/test_seed_demo.py": {
+    "mtime": 1793975330.4956627,
+    "ast_hash": "3fb9be2e86c171179e0dc573ed922f6b",
     "semantic_hash": ""
   }
 }

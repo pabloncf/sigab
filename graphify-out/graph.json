@@ -101,8 +101,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_sigab_admin",
-      "community": 2,
-      "community_name": "CommandContext",
+      "community": 42,
+      "community_name": "models.py",
       "norm_label": "admin.py"
     },
     {
@@ -431,8 +431,8 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "backend_sigab_admin_movementeventadmin",
-      "community": 2,
-      "community_name": "CommandContext",
+      "community": 42,
+      "community_name": "models.py",
       "norm_label": "movementeventadmin"
     },
     {
@@ -1910,6 +1910,105 @@
       "norm_label": ".handle()"
     },
     {
+      "label": "seed_demo.py",
+      "file_type": "code",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "backend_sigab_management_commands_seed_demo",
+      "community": 81,
+      "community_name": "Role",
+      "norm_label": "seed_demo.py"
+    },
+    {
+      "label": "_key()",
+      "file_type": "code",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L54",
+      "_origin": "ast",
+      "id": "backend_sigab_management_commands_seed_demo_key",
+      "community": 81,
+      "community_name": "Role",
+      "norm_label": "_key()"
+    },
+    {
+      "label": "Command",
+      "file_type": "code",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L58",
+      "_origin": "ast",
+      "id": "backend_sigab_management_commands_seed_demo_command",
+      "community": 81,
+      "community_name": "Role",
+      "norm_label": "command"
+    },
+    {
+      "label": "BaseCommand",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "backend_sigab_management_commands_seed_demo_py_basecommand",
+      "community": 81,
+      "community_name": "Role",
+      "norm_label": "basecommand"
+    },
+    {
+      "label": ".add_arguments()",
+      "file_type": "code",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L61",
+      "_origin": "ast",
+      "id": "backend_sigab_management_commands_seed_demo_command_add_arguments",
+      "community": 81,
+      "community_name": "Role",
+      "norm_label": ".add_arguments()"
+    },
+    {
+      "label": ".handle()",
+      "file_type": "code",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L64",
+      "_origin": "ast",
+      "id": "backend_sigab_management_commands_seed_demo_command_handle",
+      "community": 81,
+      "community_name": "Role",
+      "norm_label": ".handle()"
+    },
+    {
+      "label": "._seed()",
+      "file_type": "code",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L82",
+      "_origin": "ast",
+      "id": "backend_sigab_management_commands_seed_demo_command_seed",
+      "community": 81,
+      "community_name": "Role",
+      "norm_label": "._seed()"
+    },
+    {
+      "label": "._movements()",
+      "file_type": "code",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L165",
+      "_origin": "ast",
+      "id": "backend_sigab_management_commands_seed_demo_command_movements",
+      "community": 81,
+      "community_name": "Role",
+      "norm_label": "._movements()"
+    },
+    {
+      "label": "Leave items in every state the flow supports, with history behind them.",
+      "file_type": "rationale",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L166",
+      "_origin": "ast",
+      "id": "backend_sigab_management_commands_seed_demo_rationale_166",
+      "community": 81,
+      "community_name": "Role",
+      "norm_label": "leave items in every state the flow supports, with history behind them."
+    },
+    {
       "label": "set_organization_status.py",
       "file_type": "code",
       "source_file": "backend/sigab/management/commands/set_organization_status.py",
@@ -2620,8 +2719,8 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "backend_sigab_models_role",
-      "community": 2,
-      "community_name": "CommandContext",
+      "community": 81,
+      "community_name": "Role",
       "norm_label": "role"
     },
     {
@@ -2697,8 +2796,8 @@
       "source_location": "L280",
       "_origin": "ast",
       "id": "backend_sigab_models_equipmenttype_save",
-      "community": 81,
-      "community_name": ".save",
+      "community": 41,
+      "community_name": "services.py",
       "norm_label": ".save()"
     },
     {
@@ -2708,7 +2807,7 @@
       "source_location": "L292",
       "_origin": "ast",
       "id": "backend_sigab_models_item",
-      "community": 61,
+      "community": 82,
       "community_name": "Item",
       "norm_label": "item"
     },
@@ -2719,7 +2818,7 @@
       "source_location": "L293",
       "_origin": "ast",
       "id": "backend_sigab_models_administrativestatus",
-      "community": 61,
+      "community": 82,
       "community_name": "Item",
       "norm_label": "administrativestatus"
     },
@@ -2730,7 +2829,7 @@
       "source_location": "L297",
       "_origin": "ast",
       "id": "backend_sigab_models_condition",
-      "community": 61,
+      "community": 82,
       "community_name": "Item",
       "norm_label": "condition"
     },
@@ -2741,7 +2840,7 @@
       "source_location": "L301",
       "_origin": "ast",
       "id": "backend_sigab_models_availability",
-      "community": 61,
+      "community": 82,
       "community_name": "Item",
       "norm_label": "availability"
     },
@@ -2763,7 +2862,7 @@
       "source_location": "L369",
       "_origin": "ast",
       "id": "backend_sigab_models_item_display_identifier",
-      "community": 61,
+      "community": 82,
       "community_name": "Item",
       "norm_label": ".display_identifier()"
     },
@@ -2840,8 +2939,8 @@
       "source_location": "L455",
       "_origin": "ast",
       "id": "backend_sigab_models_movement_save",
-      "community": 81,
-      "community_name": ".save",
+      "community": 41,
+      "community_name": "services.py",
       "norm_label": ".save()"
     },
     {
@@ -2873,8 +2972,8 @@
       "source_location": "L470",
       "_origin": "ast",
       "id": "backend_sigab_models_immutablemodel_save",
-      "community": 81,
-      "community_name": ".save",
+      "community": 41,
+      "community_name": "services.py",
       "norm_label": ".save()"
     },
     {
@@ -2895,8 +2994,8 @@
       "source_location": "L479",
       "_origin": "ast",
       "id": "backend_sigab_models_movementevent",
-      "community": 2,
-      "community_name": "CommandContext",
+      "community": 42,
+      "community_name": "models.py",
       "norm_label": "movementevent"
     },
     {
@@ -2917,8 +3016,8 @@
       "source_location": "L530",
       "_origin": "ast",
       "id": "backend_sigab_models_auditevent_save",
-      "community": 81,
-      "community_name": ".save",
+      "community": 41,
+      "community_name": "services.py",
       "norm_label": ".save()"
     },
     {
@@ -2939,8 +3038,8 @@
       "source_location": "L571",
       "_origin": "ast",
       "id": "backend_sigab_models_authenticationfailure",
-      "community": 2,
-      "community_name": "CommandContext",
+      "community": 42,
+      "community_name": "models.py",
       "norm_label": "authenticationfailure"
     },
     {
@@ -2983,8 +3082,8 @@
       "source_location": "L572",
       "_origin": "ast",
       "id": "backend_sigab_models_rationale_572",
-      "community": 2,
-      "community_name": "CommandContext",
+      "community": 42,
+      "community_name": "models.py",
       "norm_label": "failed login attempt, kept only to rate-limit authentication (sigab-021)...."
     },
     {
@@ -3280,8 +3379,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "backend_sigab_services_contingency",
-      "community": 2,
-      "community_name": "CommandContext",
+      "community": 81,
+      "community_name": "Role",
       "norm_label": "contingency"
     },
     {
@@ -3874,8 +3973,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "backend_sigab_services_rationale_61",
-      "community": 2,
-      "community_name": "CommandContext",
+      "community": 81,
+      "community_name": "Role",
       "norm_label": "line of the reserve's contingency book being reconciled (sigab-046, adr 0004)."
     },
     {
@@ -4116,8 +4215,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_sigab_tests_conftest_py_fixture",
-      "community": 82,
-      "community_name": "world",
+      "community": 2,
+      "community_name": "CommandContext",
       "norm_label": "fixture"
     },
     {
@@ -4127,8 +4226,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "backend_sigab_tests_conftest_api_world",
-      "community": 82,
-      "community_name": "world",
+      "community": 2,
+      "community_name": "CommandContext",
       "norm_label": "api_world()"
     },
     {
@@ -4138,8 +4237,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "backend_sigab_tests_conftest_world",
-      "community": 82,
-      "community_name": "world",
+      "community": 2,
+      "community_name": "CommandContext",
       "norm_label": "world()"
     },
     {
@@ -4150,7 +4249,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "test_activity_and_search.py"
     },
     {
@@ -4161,7 +4260,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_post",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "_post()"
     },
     {
@@ -4172,7 +4271,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_checkout",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "_checkout()"
     },
     {
@@ -4183,7 +4282,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_py_fixture",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "fixture"
     },
     {
@@ -4194,7 +4293,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_two_units",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "two_units()"
     },
     {
@@ -4205,7 +4304,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_py_django_db",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "django_db"
     },
     {
@@ -4216,7 +4315,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_test_feed_is_paginated_and_filterable",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "test_feed_is_paginated_and_filterable()"
     },
     {
@@ -4227,7 +4326,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_test_feed_respects_unit_scope_and_is_not_the_audit",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "test_feed_respects_unit_scope_and_is_not_the_audit()"
     },
     {
@@ -4238,7 +4337,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_test_possession_matches_confirmed_movements",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "test_possession_matches_confirmed_movements()"
     },
     {
@@ -4249,7 +4348,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_test_search_finds_items_and_people_within_scope",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "test_search_finds_items_and_people_within_scope()"
     },
     {
@@ -4260,7 +4359,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_test_search_hides_other_units_and_people_without_permission",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "test_search_hides_other_units_and_people_without_permission()"
     },
     {
@@ -4271,7 +4370,7 @@
       "_origin": "ast",
       "id": "skipif",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "skipif"
     },
     {
@@ -4282,7 +4381,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_test_search_response_time_with_test_volume",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "test_search_response_time_with_test_volume()"
     },
     {
@@ -4293,7 +4392,7 @@
       "_origin": "ast",
       "id": "backend_sigab_tests_test_activity_and_search_rationale_185",
       "community": 61,
-      "community_name": "Item",
+      "community_name": "test_activity_and_search.py",
       "norm_label": "volume documented in docs/busca.md: 10 units, 5,000 items, 2,000 people."
     },
     {
@@ -5216,8 +5315,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency",
-      "community": 42,
-      "community_name": "models.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "test_concurrency.py"
     },
     {
@@ -5227,8 +5326,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_py_fixture",
-      "community": 42,
-      "community_name": "models.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "fixture"
     },
     {
@@ -5238,8 +5337,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_postgresql_only",
-      "community": 42,
-      "community_name": "models.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "postgresql_only()"
     },
     {
@@ -5249,8 +5348,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_race",
-      "community": 58,
-      "community_name": "test_audit.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "_race()"
     },
     {
@@ -5260,8 +5359,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_checkout",
-      "community": 58,
-      "community_name": "test_audit.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "_checkout()"
     },
     {
@@ -5271,8 +5370,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_assert_single_checkout",
-      "community": 58,
-      "community_name": "test_audit.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "_assert_single_checkout()"
     },
     {
@@ -5282,8 +5381,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_test_two_simultaneous_checkouts_accept_exactly_one",
-      "community": 58,
-      "community_name": "test_audit.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "test_two_simultaneous_checkouts_accept_exactly_one()"
     },
     {
@@ -5293,8 +5392,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_test_simultaneous_retries_with_same_key_record_once",
-      "community": 58,
-      "community_name": "test_audit.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "test_simultaneous_retries_with_same_key_record_once()"
     },
     {
@@ -5304,8 +5403,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_test_two_simultaneous_returns_close_the_checkout_once",
-      "community": 58,
-      "community_name": "test_audit.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "test_two_simultaneous_returns_close_the_checkout_once()"
     },
     {
@@ -5315,8 +5414,8 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_test_live_checkout_racing_a_contingency_entry_accepts_exactly_one",
-      "community": 58,
-      "community_name": "test_audit.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "test_live_checkout_racing_a_contingency_entry_accepts_exactly_one()"
     },
     {
@@ -5326,8 +5425,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_rationale_1",
-      "community": 42,
-      "community_name": "models.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "real concurrency on postgresql (sigab-031). each attempt uses its own..."
     },
     {
@@ -5337,8 +5436,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_rationale_31",
-      "community": 58,
-      "community_name": "test_audit.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "run `operation(ctx, key)` once per key, all released at the same instant."
     },
     {
@@ -5348,8 +5447,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "backend_sigab_tests_test_concurrency_rationale_106",
-      "community": 58,
-      "community_name": "test_audit.py",
+      "community": 76,
+      "community_name": "test_concurrency.py",
       "norm_label": "mixing paper and system in one reserve is forbidden (adr 0004); the bank still..."
     },
     {
@@ -6990,6 +7089,50 @@
       "community": 66,
       "community_name": "test_reversal.py",
       "norm_label": "test_incorporation_cannot_be_reversed()"
+    },
+    {
+      "label": "test_seed_demo.py",
+      "file_type": "code",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "backend_sigab_tests_test_seed_demo",
+      "community": 82,
+      "community_name": "Item",
+      "norm_label": "test_seed_demo.py"
+    },
+    {
+      "label": "django_db",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "backend_sigab_tests_test_seed_demo_py_django_db",
+      "community": 82,
+      "community_name": "Item",
+      "norm_label": "django_db"
+    },
+    {
+      "label": "test_seed_demo_creates_items_in_every_state()",
+      "file_type": "code",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "backend_sigab_tests_test_seed_demo_test_seed_demo_creates_items_in_every_state",
+      "community": 82,
+      "community_name": "Item",
+      "norm_label": "test_seed_demo_creates_items_in_every_state()"
+    },
+    {
+      "label": "test_seed_demo_refuses_without_debug_or_twice()",
+      "file_type": "code",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "backend_sigab_tests_test_seed_demo_test_seed_demo_refuses_without_debug_or_twice",
+      "community": 82,
+      "community_name": "Item",
+      "norm_label": "test_seed_demo_refuses_without_debug_or_twice()"
     },
     {
       "label": "test_vertical_flow.py",
@@ -9207,8 +9350,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "readme",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 57,
+      "community_name": "README.md",
       "norm_label": "readme.md"
     },
     {
@@ -9248,7 +9391,7 @@
       "label": "Primeiros passos (sem Docker)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L36",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "readme_primeiros_passos_sem_docker",
       "community": 54,
@@ -9259,7 +9402,7 @@
       "label": "1. Backend",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L44",
+      "source_location": "L52",
       "_origin": "ast",
       "id": "readme_1_backend",
       "community": 54,
@@ -9270,7 +9413,7 @@
       "label": "2. Frontend",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L58",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "readme_2_frontend",
       "community": 54,
@@ -9281,7 +9424,7 @@
       "label": "3. Dados iniciais",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L70",
+      "source_location": "L78",
       "_origin": "ast",
       "id": "readme_3_dados_iniciais",
       "community": 54,
@@ -9292,7 +9435,7 @@
       "label": "Testes e verifica\u00e7\u00e3o",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L98",
+      "source_location": "L106",
       "_origin": "ast",
       "id": "readme_testes_e_verifica\u00e7\u00e3o",
       "community": 54,
@@ -9303,7 +9446,7 @@
       "label": "Graphify",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L124",
+      "source_location": "L132",
       "_origin": "ast",
       "id": "readme_graphify",
       "community": 54,
@@ -9314,7 +9457,7 @@
       "label": "Opera\u00e7\u00e3o e backup",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L137",
+      "source_location": "L145",
       "_origin": "ast",
       "id": "readme_opera\u00e7\u00e3o_e_backup",
       "community": 54,
@@ -9325,7 +9468,7 @@
       "label": "Evid\u00eancias da entrega",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L148",
+      "source_location": "L156",
       "_origin": "ast",
       "id": "readme_evid\u00eancias_da_entrega",
       "community": 54,
@@ -9339,8 +9482,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0001_stack_e_frontend",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 57,
+      "community_name": "README.md",
       "norm_label": "0001-stack-e-frontend.md"
     },
     {
@@ -9350,8 +9493,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0001_stack_e_frontend_adr_0001_mon\u00f3lito_django_e_templates_server_side",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 57,
+      "community_name": "README.md",
       "norm_label": "adr 0001 \u2014 monolito django e templates server-side"
     },
     {
@@ -9383,8 +9526,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0003_eventos_idempotencia",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "0003-eventos-idempotencia.md"
     },
     {
@@ -9394,8 +9537,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0003_eventos_idempotencia_adr_0003_eventos_proje\u00e7\u00e3o_atual_e_idempot\u00eancia",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "adr 0003 \u2014 eventos, projecao atual e idempotencia"
     },
     {
@@ -9405,8 +9548,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0004_conectividade_e_contingencia",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 57,
+      "community_name": "README.md",
       "norm_label": "0004-conectividade-e-contingencia.md"
     },
     {
@@ -9482,8 +9625,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0005_api_django_e_frontend_react",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 57,
+      "community_name": "README.md",
       "norm_label": "0005-api-django-e-frontend-react.md"
     },
     {
@@ -9603,8 +9746,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_adr_0006_eventos_auditoria_e_estornos",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "0006-eventos-auditoria-e-estornos.md"
     },
     {
@@ -9845,8 +9988,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_backup_e_restauracao",
-      "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community": 57,
+      "community_name": "README.md",
       "norm_label": "backup-e-restauracao.md"
     },
     {
@@ -9856,8 +9999,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_backup_e_ensaio_de_restaura\u00e7\u00e3o_sigab_042",
-      "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community": 86,
+      "community_name": "Backup e ensaio de restaura\u00e7\u00e3o \u2014 SIGAB-042",
       "norm_label": "backup e ensaio de restauracao \u2014 sigab-042"
     },
     {
@@ -9867,8 +10010,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_c\u00f3pia_protegida",
-      "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community": 86,
+      "community_name": "Backup e ensaio de restaura\u00e7\u00e3o \u2014 SIGAB-042",
       "norm_label": "copia protegida"
     },
     {
@@ -9878,8 +10021,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_ensaio_isolado",
-      "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community": 86,
+      "community_name": "Backup e ensaio de restaura\u00e7\u00e3o \u2014 SIGAB-042",
       "norm_label": "ensaio isolado"
     },
     {
@@ -9889,8 +10032,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_teste_reproduz\u00edvel",
-      "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community": 86,
+      "community_name": "Backup e ensaio de restaura\u00e7\u00e3o \u2014 SIGAB-042",
       "norm_label": "teste reproduzivel"
     },
     {
@@ -9900,8 +10043,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "docs_backup_e_restauracao_crit\u00e9rios_ainda_pendentes",
-      "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community": 86,
+      "community_name": "Backup e ensaio de restaura\u00e7\u00e3o \u2014 SIGAB-042",
       "norm_label": "criterios ainda pendentes"
     },
     {
@@ -9911,8 +10054,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_banco_e_migracoes",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 57,
+      "community_name": "README.md",
       "norm_label": "banco-e-migracoes.md"
     },
     {
@@ -9923,7 +10066,7 @@
       "_origin": "ast",
       "id": "docs_banco_e_migracoes_banco_e_migra\u00e7\u00f5es",
       "community": 57,
-      "community_name": "Banco e migra\u00e7\u00f5es",
+      "community_name": "README.md",
       "norm_label": "banco e migracoes"
     },
     {
@@ -9934,7 +10077,7 @@
       "_origin": "ast",
       "id": "docs_banco_e_migracoes_bancos",
       "community": 57,
-      "community_name": "Banco e migra\u00e7\u00f5es",
+      "community_name": "README.md",
       "norm_label": "bancos"
     },
     {
@@ -9945,7 +10088,7 @@
       "_origin": "ast",
       "id": "docs_banco_e_migracoes_do_banco_vazio_\u00e0_vers\u00e3o_atual",
       "community": 57,
-      "community_name": "Banco e migra\u00e7\u00f5es",
+      "community_name": "README.md",
       "norm_label": "do banco vazio a versao atual"
     },
     {
@@ -9956,7 +10099,7 @@
       "_origin": "ast",
       "id": "docs_banco_e_migracoes_verifica\u00e7\u00e3o_em_ambiente_descart\u00e1vel",
       "community": 57,
-      "community_name": "Banco e migra\u00e7\u00f5es",
+      "community_name": "README.md",
       "norm_label": "verificacao em ambiente descartavel"
     },
     {
@@ -9967,7 +10110,7 @@
       "_origin": "ast",
       "id": "docs_banco_e_migracoes_conven\u00e7\u00f5es",
       "community": 57,
-      "community_name": "Banco e migra\u00e7\u00f5es",
+      "community_name": "README.md",
       "norm_label": "convencoes"
     },
     {
@@ -9978,7 +10121,7 @@
       "_origin": "ast",
       "id": "docs_banco_e_migracoes_migra\u00e7\u00f5es_atuais",
       "community": 57,
-      "community_name": "Banco e migra\u00e7\u00f5es",
+      "community_name": "README.md",
       "norm_label": "migracoes atuais"
     },
     {
@@ -10032,8 +10175,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_contratos_devolucao_individual",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "devolucao-individual.md"
     },
     {
@@ -10142,8 +10285,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_contratos_lancamento_de_contingencia",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "lancamento-de-contingencia.md"
     },
     {
@@ -10230,8 +10373,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_contratos_saida_individual",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "saida-individual.md"
     },
     {
@@ -10835,8 +10978,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_decisoes_0004_ciclo_de_vida_do_item_individual",
-      "community": 76,
-      "community_name": "0006-eventos-auditoria-e-estornos.md",
+      "community": 47,
+      "community_name": "decisoes-pendentes.md",
       "norm_label": "0004-ciclo-de-vida-do-item-individual.md"
     },
     {
@@ -11605,8 +11748,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_integracao_continua",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 62,
+      "community_name": "Integra\u00e7\u00e3o cont\u00ednua",
       "norm_label": "integracao-continua.md"
     },
     {
@@ -12804,8 +12947,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_seguranca_e_privacidade",
-      "community": 47,
-      "community_name": "decisoes-pendentes.md",
+      "community": 85,
+      "community_name": "seguranca-e-privacidade.md",
       "norm_label": "seguranca-e-privacidade.md"
     },
     {
@@ -12816,7 +12959,7 @@
       "_origin": "ast",
       "id": "docs_seguranca_e_privacidade_seguran\u00e7a_e_privacidade",
       "community": 85,
-      "community_name": "Seguran\u00e7a e privacidade",
+      "community_name": "seguranca-e-privacidade.md",
       "norm_label": "seguranca e privacidade"
     },
     {
@@ -12827,7 +12970,7 @@
       "_origin": "ast",
       "id": "docs_seguranca_e_privacidade_modelo_de_amea\u00e7as",
       "community": 85,
-      "community_name": "Seguran\u00e7a e privacidade",
+      "community_name": "seguranca-e-privacidade.md",
       "norm_label": "modelo de ameacas"
     },
     {
@@ -12881,8 +13024,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045",
-      "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community": 57,
+      "community_name": "README.md",
       "norm_label": "tarefas-041-a-045.md"
     },
     {
@@ -12893,7 +13036,7 @@
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_entrega_e_valida\u00e7\u00e3o_das_tarefas_041_a_045",
       "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
       "norm_label": "entrega e validacao das tarefas 041 a 045"
     },
     {
@@ -12904,7 +13047,7 @@
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_sigab_041_informa\u00e7\u00f5es_necess\u00e1rias",
       "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
       "norm_label": "sigab-041: informacoes necessarias"
     },
     {
@@ -12915,7 +13058,7 @@
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_rastreabilidade_da_sigab_043",
       "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
       "norm_label": "rastreabilidade da sigab-043"
     },
     {
@@ -12926,7 +13069,7 @@
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_sigab_045_roteiro_da_sess\u00e3o_com_usu\u00e1rio_alvo",
       "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
       "norm_label": "sigab-045: roteiro da sessao com usuario-alvo"
     },
     {
@@ -12937,7 +13080,7 @@
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_ata_aguardando_sess\u00e3o",
       "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
       "norm_label": "ata \u2014 aguardando sessao"
     },
     {
@@ -12948,7 +13091,7 @@
       "_origin": "ast",
       "id": "docs_validacao_tarefas_041_a_045_verifica\u00e7\u00f5es_executadas_em_2026_11_02",
       "community": 67,
-      "community_name": "backup-e-restauracao.md",
+      "community_name": "Entrega e valida\u00e7\u00e3o das tarefas 041 a 045",
       "norm_label": "verificacoes executadas em 2026-11-02"
     },
     {
@@ -13028,6 +13171,18 @@
       "_origin": "ast",
       "source": "backend_manage",
       "target": "backend_manage_main",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_init",
       "confidence_score": 1.0
     },
     {
@@ -21355,6 +21510,386 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L58",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_management_commands_seed_demo_command",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L54",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_management_commands_seed_demo_key",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_models",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_models_account",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_models_equipmenttype",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_models_item",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_models_movement",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_models_organization",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_models_role",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_services",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_services_commandcontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "backend_sigab_services_contingency",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo",
+      "target": "uuid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L206",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command_movements",
+      "target": "backend_sigab_management_commands_seed_demo_key",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L61",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_management_commands_seed_demo_command_add_arguments",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L64",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_management_commands_seed_demo_command_handle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L165",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_management_commands_seed_demo_command_movements",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L82",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_management_commands_seed_demo_command_seed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L58",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_management_commands_seed_demo_py_basecommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 0.8,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_models_account",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 0.8,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_models_equipmenttype",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 0.8,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_models_item",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 0.8,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_models_movement",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 0.8,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_models_organization",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L10",
+      "weight": 0.8,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_models_role",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L11",
+      "weight": 0.8,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_services_commandcontext",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L11",
+      "weight": 0.8,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command",
+      "target": "backend_sigab_services_contingency",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L73",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command_handle",
+      "target": "backend_sigab_management_commands_seed_demo_command_seed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L163",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command_seed",
+      "target": "backend_sigab_management_commands_seed_demo_command_movements",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L94",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command_seed",
+      "target": "backend_sigab_services_commandcontext"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L236",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command_movements",
+      "target": "backend_sigab_services_contingency"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L190",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_command_movements",
+      "target": "backend_sigab_views_checkout"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/management/commands/seed_demo.py",
+      "source_location": "L166",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_management_commands_seed_demo_rationale_166",
+      "target": "backend_sigab_management_commands_seed_demo_command_movements",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "backend/sigab/management/commands/set_organization_status.py",
       "source_location": "L10",
       "weight": 1.0,
@@ -22514,6 +23049,18 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_tests_test_seed_demo",
+      "target": "backend_sigab_models",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "backend/sigab/tests/test_vertical_flow.py",
       "source_location": "L9",
       "weight": 1.0,
@@ -23015,6 +23562,18 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "backend_sigab_tests_test_isolation",
+      "target": "backend_sigab_models_organization",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_tests_test_seed_demo",
       "target": "backend_sigab_models_organization",
       "confidence_score": 1.0
     },
@@ -25249,6 +25808,18 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_tests_test_seed_demo",
+      "target": "backend_sigab_models_item",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "backend/sigab/tests/test_vertical_flow.py",
       "source_location": "L9",
       "weight": 1.0,
@@ -25542,6 +26113,18 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "backend_sigab_tests_test_reversal",
+      "target": "backend_sigab_models_movement",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_tests_test_seed_demo",
       "target": "backend_sigab_models_movement",
       "confidence_score": 1.0
     },
@@ -37233,6 +37816,52 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_tests_test_seed_demo",
+      "target": "backend_sigab_tests_test_seed_demo_test_seed_demo_creates_items_in_every_state",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "backend_sigab_tests_test_seed_demo",
+      "target": "backend_sigab_tests_test_seed_demo_test_seed_demo_refuses_without_debug_or_twice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "context": "decorator",
+      "_origin": "ast",
+      "source": "backend_sigab_tests_test_seed_demo_test_seed_demo_creates_items_in_every_state",
+      "target": "backend_sigab_tests_test_seed_demo_py_django_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/sigab/tests/test_seed_demo.py",
+      "source_location": "L23",
+      "weight": 1.0,
+      "context": "decorator",
+      "_origin": "ast",
+      "source": "backend_sigab_tests_test_seed_demo_test_seed_demo_refuses_without_debug_or_twice",
+      "target": "backend_sigab_tests_test_seed_demo_py_django_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "backend/sigab/tests/test_vertical_flow.py",
       "source_location": "L21",
       "weight": 1.0,
@@ -40996,7 +41625,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L140",
+      "source_location": "L148",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41007,7 +41636,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L122",
+      "source_location": "L130",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41018,7 +41647,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L139",
+      "source_location": "L147",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41029,7 +41658,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L122",
+      "source_location": "L130",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41040,7 +41669,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L146",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41051,7 +41680,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L72",
+      "source_location": "L80",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41062,7 +41691,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L146",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41073,7 +41702,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L100",
+      "source_location": "L108",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41084,7 +41713,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L146",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41095,7 +41724,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L146",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41106,7 +41735,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L122",
+      "source_location": "L130",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41117,7 +41746,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L146",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41128,7 +41757,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L150",
+      "source_location": "L158",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme",
@@ -41161,7 +41790,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L148",
+      "source_location": "L156",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
@@ -41172,7 +41801,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L124",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
@@ -41183,7 +41812,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L137",
+      "source_location": "L145",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
@@ -41194,7 +41823,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L36",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
@@ -41216,7 +41845,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L98",
+      "source_location": "L106",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_sigab",
@@ -41227,7 +41856,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L44",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_primeiros_passos_sem_docker",
@@ -41238,7 +41867,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L58",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_primeiros_passos_sem_docker",
@@ -41249,7 +41878,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L70",
+      "source_location": "L78",
       "weight": 1.0,
       "_origin": "ast",
       "source": "readme_primeiros_passos_sem_docker",
@@ -45812,5 +46441,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "89a4434400e2a2ae5d950bab9f7ffcb93e70d4b1"
+  "built_at_commit": "d6d61c884b92c75c7e83cbfe921587ddf9e5203f"
 }

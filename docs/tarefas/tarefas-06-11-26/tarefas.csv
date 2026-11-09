@@ -1,0 +1,520 @@
+Work Type,Status,Summary,Description,Priority,Labels,Labels,Labels,Labels,Component,Work item ID,Parent,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By
+Epic,To Do,SIGAB — Alinhamento (incremento 2026-11),Agrupa as novas tarefas de Alinhamento derivadas da auditoria de alinhamento de 2026-11-06. Não substitui os épicos do backlog inicial.,High,sigab,epic,epic-alinhamento,lote-2026-11-06,Alinhamento,2001,,,,,,,
+Epic,To Do,SIGAB — Garantias operacionais (incremento 2026-11),Agrupa as novas tarefas de Garantias operacionais derivadas da auditoria de alinhamento de 2026-11-06. Não substitui os épicos do backlog inicial.,High,sigab,epic,epic-garantias-operacionais,lote-2026-11-06,Garantias operacionais,2002,,,,,,,
+Epic,To Do,SIGAB — Restrições (incremento 2026-11),Agrupa as novas tarefas de Restrições derivadas da auditoria de alinhamento de 2026-11-06. Não substitui os épicos do backlog inicial.,High,sigab,epic,epic-restricoes,lote-2026-11-06,Restrições,2003,,,,,,,
+Epic,To Do,SIGAB — Consultas e documentos (incremento 2026-11),Agrupa as novas tarefas de Consultas e documentos derivadas da auditoria de alinhamento de 2026-11-06. Não substitui os épicos do backlog inicial.,High,sigab,epic,epic-consultas-e-documentos,lote-2026-11-06,Consultas e documentos,2004,,,,,,,
+Epic,To Do,SIGAB — Auditoria e acesso (incremento 2026-11),Agrupa as novas tarefas de Auditoria e acesso derivadas da auditoria de alinhamento de 2026-11-06. Não substitui os épicos do backlog inicial.,High,sigab,epic,epic-auditoria-e-acesso,lote-2026-11-06,Auditoria e acesso,2005,,,,,,,
+Epic,To Do,SIGAB — Ciclo de vida e inventário (incremento 2026-11),Agrupa as novas tarefas de Ciclo de vida e inventário derivadas da auditoria de alinhamento de 2026-11-06. Não substitui os épicos do backlog inicial.,High,sigab,epic,epic-ciclo-de-vida-e-inventario,lote-2026-11-06,Ciclo de vida e inventário,2006,,,,,,,
+Epic,To Do,SIGAB — Modularização e qualidade (incremento 2026-11),Agrupa as novas tarefas de Modularização e qualidade derivadas da auditoria de alinhamento de 2026-11-06. Não substitui os épicos do backlog inicial.,High,sigab,epic,epic-modularizacao-e-qualidade,lote-2026-11-06,Modularização e qualidade,2007,,,,,,,
+Epic,To Do,SIGAB — Operação de balcão (incremento 2026-11),Agrupa as novas tarefas de Operação de balcão derivadas da auditoria de alinhamento de 2026-11-06. Não substitui os épicos do backlog inicial.,High,sigab,epic,epic-operacao-de-balcao,lote-2026-11-06,Operação de balcão,2008,,,,,,,
+Task,To Do,[SIGAB-047] Consolidar linha de base e rastreabilidade dos requisitos,"Reconciliar documento inicial, decisões posteriores, relatório de 2026-11-06 e backlog. Separar validação de referência, validação do alvo, implementação, testes e aceite.
+
+ID original: SIGAB-047
+
+Tipo original: decisao
+
+Sprint sugerida: Onda 1 (sem data comprometida)
+
+Responsável sugerido: Produto/Arquitetura
+
+Entregável: Consolidar linha de base e rastreabilidade dos requisitos; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Cada um dos 55 requisitos/regras possui estado, responsável sugerido e referência de evidência ou pendência explícita. Contradições de estorno, contingência, concessões e entrevista são resolvidas com cronologia. Fonte original permanece intacta. Escopo do incremento e substituições de requisitos são submetidos a Produto; aprovação ausente não é inferida.
+
+Requisitos relacionados: DOC-0011 completo; Seção 1.2
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido.",Highest,sigab,tipo-decisao,origem-auditoria-2026-11-06,sprint-onda-1,Alinhamento,47,2001,,,,,,
+Task,To Do,[SIGAB-048] Unificar garantias do Django Admin e dos serviços,"Eliminar entradas administrativas que contornam autorização, confirmação e validação dos comandos operacionais. Preferir Admin somente leitura para esses cadastros até existir caminho equivalente.
+
+ID original: SIGAB-048
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 1 (sem data comprometida)
+
+Responsável sugerido: Backend/Segurança
+
+Entregável: Unificar garantias do Django Admin e dos serviços; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Nenhuma superfície habilitada cria item sem série/patrimônio ou referência de outro tenant. Conta global não opera acervo sem fluxo autorizado. Edições de acervo exigem resumo/confirmação nos caminhos mantidos. Testes negativos cobrem Admin, API e templates habilitados; migração não apaga dados.
+
+Requisitos relacionados: RF-01; RF-12; RF-21; RN-02; RNF-05
+
+Dependências originais: SIGAB-047
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido.",Highest,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-1,Garantias operacionais,48,2002,47,,,,,
+Task,To Do,[SIGAB-049] Autenticar por organização e matrícula,"Definir identificação da organização no login e vincular credencial à matrícula sem unicidade global da matrícula. Planejar migração das contas e tratamento separado de contas técnicas.
+
+ID original: SIGAB-049
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 1 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend/Segurança
+
+Entregável: Autenticar por organização e matrícula; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Duas organizações autenticam pessoas com a mesma matrícula sem colisão ou acesso cruzado. Mensagens não revelam existência de conta em outro cliente. Limitação de tentativas, revogação de sessão e suspensão continuam válidas. Plano de migração/rollback e testes de login no navegador documentados.
+
+Requisitos relacionados: RF-02; RNF-05
+
+Dependências originais: SIGAB-047;SIGAB-021;SIGAB-022
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-021;SIGAB-022. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-1,Garantias operacionais,49,2002,47,,,,,
+Task,To Do,[SIGAB-050] Implementar cadastro e ciclo de vida de restrições,"Implementar a decisão 0005 após fechar vigência, categorias, escopo, acesso ao motivo e política de anexos. Criar, alterar e encerrar restrição preservando histórico.
+
+ID original: SIGAB-050
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 1 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend/Segurança
+
+Entregável: Implementar cadastro e ciclo de vida de restrições; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Gestor autorizado cadastra categoria, motivo, início/fim e anexo opcional conforme política aprovada. Alterações e encerramento exigem motivo e auditoria. Datas inválidas são recusadas. Operador não acessa motivo ou anexo por API, interface ou URL direta. Testes cobrem tenant, escopo, vigência e alterações.
+
+Requisitos relacionados: RF-30; RF-32; RN-09; RNF-04
+
+Dependências originais: SIGAB-040;SIGAB-039;SIGAB-047
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-040;SIGAB-039. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",Highest,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-1,Restrições,50,2003,47,,,,,
+Task,To Do,[SIGAB-051] Bloquear saída por restrição ativa,"Integrar decisão mínima de elegibilidade à saída individual e futura cesta. Bloqueio deve ocorrer na transação, com informação minimizada ao operador.
+
+ID original: SIGAB-051
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 1 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend/QA
+
+Entregável: Bloquear saída por restrição ativa; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Restrição vigente e aplicável bloqueia entrega sem gravar movimento parcial e sem revelar motivo. Testar limites temporais, escopo, múltiplas restrições e concorrência PostgreSQL entre restrição e entrega. Devolução permanece possível. Exceção permanece negada até regra e separação de funções serem formalmente aprovadas; se aprovada, exige testes específicos.
+
+Requisitos relacionados: RF-31; RN-06; RNF-04
+
+Dependências originais: SIGAB-050;SIGAB-030
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-030. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",Highest,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-1,Restrições,51,2003,50,,,,,
+Task,To Do,[SIGAB-052] Separar bloqueio comercial de suspensão de segurança,"Criar estados e comandos distintos para inadimplência e suspensão de segurança. Não reutilizar indiscriminadamente organization.inactive para cobrança.
+
+ID original: SIGAB-052
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Produto/Backend/Frontend
+
+Entregável: Separar bloqueio comercial de suspensão de segurança; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Bloqueio comercial impede novos cadastros e saídas, mas permite devolução, consulta de posse e exportação autorizada. Estado, motivo e ator ficam auditados. Testes exercitam cada operação em cada estado e repetição do comando. Política de suspensão de segurança é explícita e não altera a exceção comercial.
+
+Requisitos relacionados: RF-06; RN-07
+
+Dependências originais: SIGAB-047;SIGAB-023;SIGAB-058;SIGAB-060
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-023. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",Highest,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-2,Garantias operacionais,52,2002,47,58,60,,,
+Task,To Do,[SIGAB-053] Atualizar acervo entre balcões,"Definir latência aceitável com Produto e adotar mecanismo de atualização entre sessões, incluindo reconexão e indicação de falha de rede.
+
+ID original: SIGAB-053
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 1 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend/QA
+
+Entregável: Atualizar acervo entre balcões; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Teste de navegador com dois clientes demonstra devolução em A refletida em B dentro da meta registrada. Saídas concorrentes continuam protegidas pelo servidor. Reconexão refaz leitura autorizada; não há compartilhamento entre tenants ou unidades não autorizadas. Meta e medição entram na evidência do requisito.
+
+Requisitos relacionados: RNF-02; RF-23
+
+Dependências originais: SIGAB-047;SIGAB-033
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-033. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-1,Consultas e documentos,53,2004,47,,,,,
+Task,To Do,[SIGAB-054] Completar paginação e filtros de acervo e pessoas,"Remover limitação operacional aos primeiros 100 itens e 20 pessoas. Expor filtros de unidade, tipo, estado e período com semântica documentada para o período.
+
+ID original: SIGAB-054
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 1 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Completar paginação e filtros de acervo e pessoas; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Usuário navega até item 101 e pessoa 21 mantendo filtros e total correto. Posse por pessoa lista todos os itens autorizados. Período tem campo de referência explícito e testes de fronteira. Ordenação é estável; UI distingue vazio, erro e carregamento; tenant e escopo são verificados no servidor.
+
+Requisitos relacionados: RF-50; RF-51; RF-27
+
+Dependências originais: SIGAB-038;SIGAB-037
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-038;SIGAB-037. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-1,Consultas e documentos,54,2004,,,,,,
+Task,To Do,[SIGAB-055] Padronizar auditoria de alterações e histórico do item,"Versionar payloads de auditoria com estado anterior/novo minimizado e motivo quando exigido, inclusive nos caminhos administrativos restantes. Integrar alterações cadastrais autorizadas ao histórico consultável do item.
+
+ID original: SIGAB-055
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 1 (sem data comprometida)
+
+Responsável sugerido: Backend/Segurança
+
+Entregável: Padronizar auditoria de alterações e histórico do item; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Matriz por ação define campos permitidos/obrigatórios. Testes verificam antes/depois, ator, instante, correlação e motivo em criação, edição e movimento. CPF integral, senha e motivo restrito não vazam. Histórico distingue alteração cadastral de movimento e respeita escopo. Eventos antigos continuam legíveis.
+
+Requisitos relacionados: RF-15; RF-60; RN-09
+
+Dependências originais: SIGAB-048;SIGAB-035
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-035. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-1,Auditoria e acesso,55,2005,48,,,,,
+Task,To Do,[SIGAB-056] Proteger e ancorar a trilha de auditoria,"Adicionar proteção no PostgreSQL para impedir alteração/exclusão pelo usuário da aplicação e ancoragem independente dos hashes. Definir tratamento dos eventos globais sem organização.
+
+ID original: SIGAB-056
+
+Tipo original: infraestrutura
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Backend/DevOps/Segurança
+
+Entregável: Proteger e ancorar a trilha de auditoria; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Papel de execução não altera nem apaga registros auditáveis via SQL direto. Migrações usam papel separado. Testes detectam alteração, remoção e truncamento comparando âncora externa. Restauração verifica cadeia e âncora. Acesso privilegiado residual e procedimento de manutenção são documentados sem prometer impossibilidade absoluta para administrador do banco.
+
+Requisitos relacionados: RF-62; RNF-03
+
+Dependências originais: SIGAB-055;SIGAB-042
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-042. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-infraestrutura,origem-auditoria-2026-11-06,sprint-onda-2,Auditoria e acesso,56,2005,55,,,,,
+Task,To Do,[SIGAB-057] Exibir histórico de perfis e tela de auditoria,"Apresentar na pessoa concessões e revogações históricas com motivo, ator e instante. Criar consulta da trilha para auditores autorizados, separada do feed de movimentos.
+
+ID original: SIGAB-057
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Exibir histórico de perfis e tela de auditoria; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Concessão revogada continua consultável no histórico da pessoa sem parecer ativa. Filtros de ator, ação, período e resultado funcionam com paginação. Sem permissão não há acesso por URL direta. Testes cobrem tenant, dados minimizados e separação entre atividade e auditoria.
+
+Requisitos relacionados: RF-04; RF-60; RF-62
+
+Dependências originais: SIGAB-055;SIGAB-022
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-022. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-2,Auditoria e acesso,57,2005,55,,,,,
+Task,To Do,[SIGAB-058] Emitir comprovantes de saída e devolução,"Definir modelo do comprovante e implementar impressão/exportação com referência estável ao movimento, inclusive contingência e estorno.
+
+ID original: SIGAB-058
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Produto/Backend/Frontend
+
+Entregável: Emitir comprovantes de saída e devolução; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Documento apresenta organização, item, destinatário, operador, instante do fato e do lançamento quando diferentes. Impressão e PDF legíveis são verificados. Movimento estornado é identificado sem reescrever o original. Reemissão não cria novo movimento; acesso respeita tenant/escopo. Não declarar assinatura digital ou validade jurídica não implementadas.
+
+Requisitos relacionados: RF-26; RF-21
+
+Dependências originais: SIGAB-047;SIGAB-030;SIGAB-033;SIGAB-046
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-030;SIGAB-033;SIGAB-046. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-2,Consultas e documentos,58,2004,47,,,,,
+Task,To Do,[SIGAB-059] Criar painel por tipo e situação do acervo,"Agregar total, disponível, em posse e inapto por tipo e unidade. Definir denominadores para itens inativos/baixados e manter quantidade separada de bens individuais.
+
+ID original: SIGAB-059
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Criar painel por tipo e situação do acervo; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Totais reconciliam com itens e estados na mesma referência temporal. Filtros e escopo não vazam dados. Testes cobrem acervo vazio, inapto, posse, estorno e baixa quando habilitada. Estoque quantitativo fica identificado como indisponível até SIGAB-041; sua inclusão deve ter teste de reconciliação próprio.
+
+Requisitos relacionados: RF-40
+
+Dependências originais: SIGAB-054
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-2,Consultas e documentos,59,2004,54,,,,,
+Task,To Do,[SIGAB-060] Completar relatórios por pessoa e operador com exportação,"Criar filtro operacional por armeiro e exportar relatórios de posse, pessoa, item, operador e atividade com todos os resultados filtrados.
+
+ID original: SIGAB-060
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend/QA
+
+Entregável: Completar relatórios por pessoa e operador com exportação; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: PDF/versão imprimível preservam filtros, organização, período e indicação de estornos. Exportação inclui registros além da primeira página e usa autorização no servidor. Testes com mais de 100 registros comparam contagem/lista/exportação; layout é verificado em múltiplas páginas. Relatório de estoque é atendido em SIGAB-041 antes de RF-54 ser fechado.
+
+Requisitos relacionados: RF-50; RF-52; RF-53; RF-55; RF-56; RN-07
+
+Dependências originais: SIGAB-054;SIGAB-055;SIGAB-058
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-2,Consultas e documentos,60,2004,54,55,58,,,
+Task,To Do,[SIGAB-061] Implementar baixa e anulação de incorporação,"Detalhar e implementar transições de baixa e anulação da decisão 0004. Distinguir fim de vida de correção de cadastro, mantendo identificadores e histórico.
+
+ID original: SIGAB-061
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Produto/Backend/Frontend
+
+Entregável: Implementar baixa e anulação de incorporação; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Motivo e permissões são obrigatórios; solicitação e aprovação seguem separação de funções definida na matriz. Item em posse não é baixado silenciosamente. Anulação valida movimentos dependentes e não apaga fatos nem libera identificador para reutilização. Testes PostgreSQL cobrem concorrência, idempotência e transições proibidas.
+
+Requisitos relacionados: RF-14; RN-05; RN-09
+
+Dependências originais: SIGAB-047;SIGAB-048;SIGAB-055;SIGAB-009
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-009. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-2,Ciclo de vida e inventário,61,2006,47,48,55,,,
+Task,To Do,[SIGAB-062] Implementar contagem guiada de itens individuais,"Criar sessão de inventário por unidade/reserva com fotografia do esperado, contagem por item/tipo e regra explícita para movimentação durante contagem.
+
+ID original: SIGAB-062
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 3 (sem data comprometida)
+
+Responsável sugerido: Produto/Backend/Frontend
+
+Entregável: Implementar contagem guiada de itens individuais; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Sessão registra abertura, responsáveis, referência temporal e fechamento. Recontagem e item inesperado são registrados sem duplicar contagem. Comparação separa item na reserva de item em posse. Testes cobrem isolamento, contagem interrompida e movimento durante a sessão; decisão sobre congelamento ou reconciliação é documentada.
+
+Requisitos relacionados: RF-41
+
+Dependências originais: SIGAB-047;SIGAB-054
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-3,Ciclo de vida e inventário,62,2006,47,54,,,,
+Task,To Do,[SIGAB-063] Tratar divergências de inventário até resolução,"Gerar ocorrência para diferença de inventário, com responsável, status, investigação e desfecho rastreável.
+
+ID original: SIGAB-063
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 3 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend/QA
+
+Entregável: Tratar divergências de inventário até resolução; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Cada divergência mantém esperado, contado e referência à sessão. Alterações de status/motivo ficam auditadas. Encerramento exige resolução ou justificativa autorizada. Ajuste ou baixa usa comando do domínio correspondente, nunca edição direta; baixa depende de SIGAB-061, ajuste quantitativo de SIGAB-041. Testes impedem encerramento indevido e acesso cruzado.
+
+Requisitos relacionados: RF-42; RN-05; RN-09
+
+Dependências originais: SIGAB-062;SIGAB-055
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-3,Ciclo de vida e inventário,63,2006,62,55,,,,
+Task,To Do,[SIGAB-064] Separar serviços e API por domínio,"Extrair identidade, pessoas, estrutura, catálogo, movimentação, consultas e auditoria dos arquivos concentrados. Preservar contratos HTTP, imports públicos e transações.
+
+ID original: SIGAB-064
+
+Tipo original: refatoracao
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Backend/Arquitetura
+
+Entregável: Separar serviços e API por domínio; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Mapa de dependências e responsabilidade dos módulos documentado. Suítes de contrato, isolamento, fluxo vertical e concorrência PostgreSQL passam sem mudar respostas. Sem renomeação de tabelas/app_label apenas por organização de arquivos. Movimentação, projeção e eventos permanecem atômicos; graphify atualizado.
+
+Requisitos relacionados: Arquitetura; RF-01; RF-60
+
+Dependências originais: SIGAB-047;SIGAB-048
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido.",Medium,sigab,tipo-refatoracao,origem-auditoria-2026-11-06,sprint-onda-2,Modularização e qualidade,64,2007,47,48,,,,
+Task,To Do,[SIGAB-065] Organizar frontend por domínio e esclarecer navegação,"Separar estrutura, tipos, pessoas e acessos em componentes/features coerentes. Explicitar que tipo quantitativo ainda não possui operações enquanto SIGAB-041 estiver pendente.
+
+ID original: SIGAB-065
+
+Tipo original: refatoracao
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Frontend/Produto
+
+Entregável: Organizar frontend por domínio e esclarecer navegação; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Navegação respeita permissões e preserva URLs úteis. Não há menu vazio de capacidade futura nem promessa de estoque disponível. Dados pessoais e administração de acesso têm responsabilidades separadas. Typecheck/build e testes de navegação passam; fluxo individual mantém confirmação e idempotência.
+
+Requisitos relacionados: RNF-06; RF-10; RF-50
+
+Dependências originais: SIGAB-047;SIGAB-054
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido.",Medium,sigab,tipo-refatoracao,origem-auditoria-2026-11-06,sprint-onda-2,Modularização e qualidade,65,2007,47,54,,,,
+Task,To Do,[SIGAB-066] Automatizar jornadas React em navegador no CI,"Complementar os testes HTTP existentes com navegador real para login, incorporação, saída, devolução, estorno e contingência.
+
+ID original: SIGAB-066
+
+Tipo original: teste
+
+Sprint sugerida: Onda 1 (sem data comprometida)
+
+Responsável sugerido: QA/Full-stack
+
+Entregável: Automatizar jornadas React em navegador no CI; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: CI reproduzível usa dados sintéticos e cobre sucesso, confirmação, duplo envio, erro de rede/reenvio, permissão negada e tenant distinto. Evidência diferencia teste HTTP de navegador. Teste de duas sessões é incorporado quando SIGAB-053 for entregue; novas restrições e login passam a integrar a suíte quando disponíveis.
+
+Requisitos relacionados: RF-01; RF-20; RF-21; RF-22; RNF-06
+
+Dependências originais: SIGAB-043
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-043. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-teste,origem-auditoria-2026-11-06,sprint-onda-1,Modularização e qualidade,66,2007,,,,,,
+Task,To Do,[SIGAB-067] Definir atendimento com vários itens e modalidades de cautela,"Validar cesta por pessoa, atomicidade, retirada por turno, prazo determinado e prazo indeterminado. Registrar decisão sobre terceiro retirante e sua evidência, sem inferir autorização.
+
+ID original: SIGAB-067
+
+Tipo original: design
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Produto/Arquitetura
+
+Entregável: Definir atendimento com vários itens e modalidades de cautela; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Contrato define campos obrigatórios, prazo/fuso, confirmação, itens mistos, idempotência e falha parcial. Define identidade de retirante versus usuário somente se autorizado; se não, RF-25/RN-10 continuam explicitamente pendentes ou formalmente substituídos. Critérios de vencimento e encerramento de pendência são aprovados com o alvo.
+
+Requisitos relacionados: RF-20; RF-25; RF-27; RN-10; Decisão 0001
+
+Dependências originais: SIGAB-047;SIGAB-007;SIGAB-008
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-007;SIGAB-008. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-design,origem-auditoria-2026-11-06,sprint-onda-2,Operação de balcão,67,2008,47,,,,,
+Task,To Do,[SIGAB-068] Implementar saída por pessoa com cesta de materiais,"Implementar contrato aprovado de atendimento, selecionando pessoa e vários itens individuais/quantitativos, com resumo único e comprovante.
+
+ID original: SIGAB-068
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 3 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend/QA
+
+Entregável: Implementar saída por pessoa com cesta de materiais; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Entrega respeita atomicidade definida, autorização, elegibilidade e saldo. Reenvio não duplica itens ou quantidades. Concorrência PostgreSQL não entrega item duas vezes nem gera saldo negativo. Terceiro retirante é persistido separado do usuário apenas se SIGAB-067 aprovar; caso contrário interface não oferece esse fluxo e requisito não é marcado atendido.
+
+Requisitos relacionados: RF-20; RF-21; RF-25; RN-10
+
+Dependências originais: SIGAB-067;SIGAB-051;SIGAB-041;SIGAB-058
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-041. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-3,Operação de balcão,68,2008,67,51,58,,,
+Task,To Do,[SIGAB-069] Consolidar pendências e histórico quantitativo,"Construir consultas consolidadas de itens em posse e quantidades não devolvidas/consumidas, com filtros por pessoa, unidade e organização. Usar o livro de SIGAB-041 sem reimplementar sua escrita.
+
+ID original: SIGAB-069
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 3 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend
+
+Entregável: Consolidar pendências e histórico quantitativo; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Devolução parcial e consumo justificado encerram somente a quantidade correspondente. Estorno recompõe pendência e histórico. Contagens reconciliam com fatos e saldo; prazo vencido distingue-se de posse válida sem prazo. Histórico por tipo inclui saída, devolução e consumo; exportação respeita escopo e inclui todas as páginas.
+
+Requisitos relacionados: RF-24; RF-27; RF-51; RF-54; RF-56
+
+Dependências originais: SIGAB-041;SIGAB-054;SIGAB-067;SIGAB-068
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-041. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-3,Operação de balcão,69,2008,54,67,68,,,
+Task,To Do,[SIGAB-070] Permitir consulta apenas da própria posse e histórico,"Definir permissão de autosserviço para destinatário consultar somente seus materiais sem receber leitura da unidade inteira.
+
+ID original: SIGAB-070
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 3 (sem data comprometida)
+
+Responsável sugerido: Produto/Backend/Frontend
+
+Entregável: Permitir consulta apenas da própria posse e histórico; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Pessoa com conta acessa sua posse/histórico e comprovantes autorizados. Trocar UUID, parâmetro de pessoa ou URL não permite consultar terceiros. Destinatário sem conta continua podendo receber material. Testes cobrem vínculo pessoa-conta, revogação e isolamento entre organizações.
+
+Requisitos relacionados: Seção 3; RF-51; RF-52; RNF-05
+
+Dependências originais: SIGAB-049;SIGAB-054;SIGAB-060
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido.",Medium,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-3,Auditoria e acesso,70,2005,49,54,60,,,
+Task,To Do,[SIGAB-071] Decidir escopo das capacidades futuras ainda não detalhadas,"Registrar decisão individual sobre biometria opcional, catálogo pré-carregado, sinistro, avisos, foto, cadastro de postos, manutenção, transferência e integrações.
+
+ID original: SIGAB-071
+
+Tipo original: decisao
+
+Sprint sugerida: Onda 3 (sem data comprometida)
+
+Responsável sugerido: Produto/Segurança/Jurídico
+
+Entregável: Decidir escopo das capacidades futuras ainda não detalhadas; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Cada capacidade tem necessidade validada ou pendência explícita, responsável e destino: implementar, adiar ou descartar com motivo. Biometria define alternativa sem leitor e tratamento de dados; catálogo define fonte/licença; integrações e transferência definem contratos. Capacidades aprovadas recebem tarefas próprias antes de desenvolvimento; esta tarefa não conta como implementação.
+
+Requisitos relacionados: RF-05; RF-11; Seção 4.8; Seção 7
+
+Dependências originais: SIGAB-047;SIGAB-005;SIGAB-007
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-005;SIGAB-007. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",Medium,sigab,tipo-decisao,origem-auditoria-2026-11-06,sprint-onda-3,Alinhamento,71,2001,47,,,,,
+Task,To Do,[SIGAB-072] Aplicar controles de retenção e acesso a dados pessoais,"Transformar política aprovada em regras técnicas de acesso mínimo, registro de acessos sensíveis, retenção e descarte compatíveis com histórico e auditoria.
+
+ID original: SIGAB-072
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Onda 2 (sem data comprometida)
+
+Responsável sugerido: Backend/Segurança/Encarregado
+
+Entregável: Aplicar controles de retenção e acesso a dados pessoais; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Matriz por dado informa finalidade, acesso, prazo aprovado e ação ao vencer. Rotina tem simulação, autorização e evidência de execução, sem apagar movimentação protegida. Testes verificam CPF minimizado, logs sem segredos e restrição de anexos quando disponíveis. Prazos e bases legais não são inventados; aprovação institucional é pré-condição.
+
+Requisitos relacionados: RNF-04; RF-03
+
+Dependências originais: SIGAB-039;SIGAB-047;SIGAB-055
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-039. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-06,sprint-onda-2,Auditoria e acesso,72,2005,47,55,,,,
+Task,To Do,[SIGAB-073] Validar desempenho e uso no balcão com volume acordado,"Obter volume por turno, concorrência, tamanho de acervo e metas para saída, devolução e busca. Medir em PostgreSQL e ambiente representativo, complementando o ensaio sintético existente.
+
+ID original: SIGAB-073
+
+Tipo original: teste
+
+Sprint sugerida: Onda 3 (sem data comprometida)
+
+Responsável sugerido: QA/Produto/Backend
+
+Entregável: Validar desempenho e uso no balcão com volume acordado; documentação e evidências dos critérios de aceite.
+
+Critério de aceite: Perfil de carga e limites de p95/erros são acordados antes de rodar. Relatório registra ambiente, volume, resultados e gargalos; teste de balcão registra tempo/campos e feedback. Medição inclui custo da auditoria por organização. Resultado sintético não é declarado capacidade de produção; falhas geram ajustes e reteste.
+
+Requisitos relacionados: RNF-06; RNF-08
+
+Dependências originais: SIGAB-045;SIGAB-053;SIGAB-054;SIGAB-066
+
+Observações: Origem: docs/validacao/alinhamento-requisitos-2026-11-06.md. Prioridade e onda são propostas. Nenhum aceite de produto é presumido. Dependências de lote anterior: SIGAB-045. Resolver com chaves reais do Jira; não foram inseridas como IDs locais em Is Blocked By.",High,sigab,tipo-teste,origem-auditoria-2026-11-06,sprint-onda-3,Modularização e qualidade,73,2007,53,54,66,,,

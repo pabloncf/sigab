@@ -1,16 +1,16 @@
-# Graph Report - sigab  (2026-11-05)
+# Graph Report - sigab  (2026-11-06)
 
 ## Corpus Check
-- 120 files · ~76,410 words
+- 122 files · ~77,215 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1177 nodes · 2845 edges · 86 communities (70 shown, 16 thin omitted)
-- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 224 edges (avg confidence: 0.54)
+- 1190 nodes · 2887 edges · 87 communities (71 shown, 16 thin omitted)
+- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 233 edges (avg confidence: 0.54)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `89a44344`
+- Built from commit: `d6d61c88`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -52,6 +52,7 @@
 - test_observability.py
 - test_items.py
 - test_isolation.py
+- decisoes-pendentes.md
 - 3. Ameaças
 - test_catalog.py
 - test_api_conventions.py
@@ -61,17 +62,17 @@
 - SIGAB
 - AccountAdmin
 - Observabilidade mínima
-- Banco e migrações
+- README.md
 - test_audit.py
 - ADR 0004 — Conectividade online, contingência em papel e reconciliação
 - 0005_atomic_permission_codes.py
-- Item
+- test_activity_and_search.py
 - Integração contínua
 - validate_cpf
 - 0003_person_cpf_account_revocation.py
 - 0001-guardas-municipais.md
 - test_reversal.py
-- backup-e-restauracao.md
+- Entrega e validação das tarefas 041 a 045
 - Decisão de domínio 0005 — Restrição operacional da pessoa
 - Contrato da devolução de item individual
 - Política de dados pessoais
@@ -80,26 +81,28 @@
 - test-backup.sh
 - 0006_movement_reversal.py
 - Contrato do lançamento de contingência
-- 0006-eventos-auditoria-e-estornos.md
+- test_concurrency.py
 - restore-test.sh
 - Decisões pendentes
 - roles.py
 - backup.sh
-- world
+- Role
+- Item
 - 0008_movement_contingency.py
 - 0002-tenancy-autorizacao.md
-- Segurança e privacidade
+- seguranca-e-privacidade.md
+- Backup e ensaio de restauração — SIGAB-042
 
 ## God Nodes (most connected - your core abstractions)
-1. `Account` - 44 edges
-2. `Item` - 43 edges
+1. `Account` - 46 edges
+2. `Item` - 46 edges
 3. `AuditEvent` - 42 edges
-4. `CommandContext` - 39 edges
-5. `Grant` - 38 edges
-6. `ConflictError` - 38 edges
-7. `Organization` - 37 edges
-8. `Person` - 35 edges
-9. `Role` - 35 edges
+4. `CommandContext` - 42 edges
+5. `Organization` - 40 edges
+6. `Grant` - 38 edges
+7. `ConflictError` - 38 edges
+8. `Role` - 37 edges
+9. `Person` - 35 edges
 10. `api_view()` - 33 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -117,7 +120,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (86 total, 16 thin omitted)
+## Communities (87 total, 16 thin omitted)
 
 ### Community 0 - "test_flow.py"
 Cohesion: 0.14
@@ -128,8 +131,8 @@ Cohesion: 0.10
 Nodes (37): CheckoutForm, ConditionForm, ReturnForm, _effective_grants(), has_permission(), Server-side authorization (decision 0002, matrix 1.3.0). Default deny. A…, access_admin(), _grant() (+29 more)
 
 ### Community 2 - "CommandContext"
-Cohesion: 0.14
-Nodes (32): AuditedAdmin, AuditEventAdmin, ItemAdmin, MovementAdmin, MovementEventAdmin, OrganizationAdmin, AuthenticationFailure, Classification (+24 more)
+Cohesion: 0.12
+Nodes (28): AuditedAdmin, AuditEventAdmin, ItemAdmin, MovementAdmin, OrganizationAdmin, Classification, EquipmentType, Grant (+20 more)
 
 ### Community 3 - "2. Matriz de obrigações aplicáveis"
 Cohesion: 0.08
@@ -220,12 +223,12 @@ Cohesion: 0.22
 Nodes (9): Consequências, Decisão, Decisão de produto 0001 — Segmento inicial, Escopo e exclusões iniciais, Justificativa, Premissas validadas no levantamento inicial, Problema inicial, Público inicial (+1 more)
 
 ### Community 41 - "services.py"
-Cohesion: 0.07
+Cohesion: 0.06
 Nodes (73): AppendOnlyQuerySet, Block bulk writes that bypass the per-instance immutability guards., _account_for_update(), audit(), _audit_account_status(), _check_contingency_fact(), _check_grant_conflicts(), checkout_item() (+65 more)
 
 ### Community 42 - "models.py"
 Cohesion: 0.10
-Nodes (22): AbstractUser, Command, BaseCommand, Command, atomic, BaseCommand, Command, atomic (+14 more)
+Nodes (23): AbstractUser, MovementEventAdmin, Command, BaseCommand, Command, atomic, BaseCommand, Command (+15 more)
 
 ### Community 43 - "test_identity.py"
 Cohesion: 0.21
@@ -275,13 +278,13 @@ Nodes (11): 1. Backend, 2. Frontend, 3. Dados iniciais, Estrutura, Evidências d
 Cohesion: 0.25
 Nodes (8): Fora do escopo, Formato do log, Identificador de requisição, O que nunca é registrado, Observabilidade mínima, Separação, Testes, Tratamento centralizado de erros
 
-### Community 57 - "Banco e migrações"
-Cohesion: 0.33
-Nodes (6): Banco e migrações, Bancos, Convenções, Do banco vazio à versão atual, Migrações atuais, Verificação em ambiente descartável
+### Community 57 - "README.md"
+Cohesion: 0.19
+Nodes (7): ADR 0001 — Monólito Django e templates server-side, Banco e migrações, Bancos, Convenções, Do banco vazio à versão atual, Migrações atuais, Verificação em ambiente descartável
 
 ### Community 58 - "test_audit.py"
-Cohesion: 0.11
-Nodes (26): Command, BaseCommand, Return None when the chain is intact, else a description of the first break., verify_chain(), audit_record_hash(), SHA-256 over the canonical content of an audit event and the previous hash., admin(), _audited() (+18 more)
+Cohesion: 0.17
+Nodes (17): Command, BaseCommand, Return None when the chain is intact, else a description of the first break., verify_chain(), audit_record_hash(), SHA-256 over the canonical content of an audit event and the previous hash., admin(), _audited() (+9 more)
 
 ### Community 59 - "ADR 0004 — Conectividade online, contingência em papel e reconciliação"
 Cohesion: 0.33
@@ -291,12 +294,12 @@ Nodes (6): ADR 0004 — Conectividade online, contingência em papel e reconcili
 Cohesion: 0.60
 Nodes (4): backward(), forward(), Migration, _rewrite()
 
-### Community 61 - "Item"
-Cohesion: 0.18
-Nodes (17): AdministrativeStatus, Availability, Condition, Item, _checkout(), _post(), django_db, fixture (+9 more)
+### Community 61 - "test_activity_and_search.py"
+Cohesion: 0.26
+Nodes (13): _checkout(), _post(), django_db, fixture, Volume documented in docs/busca.md: 10 units, 5,000 items, 2,000 people., test_feed_is_paginated_and_filterable(), test_feed_respects_unit_scope_and_is_not_the_audit(), test_possession_matches_confirmed_movements() (+5 more)
 
 ### Community 62 - "Integração contínua"
-Cohesion: 0.33
+Cohesion: 0.29
 Nodes (6): Ensaio periódico de restauração, Etapas, Integração contínua, Pendências, Reprodutibilidade, Segredos
 
 ### Community 65 - "0001-guardas-municipais.md"
@@ -307,9 +310,9 @@ Nodes (3): Estado individual: ciclo de vida do item, Requisitos e rastreabilidad
 Cohesion: 0.36
 Nodes (16): _checkout(), flows(), _item(), _post(), django_db, fixture, _return(), _reverse() (+8 more)
 
-### Community 67 - "backup-e-restauracao.md"
-Cohesion: 0.15
-Nodes (11): Backup e ensaio de restauração — SIGAB-042, Critérios ainda pendentes, Cópia protegida, Ensaio isolado, Teste reproduzível, Ata — aguardando sessão, Entrega e validação das tarefas 041 a 045, Rastreabilidade da SIGAB-043 (+3 more)
+### Community 67 - "Entrega e validação das tarefas 041 a 045"
+Cohesion: 0.33
+Nodes (6): Ata — aguardando sessão, Entrega e validação das tarefas 041 a 045, Rastreabilidade da SIGAB-043, SIGAB-041: informações necessárias, SIGAB-045: roteiro da sessão com usuário-alvo, Verificações executadas em 2026-11-02
 
 ### Community 68 - "Decisão de domínio 0005 — Restrição operacional da pessoa"
 Cohesion: 0.20
@@ -339,6 +342,10 @@ Nodes (7): AGE_IDENTITY, BACKUP_DIR, DATABASE_URL, PGDATABASE, REPORT_PATH, REST
 Cohesion: 0.29
 Nodes (7): 1. Comando, 2. Dados, 3. Regras, 4. Efeitos, 5. Fora deste contrato, 6. Critérios de aceite e evidências, Contrato do lançamento de contingência
 
+### Community 76 - "test_concurrency.py"
+Cohesion: 0.27
+Nodes (12): _assert_single_checkout(), _checkout(), postgresql_only(), fixture, _race(), Real concurrency on PostgreSQL (SIGAB-031). Each attempt uses its own…, Mixing paper and system in one reserve is forbidden (ADR 0004); the bank still…, Run `operation(ctx, key)` once per key, all released at the same instant. (+4 more)
+
 ### Community 77 - "restore-test.sh"
 Cohesion: 0.40
 Nodes (3): DATABASE_URL, PGDATABASE, restore-test.sh script
@@ -347,9 +354,17 @@ Nodes (3): DATABASE_URL, PGDATABASE, restore-test.sh script
 Cohesion: 0.33
 Nodes (4): atomic, create_tenant_roles(), Tenant role templates of decision 0002 (matrix 1.3.0). Global roles (platform…, Create the approved tenant roles for a new organization; return them by key.
 
-### Community 82 - "world"
-Cohesion: 0.67
-Nodes (3): api_world(), fixture, world()
+### Community 81 - "Role"
+Cohesion: 0.27
+Nodes (7): Command, _key(), BaseCommand, Leave items in every state the flow supports, with history behind them., Role, Contingency, Line of the reserve's contingency book being reconciled (SIGAB-046, ADR 0004).
+
+### Community 82 - "Item"
+Cohesion: 0.25
+Nodes (7): AdministrativeStatus, Availability, Condition, Item, django_db, test_seed_demo_creates_items_in_every_state(), test_seed_demo_refuses_without_debug_or_twice()
+
+### Community 86 - "Backup e ensaio de restauração — SIGAB-042"
+Cohesion: 0.40
+Nodes (5): Backup e ensaio de restauração — SIGAB-042, Critérios ainda pendentes, Cópia protegida, Ensaio isolado, Teste reproduzível
 
 ## Knowledge Gaps
 - **360 isolated node(s):** `sigab`, `Migration`, `Migration`, `Migration`, `Migration` (+355 more)
@@ -359,17 +374,17 @@ Nodes (3): api_world(), fixture, world()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Account` connect `models.py` to `test_flow.py`, `has_permission`, `CommandContext`, `test_reversal.py`, `test_contingency.py`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_items.py`, `test_isolation.py`, `test_catalog.py`, `AccountAdmin`, `test_audit.py`, `Item`, `api/views.py`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
-- **Why does `AuditEvent` connect `models.py` to `test_flow.py`, `has_permission`, `CommandContext`, `test_reversal.py`, `test_contingency.py`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_items.py`, `test_isolation.py`, `.save`, `test_catalog.py`, `AccountAdmin`, `test_audit.py`, `api/views.py`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
-- **Why does `Organization` connect `models.py` to `test_flow.py`, `has_permission`, `CommandContext`, `test_contingency.py`, `convert`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_isolation.py`, `test_api.py`, `AccountAdmin`, `test_audit.py`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+- **Why does `Account` connect `models.py` to `test_flow.py`, `has_permission`, `CommandContext`, `test_reversal.py`, `test_contingency.py`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_concurrency.py`, `test_isolation.py`, `test_items.py`, `Role`, `test_catalog.py`, `AccountAdmin`, `test_audit.py`, `test_activity_and_search.py`, `api/views.py`?**
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Why does `AuditEvent` connect `models.py` to `test_flow.py`, `has_permission`, `CommandContext`, `test_reversal.py`, `test_contingency.py`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_concurrency.py`, `test_isolation.py`, `test_items.py`, `Role`, `test_catalog.py`, `AccountAdmin`, `test_audit.py`, `api/views.py`?**
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Why does `Organization` connect `models.py` to `test_flow.py`, `has_permission`, `CommandContext`, `test_contingency.py`, `convert`, `services.py`, `test_identity.py`, `test_authentication.py`, `test_concurrency.py`, `test_isolation.py`, `Role`, `Item`, `test_api.py`, `AccountAdmin`, `test_audit.py`?**
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+- **Are the 18 inferred relationships involving `Account` (e.g. with `AccountAdmin` and `AuditedAdmin`) actually correct?**
+  _`Account` has 18 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 16 inferred relationships involving `Item` (e.g. with `AccountAdmin` and `AuditedAdmin`) actually correct?**
+  _`Item` has 16 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 29 inferred relationships involving `ValidationError` (e.g. with `_boolean()` and `_contingency()`) actually correct?**
   _`ValidationError` has 29 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 17 inferred relationships involving `Account` (e.g. with `AccountAdmin` and `AuditedAdmin`) actually correct?**
-  _`Account` has 17 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 15 inferred relationships involving `Item` (e.g. with `AccountAdmin` and `AuditedAdmin`) actually correct?**
-  _`Item` has 15 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 18 inferred relationships involving `AuditEvent` (e.g. with `AccountAdmin` and `AuditedAdmin`) actually correct?**
   _`AuditEvent` has 18 INFERRED edges - model-reasoned connections that need verification._
