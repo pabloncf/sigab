@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1793637818.3366063,
-    "ast_hash": "63f84e0c0d8032cba3e9fd78a4bbe312",
+    "mtime": 1794244750.3211417,
+    "ast_hash": "c88b7615ef67fa54e08b59ba45d40d64",
     "semantic_hash": ""
   },
   "AGENTS.md": {
@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793975374.6977792,
-    "ast_hash": "b668363fa963328b5a22cf96ade0c080",
+    "mtime": 1794244852.9328144,
+    "ast_hash": "d81c6e96af16aac9c4932a4e3612e157",
     "semantic_hash": ""
   },
   "compose.yaml": {
@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "docs/requisitos.md": {
-    "mtime": 1792439035.7372167,
-    "ast_hash": "f495cb3f9c492c22af228059054758f7",
+    "mtime": 1793996280.9333057,
+    "ast_hash": "9bc466e0d75fc108e946a89b236dff98",
     "semantic_hash": ""
   },
   "docs/seguranca-e-privacidade.md": {
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "docs/tarefas/IMPORTAR-NO-JIRA.md": {
-    "mtime": 1792094032.3168843,
-    "ast_hash": "9ae66b89e33a279619e56aa9a463f4a0",
+    "mtime": 1793996618.9497237,
+    "ast_hash": "41cf54ce336c8bf87b60f9cde8aaafb1",
     "semantic_hash": ""
   },
   "docs/visao-do-produto.md": {
@@ -130,13 +130,13 @@
     "semantic_hash": ""
   },
   "frontend/package.json": {
-    "mtime": 1792439785.1768324,
-    "ast_hash": "cd67be6a2e091bcfee0b13c6ae1139b0",
+    "mtime": 1794244750.2454247,
+    "ast_hash": "56d25e30cb80e84e41ad876060eeb35a",
     "semantic_hash": ""
   },
   "frontend/src/App.tsx": {
-    "mtime": 1793758362.0309193,
-    "ast_hash": "caccb2390bc6cfcdeb302a5862232af8",
+    "mtime": 1794244668.4907057,
+    "ast_hash": "3341492659bb0a34b4ff1ac32c39b4aa",
     "semantic_hash": ""
   },
   "frontend/src/api/client.ts": {
@@ -145,13 +145,13 @@
     "semantic_hash": ""
   },
   "frontend/src/api/types.ts": {
-    "mtime": 1793758883.397178,
-    "ast_hash": "ab9569c6d29c4ef9c8534255dd59ada0",
+    "mtime": 1794244817.7502933,
+    "ast_hash": "65104e9028fdf4e0c9ea6a41b5d0d7da",
     "semantic_hash": ""
   },
   "frontend/src/components/AppShell.tsx": {
-    "mtime": 1793643202.311486,
-    "ast_hash": "9c24842db1d5dd67daef434d8dfddd5c",
+    "mtime": 1794244668.5034192,
+    "ast_hash": "9ccb331277b7a42c2d7af272dd074447",
     "semantic_hash": ""
   },
   "frontend/src/components/Feedback.tsx": {
@@ -265,13 +265,13 @@
     "semantic_hash": ""
   },
   "backend/sigab/api/urls.py": {
-    "mtime": 1793642164.615846,
-    "ast_hash": "c88ade9953df82a35c8dad9f6eb2dc3f",
+    "mtime": 1794245169.5431936,
+    "ast_hash": "ebf231b332da5fe9046409e3bc642bc5",
     "semantic_hash": ""
   },
   "backend/sigab/api/views.py": {
-    "mtime": 1793758883.39148,
-    "ast_hash": "8420c56581b39f34101f452f5a0fa8bf",
+    "mtime": 1794244876.3990285,
+    "ast_hash": "60efb98ce0788d4acdd5180c03057f4f",
     "semantic_hash": ""
   },
   "backend/sigab/apps.py": {
@@ -325,8 +325,8 @@
     "semantic_hash": ""
   },
   "backend/sigab/models.py": {
-    "mtime": 1793758883.3919573,
-    "ast_hash": "78570b01fa9b71f691c9b80edbc3da27",
+    "mtime": 1794244685.786816,
+    "ast_hash": "53b617ac06028290a4c653d578a71a40",
     "semantic_hash": ""
   },
   "backend/sigab/permissions.py": {
@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "backend/sigab/tests/test_isolation.py": {
-    "mtime": 1793642239.9368806,
-    "ast_hash": "077248302f51bc90492d72bb1b240aed",
+    "mtime": 1794245150.8645124,
+    "ast_hash": "66b5d1157f73edbf4ae2b0b89cb4ec06",
     "semantic_hash": ""
   },
   "backend/sigab/tests/test_items.py": {
@@ -555,8 +555,8 @@
     "semantic_hash": ""
   },
   "backend/sigab/tests/test_concurrency.py": {
-    "mtime": 1793758883.3928838,
-    "ast_hash": "80197e613a9667dc8a29d3318ef720a5",
+    "mtime": 1794245537.8894036,
+    "ast_hash": "086f57d83dbbadc8daa8cdcbd5524d74",
     "semantic_hash": ""
   },
   "backend/sigab/tests/test_reversal.py": {
@@ -652,6 +652,146 @@
   "backend/sigab/tests/test_seed_demo.py": {
     "mtime": 1793975330.4956627,
     "ast_hash": "3fb9be2e86c171179e0dc573ed922f6b",
+    "semantic_hash": ""
+  },
+  "backend/sigab/api/inventory.py": {
+    "mtime": 1794245241.9504232,
+    "ast_hash": "c1321bb0434002176e003684d1c77c06",
+    "semantic_hash": ""
+  },
+  "backend/sigab/api/operations.py": {
+    "mtime": 1794245616.3539536,
+    "ast_hash": "8229ca66caff9b098123a50a057e9635",
+    "semantic_hash": ""
+  },
+  "backend/sigab/api/self_service.py": {
+    "mtime": 1794245616.3673725,
+    "ast_hash": "b76576172951411b080899b7542a35e1",
+    "semantic_hash": ""
+  },
+  "backend/sigab/domain/__init__.py": {
+    "mtime": 1794244685.7859473,
+    "ast_hash": "840651a4c5c587fcbc38e81a2414ee23",
+    "semantic_hash": ""
+  },
+  "backend/sigab/domain/catalog.py": {
+    "mtime": 1794244685.7859411,
+    "ast_hash": "f971d0b93ab1bf35d916e3d8f3664c99",
+    "semantic_hash": ""
+  },
+  "backend/sigab/domain/identity.py": {
+    "mtime": 1794244685.7859576,
+    "ast_hash": "9760ddd3801d85e0c3c11e56f42a2119",
+    "semantic_hash": ""
+  },
+  "backend/sigab/domain/inventory.py": {
+    "mtime": 1794245616.3385212,
+    "ast_hash": "70eb67cba5b14ad7b5624e571dea4469",
+    "semantic_hash": ""
+  },
+  "backend/sigab/domain/movements.py": {
+    "mtime": 1794244685.7860246,
+    "ast_hash": "5a07cb8dd4f17d932067013fdfa45ea3",
+    "semantic_hash": ""
+  },
+  "backend/sigab/domain/operations.py": {
+    "mtime": 1794245616.314752,
+    "ast_hash": "f6838bbc6702752aae7d03e866f9ee90",
+    "semantic_hash": ""
+  },
+  "backend/sigab/domain/queries.py": {
+    "mtime": 1794244440.6354413,
+    "ast_hash": "c1bb777d18549e0120611de4379ac7ba",
+    "semantic_hash": ""
+  },
+  "backend/sigab/migrations/0009_inventorycount_inventorysession_inventorydivergence_and_more.py": {
+    "mtime": 1794244568.2440886,
+    "ast_hash": "389d1a2ea65cccf9093322628958d7cc",
+    "semantic_hash": ""
+  },
+  "backend/sigab/tests/test_requirements_063_070.py": {
+    "mtime": 1794245258.433319,
+    "ast_hash": "60e55a8e1dda9f572b622f77b2a831fe",
+    "semantic_hash": ""
+  },
+  "frontend/e2e/journeys.spec.ts": {
+    "mtime": 1794245470.200639,
+    "ast_hash": "ecf2696d45eb4d4f52dddc99fbcab56f",
+    "semantic_hash": ""
+  },
+  "frontend/playwright.config.ts": {
+    "mtime": 1794244750.2656517,
+    "ast_hash": "4f467a1a725aeba2ddd28125784ba301",
+    "semantic_hash": ""
+  },
+  "frontend/src/features/audit/index.ts": {
+    "mtime": 1794244668.3525646,
+    "ast_hash": "3dbc52ab6a80795cb33c727f028ce1b0",
+    "semantic_hash": ""
+  },
+  "frontend/src/features/catalog/index.ts": {
+    "mtime": 1794244668.3156245,
+    "ast_hash": "3af652af3a22357f15b8500340c490ee",
+    "semantic_hash": ""
+  },
+  "frontend/src/features/identity/index.ts": {
+    "mtime": 1794244668.2794104,
+    "ast_hash": "2aa5c9d1f2c41512fe64bd3c6471f934",
+    "semantic_hash": ""
+  },
+  "frontend/src/features/inventory/index.ts": {
+    "mtime": 1794244668.2365687,
+    "ast_hash": "41921d7a868dcf6a6933b77c3b63c535",
+    "semantic_hash": ""
+  },
+  "frontend/src/features/operations/ServiceBatchPage.tsx": {
+    "mtime": 1794244817.7669384,
+    "ast_hash": "765b9c929b804228f0a4a0b5661aab30",
+    "semantic_hash": ""
+  },
+  "frontend/src/features/operations/index.ts": {
+    "mtime": 1794244668.451393,
+    "ast_hash": "656324b7e9df78f5c335d1e4f7423344",
+    "semantic_hash": ""
+  },
+  "frontend/src/features/self-service/MyPossessionsPage.tsx": {
+    "mtime": 1794244668.3889208,
+    "ast_hash": "270a9b707deac8b05d8a05c7659ea808",
+    "semantic_hash": ""
+  },
+  "frontend/src/features/self-service/index.ts": {
+    "mtime": 1794244668.4012225,
+    "ast_hash": "2d4f63b10afd44f87a6c894386230a94",
+    "semantic_hash": ""
+  },
+  "docs/arquitetura/modulos-por-dominio.md": {
+    "mtime": 1794244852.90783,
+    "ast_hash": "931738cc7a6bca83e8ea541a50270a01",
+    "semantic_hash": ""
+  },
+  "docs/contratos/atendimento-cesta.md": {
+    "mtime": 1794244852.8655345,
+    "ast_hash": "d03c89ba461c9e85dd6e1ba90d7d223d",
+    "semantic_hash": ""
+  },
+  "docs/tarefas/tarefas-06-11-26/README.md": {
+    "mtime": 1793996665.0293493,
+    "ast_hash": "4b2d380cadb0cd6e922fa3605c91d2af",
+    "semantic_hash": ""
+  },
+  "docs/validacao/alinhamento-requisitos-2026-11-06.md": {
+    "mtime": 1793996288.0718362,
+    "ast_hash": "ed023ef67f1832b1336ee965d2459f5d",
+    "semantic_hash": ""
+  },
+  "docs/validacao/tarefas-063-a-070.md": {
+    "mtime": 1794244852.9203954,
+    "ast_hash": "2151391704db91d7d3d5db44dd0c7c18",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20261109_170350_analise_as_tareas_63_a_70.md": {
+    "mtime": 1794243830.1719007,
+    "ast_hash": "f20189e120b273d5a8615961caa9e849",
     "semantic_hash": ""
   }
 }

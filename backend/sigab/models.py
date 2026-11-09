@@ -568,6 +568,258 @@ def audit_record_hash(event):
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
+class ServiceBatch(TimestampedModel):
+    """One confirmed counter service containing individual and quantitative materials."""
+
+    class CustodyMode(models.TextChoices):
+        SHIFT = "shift", "Por turno"
+        FIXED_TERM = "fixed_term", "Prazo determinado"
+        INDEFINITE = "indefinite", "Prazo indeterminado"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="service_batches"
+    )
+    recipient = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="service_batches")
+    # Kept separate from the authenticated operator. It is populated only when an
+    # explicitly authorized workflow supplies a third-party pickup person.
+    pickup_person = models.ForeignKey(
+        Person,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="picked_up_service_batches",
+    )
+    operator = models.ForeignKey(
+        Account, on_delete=models.PROTECT, related_name="operated_service_batches"
+    )
+    custody_mode = models.CharField(max_length=16, choices=CustodyMode)
+    due_at = models.DateTimeField(null=True, blank=True)
+    idempotency_key = models.UUIDField()
+    request_hash = models.CharField(max_length=64)
+    confirmed_at = models.DateTimeField()
+    receipt_code = models.CharField(max_length=24)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "idempotency_key"],
+                name="uniq_service_batch_idempotency_org",
+            ),
+            models.UniqueConstraint(
+                fields=["organization", "receipt_code"], name="uniq_service_receipt_org"
+            ),
+            models.CheckConstraint(
+                condition=(Q(custody_mode="fixed_term") & Q(due_at__isnull=False))
+                | (~Q(custody_mode="fixed_term") & Q(due_at__isnull=True)),
+                name="service_due_matches_mode",
+            ),
+        ]
+
+
+class ServiceBatchItem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    batch = models.ForeignKey(ServiceBatch, on_delete=models.PROTECT, related_name="items")
+    item = models.ForeignKey(Item, on_delete=models.PROTECT, related_name="service_lines")
+    movement = models.OneToOneField(
+        Movement, on_delete=models.PROTECT, related_name="service_batch_line"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["batch", "item"], name="uniq_item_per_service_batch")
+        ]
+
+
+class StockBalance(TimestampedModel):
+    """Current quantitative stock, locked before every write."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="stock_balances"
+    )
+    equipment_type = models.ForeignKey(
+        EquipmentType, on_delete=models.PROTECT, related_name="stock_balances"
+    )
+    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, related_name="stock_balances")
+    storage_location = models.ForeignKey(
+        StorageLocation, on_delete=models.PROTECT, related_name="stock_balances"
+    )
+    quantity = models.DecimalField(max_digits=14, decimal_places=3, default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "equipment_type", "unit", "storage_location"],
+                name="uniq_stock_position",
+            ),
+            models.CheckConstraint(condition=Q(quantity__gte=0), name="stock_quantity_nonnegative"),
+        ]
+
+    def clean(self):
+        refs = {
+            self.equipment_type.organization_id,
+            self.unit.organization_id,
+            self.storage_location.organization_id,
+            self.organization_id,
+        }
+        if len(refs) != 1 or self.storage_location.unit_id != self.unit_id:
+            raise ValidationError("Posição de estoque contém referências incompatíveis.")
+        if self.equipment_type.classification != EquipmentType.Classification.QUANTITATIVE:
+            raise ValidationError("Posição de estoque exige tipo quantitativo.")
+
+
+class StockLoan(TimestampedModel):
+    class Status(models.TextChoices):
+        OPEN = "open", "Aberta"
+        CLOSED = "closed", "Encerrada"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="stock_loans"
+    )
+    batch = models.ForeignKey(ServiceBatch, on_delete=models.PROTECT, related_name="stock_loans")
+    balance = models.ForeignKey(StockBalance, on_delete=models.PROTECT, related_name="loans")
+    recipient = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="stock_loans")
+    original_quantity = models.DecimalField(max_digits=14, decimal_places=3)
+    open_quantity = models.DecimalField(max_digits=14, decimal_places=3)
+    due_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=12, choices=Status, default=Status.OPEN)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["batch", "balance"], name="uniq_stock_line_per_batch"),
+            models.CheckConstraint(
+                condition=Q(original_quantity__gt=0), name="stock_loan_original_positive"
+            ),
+            models.CheckConstraint(
+                condition=Q(open_quantity__gte=0), name="stock_loan_open_nonnegative"
+            ),
+            models.CheckConstraint(
+                condition=Q(open_quantity__lte=models.F("original_quantity")),
+                name="stock_loan_open_lte_original",
+            ),
+        ]
+
+
+class StockLedgerEntry(ImmutableModel):
+    class Type(models.TextChoices):
+        RECEIPT = "receipt", "Entrada"
+        CHECKOUT = "checkout", "Saída"
+        RETURN = "return", "Devolução"
+        CONSUME = "consume", "Consumo"
+        ADJUST = "adjust", "Ajuste"
+        REVERSAL = "reversal", "Estorno"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="stock_entries"
+    )
+    balance = models.ForeignKey(StockBalance, on_delete=models.PROTECT, related_name="entries")
+    loan = models.ForeignKey(
+        StockLoan, null=True, blank=True, on_delete=models.PROTECT, related_name="entries"
+    )
+    entry_type = models.CharField(max_length=12, choices=Type)
+    quantity = models.DecimalField(max_digits=14, decimal_places=3)
+    balance_delta = models.DecimalField(max_digits=14, decimal_places=3)
+    operator = models.ForeignKey(
+        Account, on_delete=models.PROTECT, related_name="operated_stock_entries"
+    )
+    recipient = models.ForeignKey(
+        Person, null=True, blank=True, on_delete=models.PROTECT, related_name="stock_entries"
+    )
+    idempotency_key = models.UUIDField()
+    occurred_at = models.DateTimeField()
+    reason = models.CharField(max_length=500, blank=True)
+    reverses = models.OneToOneField(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="reversal"
+    )
+
+    class Meta:
+        ordering = ["occurred_at", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "idempotency_key"],
+                name="uniq_stock_entry_idempotency_org",
+            ),
+            models.CheckConstraint(
+                condition=Q(quantity__gt=0), name="stock_entry_quantity_positive"
+            ),
+        ]
+
+
+class InventorySession(TimestampedModel):
+    class Status(models.TextChoices):
+        OPEN = "open", "Aberta"
+        CLOSED = "closed", "Fechada"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="inventory_sessions"
+    )
+    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, related_name="inventory_sessions")
+    opened_by = models.ForeignKey(
+        Account, on_delete=models.PROTECT, related_name="opened_inventory_sessions"
+    )
+    opened_at = models.DateTimeField()
+    reference_at = models.DateTimeField()
+    closed_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=12, choices=Status, default=Status.OPEN)
+
+
+class InventoryCount(TimestampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session = models.ForeignKey(InventorySession, on_delete=models.PROTECT, related_name="counts")
+    item = models.ForeignKey(Item, on_delete=models.PROTECT, related_name="inventory_counts")
+    expected_state = models.CharField(max_length=24)
+    counted_state = models.CharField(max_length=24, blank=True)
+    counted_at = models.DateTimeField(null=True, blank=True)
+    counted_by = models.ForeignKey(
+        Account, null=True, blank=True, on_delete=models.PROTECT, related_name="inventory_counts"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["session", "item"], name="uniq_inventory_count_item")
+        ]
+
+
+class InventoryDivergence(TimestampedModel):
+    class Status(models.TextChoices):
+        OPEN = "open", "Aberta"
+        INVESTIGATING = "investigating", "Em investigação"
+        RESOLVED = "resolved", "Resolvida"
+        DISMISSED = "dismissed", "Justificada"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session = models.ForeignKey(
+        InventorySession, on_delete=models.PROTECT, related_name="divergences"
+    )
+    count = models.OneToOneField(
+        InventoryCount, on_delete=models.PROTECT, related_name="divergence"
+    )
+    expected_state = models.CharField(max_length=24)
+    counted_state = models.CharField(max_length=24)
+    status = models.CharField(max_length=16, choices=Status, default=Status.OPEN)
+    assignee = models.ForeignKey(
+        Account,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="assigned_inventory_divergences",
+    )
+    reason = models.CharField(max_length=500, blank=True)
+    resolution = models.CharField(max_length=500, blank=True)
+    resolved_by = models.ForeignKey(
+        Account,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="resolved_inventory_divergences",
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+
 class AuthenticationFailure(models.Model):
     """Failed login attempt, kept only to rate-limit authentication (SIGAB-021).
 

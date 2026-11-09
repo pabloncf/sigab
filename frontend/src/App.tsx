@@ -3,12 +3,12 @@ import { ApiError, apiRequest } from "./api/client";
 import type { Session } from "./api/types";
 import { AppShell } from "./components/AppShell";
 import { ErrorState, LoadingState } from "./components/Feedback";
-import { ItemDetailPage } from "./pages/ItemDetailPage";
-import { ActivityPage } from "./pages/ActivityPage";
-import { CatalogPage } from "./pages/CatalogPage";
-import { ItemsPage } from "./pages/ItemsPage";
-import { PeoplePage } from "./pages/PeoplePage";
-import { PersonDetailPage } from "./pages/PersonDetailPage";
+import { ActivityPage } from "./features/audit";
+import { CatalogPage } from "./features/catalog";
+import { PeoplePage, PersonDetailPage } from "./features/identity";
+import { ItemDetailPage, ItemsPage } from "./features/inventory";
+import { ServiceBatchPage } from "./features/operations";
+import { MyPossessionsPage } from "./features/self-service";
 
 function routeId(prefix: string): string | null {
   return window.location.pathname.match(new RegExp(`^/${prefix}/([0-9a-f-]+)/?$`, "i"))?.[1] ?? null;
@@ -16,6 +16,8 @@ function routeId(prefix: string): string | null {
 
 function Page({ session }: { session: Session }) {
   const path = window.location.pathname;
+  if (session.permissions.can_use_self_service && /^\/minha-posse\/?$/.test(path)) return <MyPossessionsPage />;
+  if (session.permissions.can_checkout && /^\/atendimento\/?$/.test(path)) return <ServiceBatchPage />;
   const itemId = routeId("items");
   if (itemId) return <ItemDetailPage itemId={itemId} />;
   if (session.permissions.can_manage_catalog && /^\/cadastros\/?$/.test(path)) return <CatalogPage />;

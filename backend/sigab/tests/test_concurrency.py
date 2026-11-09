@@ -3,13 +3,27 @@
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from decimal import Decimal
 
 import pytest
 from django.db import IntegrityError, close_old_connections, connection, connections
 from django.utils import timezone
 
+from sigab.domain.operations import StockRequest, checkout_basket
 from sigab.management.commands.verify_audit_chain import verify_chain
-from sigab.models import Account, AuditEvent, Item, Movement, MovementEvent, Organization
+from sigab.models import (
+    Account,
+    AuditEvent,
+    EquipmentType,
+    Item,
+    Movement,
+    MovementEvent,
+    Organization,
+    ServiceBatch,
+    StockBalance,
+    StockLedgerEntry,
+    StockLoan,
+)
 from sigab.services import (
     CommandContext,
     ConflictError,
@@ -125,3 +139,49 @@ def test_live_checkout_racing_a_contingency_entry_accepts_exactly_one(world):
     assert item.availability == Item.Availability.IN_CUSTODY
     assert Movement.objects.filter(item=item, movement_type="checkout").count() == 1
     assert verify_chain(world["org"]) is None
+
+
+def test_quantitative_baskets_never_make_stock_negative(world):
+    equipment_type = EquipmentType.objects.create(
+        organization=world["org"],
+        name="Munição concorrente",
+        classification=EquipmentType.Classification.QUANTITATIVE,
+    )
+    balance = StockBalance.objects.create(
+        organization=world["org"],
+        equipment_type=equipment_type,
+        unit=world["unit"],
+        storage_location=world["location"],
+        quantity=Decimal("5"),
+    )
+
+    def operation(ctx, key):
+        return checkout_basket(
+            ctx,
+            recipient_id=world["person"].id,
+            item_ids=[],
+            stock=[
+                StockRequest(
+                    equipment_type_id=equipment_type.id,
+                    unit_id=world["unit"].id,
+                    storage_location_id=world["location"].id,
+                    quantity=Decimal("4"),
+                )
+            ],
+            idempotency_key=key,
+            custody_mode=ServiceBatch.CustodyMode.INDEFINITE,
+            due_at=None,
+            confirmed=True,
+        )
+
+    outcomes = _race(world, operation, [uuid.uuid4(), uuid.uuid4()])
+    assert outcomes == ["accepted", "conflict"]
+    balance.refresh_from_db()
+    assert balance.quantity == Decimal("1")
+    assert StockLoan.objects.filter(balance=balance).count() == 1
+    assert (
+        StockLedgerEntry.objects.filter(
+            balance=balance, entry_type=StockLedgerEntry.Type.CHECKOUT
+        ).count()
+        == 1
+    )

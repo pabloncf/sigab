@@ -14,6 +14,40 @@ from django.views import defaults
 from django.views.csrf import csrf_failure as django_csrf_failure
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from sigab.domain.catalog import (
+    create_equipment_type,
+    create_storage_location,
+    create_unit,
+    incorporate_item,
+    set_equipment_type_active,
+    set_storage_location_active,
+    set_unit_active,
+    update_equipment_type,
+    update_unit,
+)
+from sigab.domain.identity import (
+    create_account,
+    create_grant,
+    create_membership,
+    create_person,
+    end_account_sessions,
+    reactivate_account,
+    revoke_account,
+    revoke_grant,
+    set_membership_active,
+    set_person_active,
+    suspend_account,
+    update_person,
+)
+from sigab.domain.movements import (
+    REVERSIBLE_TYPES,
+    Contingency,
+    checkout_item,
+    latest_movement_in_force,
+    return_item,
+    reverse_movement,
+    set_item_condition,
+)
 from sigab.models import (
     Account,
     AuditEvent,
@@ -44,38 +78,10 @@ from sigab.permissions import (
     permitted_unit_ids,
 )
 from sigab.services import (
-    REVERSIBLE_TYPES,
     CommandContext,
     ConflictError,
-    Contingency,
     DivergenceError,
     NotFoundError,
-    checkout_item,
-    create_account,
-    create_equipment_type,
-    create_grant,
-    create_membership,
-    create_person,
-    create_storage_location,
-    create_unit,
-    end_account_sessions,
-    incorporate_item,
-    latest_movement_in_force,
-    reactivate_account,
-    return_item,
-    reverse_movement,
-    revoke_account,
-    revoke_grant,
-    set_equipment_type_active,
-    set_item_condition,
-    set_membership_active,
-    set_person_active,
-    set_storage_location_active,
-    set_unit_active,
-    suspend_account,
-    update_equipment_type,
-    update_person,
-    update_unit,
 )
 
 MAX_JSON_BODY_BYTES = 16 * 1024
@@ -372,6 +378,8 @@ def session_detail(request):
                 "can_create_item": has_any_scope(request.user, ITEM_CREATE, organization),
                 "can_view_items": has_any_scope(request.user, VIEW_ITEM, organization),
                 "can_view_audit": has_permission(request.user, AUDIT_VIEW, organization),
+                "can_checkout": has_any_scope(request.user, MOVEMENT_CHECKOUT, organization),
+                "can_use_self_service": bool(request.user.person_id),
             },
         }
     )

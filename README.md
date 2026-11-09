@@ -166,4 +166,4 @@ Consulte também a [decisão do segmento inicial](docs/decisoes/0001-segmento-in
 
 ## Evidências da entrega
 
-A [revisão das tarefas 041 a 045](docs/validacao/tarefas-041-a-045.md) liga requisitos aos testes, registra o bloqueio do estoque e traz o roteiro e a ata ainda pendente da demonstração. O teste `test_vertical_flow.py` cobre o fluxo completo pela API HTTP; testes de navegador React permanecem pendentes.
+A [revisão das tarefas 041 a 045](docs/validacao/tarefas-041-a-045.md) liga requisitos aos testes e registra as evidências da primeira fatia. A [entrega das tarefas 063 a 070](docs/validacao/tarefas-063-a-070.md) acrescenta inventário, cesta mista, estoque quantitativo, autosserviço e testes Playwright no CI.

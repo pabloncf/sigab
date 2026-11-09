@@ -12,6 +12,7 @@ import uuid
 import pytest
 from django.test import Client
 from django.urls import URLPattern
+from django.utils import timezone
 
 from sigab.api import urls as api_urls
 from sigab.models import (
@@ -19,12 +20,19 @@ from sigab.models import (
     AuditEvent,
     EquipmentType,
     Grant,
+    InventoryCount,
+    InventoryDivergence,
+    InventorySession,
     Item,
     Membership,
     Movement,
     Organization,
     Person,
     Role,
+    ServiceBatch,
+    StockBalance,
+    StockLedgerEntry,
+    StockLoan,
     StorageLocation,
     Unit,
 )
@@ -75,6 +83,67 @@ def _tenant(name, code, with_movement=False):
             idempotency_key=uuid.uuid4(),
             confirmed=True,
         )
+    quantitative_type = EquipmentType.objects.create(
+        organization=organization, name=f"Munição {code}", classification="quantitative"
+    )
+    balance = StockBalance.objects.create(
+        organization=organization,
+        equipment_type=quantitative_type,
+        unit=unit,
+        storage_location=location,
+        quantity=10,
+    )
+    batch = ServiceBatch.objects.create(
+        organization=organization,
+        recipient=person,
+        operator=account,
+        custody_mode=ServiceBatch.CustodyMode.INDEFINITE,
+        idempotency_key=uuid.uuid4(),
+        request_hash="0" * 64,
+        confirmed_at=timezone.now(),
+        receipt_code=f"AT-{code}",
+    )
+    loan = StockLoan.objects.create(
+        organization=organization,
+        batch=batch,
+        balance=balance,
+        recipient=person,
+        original_quantity=2,
+        open_quantity=2,
+    )
+    stock_entry = StockLedgerEntry.objects.create(
+        organization=organization,
+        balance=balance,
+        loan=loan,
+        entry_type=StockLedgerEntry.Type.CHECKOUT,
+        quantity=2,
+        balance_delta=-2,
+        operator=account,
+        recipient=person,
+        idempotency_key=uuid.uuid4(),
+        occurred_at=timezone.now(),
+    )
+    inventory = InventorySession.objects.create(
+        organization=organization,
+        unit=unit,
+        opened_by=account,
+        opened_at=timezone.now(),
+        reference_at=timezone.now(),
+    )
+    count = InventoryCount.objects.create(
+        session=inventory,
+        item=item,
+        expected_state=item.availability,
+        counted_state="missing",
+        counted_at=timezone.now(),
+        counted_by=account,
+    )
+    divergence = InventoryDivergence.objects.create(
+        session=inventory,
+        count=count,
+        expected_state=item.availability,
+        counted_state="missing",
+    )
     return {
         "movement": movement,
         "organization": organization,
@@ -87,6 +156,12 @@ def _tenant(name, code, with_movement=False):
         "account": account,
         "role": role,
         "grant": grant,
+        "batch": batch,
+        "balance": balance,
+        "loan": loan,
+        "stock_entry": stock_entry,
+        "inventory": inventory,
+        "divergence": divergence,
     }
 
 
@@ -118,6 +193,14 @@ def _snapshot(foreign):
         "type": EquipmentType.objects.filter(pk=foreign["type"].pk).values().get(),
         "movements": Movement.objects.filter(organization=foreign["organization"]).count(),
         "audit": AuditEvent.objects.filter(organization=foreign["organization"]).count(),
+        "loan": StockLoan.objects.filter(pk=foreign["loan"].pk).values().get(),
+        "inventory": InventorySession.objects.filter(pk=foreign["inventory"].pk).values().get(),
+        "divergence": InventoryDivergence.objects.filter(pk=foreign["divergence"].pk)
+        .values()
+        .get(),
+        "stock_entries": StockLedgerEntry.objects.filter(
+            organization=foreign["organization"]
+        ).count(),
     }
 
 
@@ -246,6 +329,43 @@ OBJECT_CASES = [
         lambda f: f"equipment-types/{f['type'].id}/status/",
         lambda f: {"is_active": False, "confirmed": True},
     ),
+    (
+        "stock-loan-settle",
+        "post",
+        lambda f: f"stock/loans/{f['loan'].id}/settle/",
+        lambda f: {
+            "quantity": "1",
+            "disposition": "return",
+            "idempotency_key": _key(),
+            "confirmed": True,
+        },
+    ),
+    (
+        "stock-entry-reverse",
+        "post",
+        lambda f: f"stock/entries/{f['stock_entry'].id}/reverse/",
+        lambda f: {"idempotency_key": _key(), "confirmed": True, "reason": "x"},
+    ),
+    ("inventory-detail", "get", lambda f: f"inventory/sessions/{f['inventory'].id}/", None),
+    (
+        "inventory-count",
+        "post",
+        lambda f: f"inventory/sessions/{f['inventory'].id}/count/",
+        lambda f: {"item_id": str(f["item"].id), "counted_state": "missing"},
+    ),
+    (
+        "inventory-close",
+        "post",
+        lambda f: f"inventory/sessions/{f['inventory'].id}/close/",
+        lambda f: {},
+    ),
+    (
+        "divergence-update",
+        "post",
+        lambda f: f"inventory/divergences/{f['divergence'].id}/",
+        lambda f: {"status": "investigating"},
+    ),
+    ("my-receipt", "get", lambda f: f"me/receipts/{f['batch'].id}/", None),
 ]
 
 # Collections: listing never shows foreign rows; creation never accepts foreign references.
@@ -258,10 +378,22 @@ COLLECTION_CASES = {
     "unit-list",
     "equipment-type-list",
     "role-list",
+    "service-batch-create",
+    "service-batch-options",
+    "stock-position-list",
+    "inventory-open",
+    "possession-list",
+    "possession-export",
 }
 
 # Routes without tenant data.
-TENANT_FREE = {"session-detail", "session-logout", "not-found"}
+TENANT_FREE = {
+    "session-detail",
+    "session-logout",
+    "my-possessions",
+    "my-history",
+    "not-found",
+}
 
 
 def _call(client, method, path, payload):
@@ -297,6 +429,11 @@ def test_foreign_object_is_indistinguishable_from_missing(tenants, name, method,
         foreign["location"].id,
         foreign["type"].id,
         foreign["movement"].id,
+        foreign["batch"].id,
+        foreign["loan"].id,
+        foreign["stock_entry"].id,
+        foreign["inventory"].id,
+        foreign["divergence"].id,
     ):
         missing = missing.replace(str(value), str(uuid.uuid4()))
     random = _call(tenants["client"], method, missing, payload(foreign) if payload else None)
@@ -328,6 +465,12 @@ def test_listings_and_search_never_return_foreign_rows(tenants):
         f"activity/?item={foreign['item'].id}",
         f"activity/?person={foreign['person'].id}",
         "audit/",
+        "service-batches/options/",
+        "stock/positions/",
+        "possessions/",
+        "possessions/export/",
+        "me/possessions/",
+        "me/history/",
         f"audit/?object_id={foreign['movement'].id}",
     ):
         body = client.get(f"/api/v1/{path}").content.decode()

@@ -1,0 +1,1 @@
+export { MyPossessionsPage } from "./MyPossessionsPage";

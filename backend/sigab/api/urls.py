@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 
-from . import views
+from . import inventory, operations, self_service, views
 
 app_name = "api"
 
@@ -14,6 +14,27 @@ urlpatterns = [
     path("search/", views.search, name="search"),
     path("activity/", views.activity_feed, name="activity"),
     path("audit/", views.audit_trail, name="audit-trail"),
+    path("service-batches/", operations.service_batch_create, name="service-batch-create"),
+    path(
+        "service-batches/options/", operations.service_batch_options, name="service-batch-options"
+    ),
+    path("stock/positions/", operations.stock_positions, name="stock-position-list"),
+    path("stock/loans/<uuid:pk>/settle/", operations.stock_loan_settle, name="stock-loan-settle"),
+    path(
+        "stock/entries/<uuid:pk>/reverse/",
+        operations.stock_entry_reverse,
+        name="stock-entry-reverse",
+    ),
+    path("inventory/sessions/", inventory.inventory_open, name="inventory-open"),
+    path("inventory/sessions/<uuid:pk>/", inventory.inventory_detail, name="inventory-detail"),
+    path("inventory/sessions/<uuid:pk>/count/", inventory.inventory_count, name="inventory-count"),
+    path("inventory/sessions/<uuid:pk>/close/", inventory.inventory_close, name="inventory-close"),
+    path("inventory/divergences/<uuid:pk>/", inventory.divergence_update, name="divergence-update"),
+    path("possessions/", self_service.possession_list, name="possession-list"),
+    path("possessions/export/", self_service.possession_export, name="possession-export"),
+    path("me/possessions/", self_service.my_possessions, name="my-possessions"),
+    path("me/history/", self_service.my_history, name="my-history"),
+    path("me/receipts/<uuid:pk>/", self_service.my_receipt, name="my-receipt"),
     path("items/<uuid:pk>/checkout/", views.item_checkout, name="item-checkout"),
     path("items/<uuid:pk>/return/", views.item_return, name="item-return"),
     path("items/<uuid:pk>/condition/", views.item_condition, name="item-condition"),

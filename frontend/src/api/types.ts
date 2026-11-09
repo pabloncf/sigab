@@ -7,7 +7,47 @@ export interface Session {
     can_create_item: boolean;
     can_view_items: boolean;
     can_view_audit: boolean;
+    can_checkout: boolean;
+    can_use_self_service: boolean;
   };
+}
+
+export interface PossessionEntry {
+  kind: "individual" | "quantitative";
+  id: string;
+  equipment_type: string;
+  identifier?: string;
+  quantity?: string;
+  unit: string;
+  due_at?: string | null;
+  overdue?: boolean;
+}
+
+export interface MyPossessions {
+  person: { id: string; name: string };
+  possessions: PossessionEntry[];
+}
+
+export interface ServiceBatchResult {
+  id: string;
+  receipt_code: string;
+  custody_mode: "shift" | "fixed_term" | "indefinite";
+  due_at: string | null;
+}
+
+export interface ServiceBatchOptions {
+  people: Array<{ id: string; name: string }>;
+  items: Array<{ id: string; identifier: string; equipment_type: string; unit: string }>;
+  stock: Array<{
+    id: string;
+    equipment_type_id: string;
+    equipment_type: string;
+    unit_id: string;
+    unit: string;
+    storage_location_id: string;
+    storage_location: string;
+    quantity: string;
+  }>;
 }
 
 export interface Page<T> {
