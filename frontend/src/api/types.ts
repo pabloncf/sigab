@@ -28,6 +28,32 @@ export interface MyPossessions {
   possessions: PossessionEntry[];
 }
 
+export interface PersonalHistoryEntry {
+  id: string;
+  type: string;
+  equipment_type: string;
+  identifier?: string;
+  quantity?: string;
+  occurred_at: string;
+}
+
+export interface PersonalHistory {
+  individual: PersonalHistoryEntry[];
+  quantitative: PersonalHistoryEntry[];
+  receipts: Array<{ id: string; code: string; confirmed_at: string }>;
+}
+
+export interface PersonalReceipt {
+  receipt_code: string;
+  confirmed_at: string;
+  recipient: { id: string; name: string };
+  operator: { id: string; username: string };
+  custody_mode: string;
+  due_at: string | null;
+  items: Array<{ id: string; identifier: string; equipment_type: string }>;
+  stock: Array<{ loan_id: string; equipment_type: string; quantity: string; open_quantity: string }>;
+}
+
 export interface ServiceBatchResult {
   id: string;
   receipt_code: string;

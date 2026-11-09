@@ -82,6 +82,16 @@ def my_history(request):
                 }
                 for value in stock
             ],
+            "receipts": [
+                {
+                    "id": str(batch.id),
+                    "code": batch.receipt_code,
+                    "confirmed_at": batch.confirmed_at.isoformat(),
+                }
+                for batch in ServiceBatch.objects.filter(
+                    organization=organization, recipient=person
+                ).order_by("-confirmed_at", "-id")
+            ],
         }
     )
 

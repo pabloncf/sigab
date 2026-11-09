@@ -18,3 +18,6 @@ backups/
 *.dump
 *.dump.age
 *.agekey
+
+# CI removido do repositório
+.github/

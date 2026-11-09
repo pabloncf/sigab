@@ -101,6 +101,14 @@ test("incorporação percorre o formulário React e abre o item criado", async (
 
 test("navegação respeita permissões e autosserviço mostra apenas a própria posse", async ({ page }) => {
   await session(page);
+  await page.route("**/api/v1/me/history/", (route) => route.fulfill({ json: {
+    success: true,
+    data: { individual: [{ id: ids.movement, type: "checkout", equipment_type: "Pistola de teste", identifier: "HIST-001", occurred_at: "2026-11-09T12:00:00Z" }], quantitative: [], receipts: [{ id: ids.batch, code: "AT-PESSOAL", confirmed_at: "2026-11-09T12:00:00Z" }] }
+  }}));
+  await page.route(`**/api/v1/me/receipts/${ids.batch}/`, (route) => route.fulfill({ json: {
+    success: true,
+    data: { receipt_code: "AT-PESSOAL", confirmed_at: "2026-11-09T12:00:00Z", recipient: { id: ids.person, name: "Pessoa E2E" }, operator: { id: "operador", username: "operador" }, custody_mode: "indefinite", due_at: null, items: [{ id: ids.item, identifier: "COMPROVANTE-001", equipment_type: "Pistola de teste" }], stock: [] }
+  }}));
   await page.route("**/api/v1/items/**", (route) => route.fulfill({ json: {
     success: true, data: [availableItem], meta: { count: 1, limit: 100, offset: 0 }
   }}));
@@ -116,6 +124,9 @@ test("navegação respeita permissões e autosserviço mostra apenas a própria 
   await page.getByRole("link", { name: "Minha posse" }).click();
   await expect(page.getByRole("heading", { name: "Minha posse" })).toBeVisible();
   await expect(page.getByText("E2E-001")).toBeVisible();
+  await expect(page.getByText(/HIST-001/)).toBeVisible();
+  await page.getByRole("button", { name: "Abrir AT-PESSOAL" }).click();
+  await expect(page.getByRole("article", { name: "Comprovante AT-PESSOAL" })).toContainText("COMPROVANTE-001");
 });
 
 test("atendimento envia uma cesta confirmada uma única vez e exibe comprovante", async ({ page }) => {
