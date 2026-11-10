@@ -837,3 +837,51 @@ class AuthenticationFailure(models.Model):
             models.Index(fields=["username_digest", "occurred_at"]),
             models.Index(fields=["ip_address", "occurred_at"]),
         ]
+
+
+class PersonRestriction(TimestampedModel):
+    class Category(models.TextChoices):
+        JUDICIAL = "judicial", "Judicial"
+        HEALTH = "saude", "Saúde"
+        ADMINISTRATIVE = "administrativa", "Administrativa"
+        OTHER = "outra", "Outra"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT)
+    person = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="restrictions")
+    category = models.CharField(max_length=16, choices=Category)
+    summary = models.CharField(max_length=200)
+    source = models.CharField(max_length=160)
+    reference = models.CharField(max_length=160, blank=True)
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField(null=True, blank=True)
+    # Empty means all types. Classification-specific grouping is deliberately not inferred.
+    equipment_types = models.ManyToManyField(EquipmentType, blank=True)
+    created_by = models.ForeignKey(
+        Account, on_delete=models.PROTECT, related_name="restrictions_created"
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+    closed_by = models.ForeignKey(
+        Account, on_delete=models.PROTECT, null=True, blank=True, related_name="restrictions_closed"
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(ends_at__isnull=True) | Q(ends_at__gt=models.F("starts_at")),
+                name="restriction_valid_window",
+            )
+        ]
+
+
+class RestrictionEvent(ImmutableModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    restriction = models.ForeignKey(
+        PersonRestriction, on_delete=models.PROTECT, related_name="history"
+    )
+    actor = models.ForeignKey(Account, on_delete=models.PROTECT)
+    occurred_at = models.DateTimeField()
+    action = models.CharField(max_length=16)
+    reason = models.CharField(max_length=200)
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)

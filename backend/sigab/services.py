@@ -41,6 +41,16 @@ class ConflictError(ValidationError):
     pass
 
 
+class RestrictedCheckout(ConflictError):
+    def __init__(self, person_id, restriction_id, equipment_type_id):
+        self.person_id = person_id
+        self.restriction_id = restriction_id
+        self.equipment_type_id = equipment_type_id
+        super().__init__(
+            "Saída bloqueada: existe restrição ativa para esta pessoa. Procure a chefia."
+        )
+
+
 class DivergenceError(ConflictError):
     """A paper record that contradicts the system; it is investigated, never forced (ADR 0004)."""
 
@@ -215,19 +225,24 @@ def checkout_item(
     existing = _existing(ctx, idempotency_key, Movement.Type.CHECKOUT, **expected)
     if existing:
         return existing, False
+    recipient = (
+        Person.objects.select_for_update()
+        .filter(id=recipient_id, organization=ctx.organization, is_active=True)
+        .first()
+    )
     item = (
         Item.objects.select_for_update().filter(id=item_id, organization=ctx.organization).first()
     )
     existing = _existing(ctx, idempotency_key, Movement.Type.CHECKOUT, **expected)
     if existing:
         return existing, False
-    recipient = Person.objects.filter(
-        id=recipient_id, organization=ctx.organization, is_active=True
-    ).first()
     if not item or not recipient:
         raise ValidationError("Item ou destinatário inválido.")
     if not has_permission(ctx.actor, MOVEMENT_CHECKOUT, ctx.organization, item.unit):
         raise PermissionDenied
+    from sigab.domain.restrictions import assert_eligible
+
+    assert_eligible(ctx, recipient, item.equipment_type_id)
     if not recipient.memberships.filter(organization=ctx.organization, is_active=True).exists():
         raise ValidationError("O destinatário não possui vínculo ativo.")
     if (
@@ -630,6 +645,10 @@ def create_account(ctx, *, person_id, username, password, email=""):
     if person.accounts.filter(revoked_at__isnull=True).exists():
         raise ConflictError("A pessoa já possui conta não revogada.")
     username = username.strip()
+    # The public credential is the tenant-local membership registration. Preserve
+    # existing internal usernames; disambiguate new identifiers across tenants.
+    if Account.objects.filter(username=username).exclude(organization=ctx.organization).exists():
+        username = f"person-{person.id.hex}-{ctx.organization.id.hex}"
     account = Account(
         organization=ctx.organization, person=person, username=username, email=email.strip()
     )

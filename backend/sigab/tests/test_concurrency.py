@@ -10,6 +10,7 @@ from django.db import IntegrityError, close_old_connections, connection, connect
 from django.utils import timezone
 
 from sigab.domain.operations import StockRequest, checkout_basket
+from sigab.domain.restrictions import create_restriction
 from sigab.management.commands.verify_audit_chain import verify_chain
 from sigab.models import (
     Account,
@@ -19,6 +20,7 @@ from sigab.models import (
     Movement,
     MovementEvent,
     Organization,
+    PersonRestriction,
     ServiceBatch,
     StockBalance,
     StockLedgerEntry,
@@ -185,3 +187,33 @@ def test_quantitative_baskets_never_make_stock_negative(world):
         ).count()
         == 1
     )
+
+
+def test_restriction_and_checkout_serialize_on_person(world):
+    role = world["account"].grants.get().role
+    role.permissions = [*role.permissions, "restriction.manage"]
+    role.save()
+    registration_key = uuid.uuid4()
+
+    def operation(ctx, key):
+        if key == registration_key:
+            return create_restriction(
+                ctx,
+                person_id=world["person"].pk,
+                category="administrativa",
+                summary="Restrição concorrente",
+                source="Comando",
+                reference="R1",
+                starts_at=timezone.now(),
+                ends_at=None,
+                equipment_type_ids=[],
+                confirmed=True,
+            ), True
+        return _checkout(world)(ctx, key)
+
+    outcomes = _race(world, operation, [registration_key, uuid.uuid4()])
+    assert outcomes in (["accepted", "accepted"], ["accepted", "conflict"])
+    restriction = PersonRestriction.objects.get(person=world["person"])
+    checkout = Movement.objects.filter(item=world["item"], movement_type="checkout").first()
+    if checkout:
+        assert checkout.confirmed_at <= restriction.created_at

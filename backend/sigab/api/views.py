@@ -82,6 +82,7 @@ from sigab.services import (
     ConflictError,
     DivergenceError,
     NotFoundError,
+    RestrictedCheckout,
 )
 
 MAX_JSON_BODY_BYTES = 16 * 1024
@@ -136,6 +137,23 @@ def api_view(*, methods):
                 return _error("Acesso negado.", status=403)
             except DivergenceError as exc:
                 _audit_refusal(request, kwargs, "divergence")
+                return _error(_validation_message(exc), status=409)
+            except RestrictedCheckout as exc:
+                AuditEvent.objects.create(
+                    organization=request.user.organization,
+                    actor=request.user,
+                    action="restriction.blocked_checkout",
+                    object_type="sigab.person",
+                    object_id=str(exc.person_id),
+                    occurred_at=timezone.now(),
+                    correlation_id=request.correlation_id,
+                    result="denied",
+                    changes={
+                        "restriction_id": str(exc.restriction_id),
+                        "equipment_type_id": str(exc.equipment_type_id),
+                        "item_id": str(kwargs.get("pk", "")),
+                    },
+                )
                 return _error(_validation_message(exc), status=409)
             except ConflictError as exc:
                 _audit_refusal(request, kwargs, "conflict")
@@ -379,6 +397,9 @@ def session_detail(request):
                 "can_view_items": has_any_scope(request.user, VIEW_ITEM, organization),
                 "can_view_audit": has_permission(request.user, AUDIT_VIEW, organization),
                 "can_checkout": has_any_scope(request.user, MOVEMENT_CHECKOUT, organization),
+                "can_manage_restrictions": has_permission(
+                    request.user, "restriction.manage", organization
+                ),
                 "can_use_self_service": bool(request.user.person_id),
             },
         }

@@ -115,9 +115,11 @@ def checkout_basket(
             raise ConflictError("A chave de idempotência já foi usada em outro atendimento.")
         return existing, False
 
-    recipient = Person.objects.filter(
-        id=recipient_id, organization=ctx.organization, is_active=True
-    ).first()
+    recipient = (
+        Person.objects.select_for_update()
+        .filter(id=recipient_id, organization=ctx.organization, is_active=True)
+        .first()
+    )
     if not recipient or not recipient.memberships.filter(is_active=True).exists():
         raise ValidationError("Destinatário inválido ou sem vínculo ativo.")
     pickup_person = None
@@ -163,6 +165,9 @@ def checkout_basket(
             raise ValidationError("Posição de estoque quantitativo inexistente.")
         if not has_permission(ctx.actor, MOVEMENT_CHECKOUT, ctx.organization, balance.unit):
             raise PermissionDenied
+        from sigab.domain.restrictions import assert_eligible
+
+        assert_eligible(ctx, recipient, balance.equipment_type_id)
         if balance.quantity < line_quantity:
             raise ConflictError("Saldo quantitativo insuficiente.")
         locked_balances[position_key] = (balance, line_quantity)
@@ -260,7 +265,7 @@ def settle_stock_loan(
             raise ConflictError("A chave de idempotência já foi usada em outra operação.")
         return existing, False
     loan = (
-        StockLoan.objects.select_for_update()
+        StockLoan.objects.select_for_update(of=("self",))
         .filter(pk=loan_id, organization=ctx.organization)
         .select_related("balance__unit", "recipient")
         .first()
@@ -461,9 +466,9 @@ def reverse_stock_entry(ctx, *, entry_id, idempotency_key, reason, confirmed):
             raise ConflictError("A chave de idempotência já foi usada em outra operação.")
         return existing, False
     original = (
-        StockLedgerEntry.objects.select_for_update()
+        StockLedgerEntry.objects.select_for_update(of=("self",))
         .filter(pk=entry_id, organization=ctx.organization)
-        .select_related("balance__unit", "loan")
+        .select_related("balance__unit")
         .first()
     )
     if not original:
@@ -475,10 +480,10 @@ def reverse_stock_entry(ctx, *, entry_id, idempotency_key, reason, confirmed):
     reason = (reason or "").strip()
     if not reason:
         raise ValidationError({"reason": "Estorno exige justificativa."})
-    balance = StockBalance.objects.select_for_update().get(pk=original.balance_id)
     loan = None
     if original.loan_id:
         loan = StockLoan.objects.select_for_update().get(pk=original.loan_id)
+    balance = StockBalance.objects.select_for_update().get(pk=original.balance_id)
     reverse_delta = -original.balance_delta
     if balance.quantity + reverse_delta < 0:
         raise ConflictError("O estorno produziria saldo negativo.")

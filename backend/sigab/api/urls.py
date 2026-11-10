@@ -1,10 +1,12 @@
 from django.urls import path, re_path
 
-from . import inventory, operations, self_service, views
+from . import inventory, operations, restrictions, self_service, views
 
 app_name = "api"
 
 urlpatterns = [
+    path("restrictions/", restrictions.restriction_list, name="restriction-list"),
+    path("restrictions/<uuid:pk>/", restrictions.restriction_detail, name="restriction-detail"),
     path("session/", views.session_detail, name="session-detail"),
     path("session/logout/", views.session_logout, name="session-logout"),
     path("items/", views.item_list, name="item-list"),

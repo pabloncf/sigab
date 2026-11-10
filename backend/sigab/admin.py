@@ -1,8 +1,6 @@
-import uuid
-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.utils import timezone
+from django.core.exceptions import PermissionDenied
 
 from .models import (
     Account,
@@ -19,81 +17,90 @@ from .models import (
     StorageLocation,
     Unit,
 )
-from .services import CommandContext, record_incorporation
+from .permissions import ALL_UNITS, has_any_scope, has_permission, permitted_unit_ids
 
 
-@admin.register(Account)
-class AccountAdmin(UserAdmin):
-    fieldsets = UserAdmin.fieldsets + (
-        ("SIGAB", {"fields": ("organization", "person", "session_version")}),
-    )
-    add_fieldsets = UserAdmin.add_fieldsets + (("SIGAB", {"fields": ("organization", "person")}),)
-
-    def has_module_permission(self, request):
-        return request.user.is_superuser
-
-    def has_view_permission(self, request, obj=None):
-        return request.user.is_superuser
+class TenantReadOnlyAdmin:
+    """Tenant data is maintained by confirmed services, including for platform users."""
 
     def has_add_permission(self, request):
-        return request.user.is_superuser
+        return False
 
     def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser
-
-    def has_delete_permission(self, request, obj=None):
-        return request.user.is_superuser
-
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        AuditEvent.objects.create(
-            organization=obj.organization,
-            actor=request.user,
-            action=f"account.{'update' if change else 'create'}",
-            object_type=obj._meta.label_lower,
-            object_id=str(obj.pk),
-            occurred_at=timezone.now(),
-            correlation_id=getattr(request, "correlation_id", str(uuid.uuid4())),
-            changes={"fields": sorted(form.changed_data)},
-        )
-
-
-class AuditedAdmin(admin.ModelAdmin):
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        if request.user.is_superuser:
-            return queryset
-        if self.model is Organization:
-            return queryset.filter(pk=request.user.organization_id)
-        return queryset.filter(organization_id=request.user.organization_id)
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        related = db_field.remote_field.model
-        if not request.user.is_superuser and request.user.organization_id:
-            if related is Organization:
-                kwargs["queryset"] = Organization.objects.filter(pk=request.user.organization_id)
-            elif any(field.name == "organization" for field in related._meta.fields):
-                kwargs["queryset"] = related.objects.filter(
-                    organization_id=request.user.organization_id
-                )
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+        return False
 
     def has_delete_permission(self, request, obj=None):
         return False
 
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        organization = obj if isinstance(obj, Organization) else getattr(obj, "organization", None)
-        AuditEvent.objects.create(
-            organization=organization,
-            actor=request.user,
-            action=f"{obj._meta.label_lower}.{'update' if change else 'create'}",
-            object_type=obj._meta.label_lower,
-            object_id=str(obj.pk),
-            occurred_at=timezone.now(),
-            correlation_id=getattr(request, "correlation_id", str(uuid.uuid4())),
-            changes={"fields": sorted(form.changed_data)},
+    def has_view_permission(self, request, obj=None):
+        user = request.user
+        if user.is_superuser or not user.organization_id:
+            return False
+        permission = self.tenant_permission()
+        if (
+            obj is not None
+            and getattr(obj, "organization_id", user.organization_id) != user.organization_id
+        ):
+            return False
+        unit = getattr(obj, "unit", None) if obj is not None else None
+        if unit:
+            return has_permission(user, permission, user.organization, unit)
+        return has_any_scope(user, permission, user.organization)
+
+    def has_module_permission(self, request):
+        return self.has_view_permission(request)
+
+    def tenant_permission(self):
+        if self.model in (Movement, MovementEvent, AuditEvent):
+            return "audit.view"
+        if self.model is Item:
+            return "item.view"
+        if self.model in (Unit, StorageLocation, EquipmentType):
+            return "catalog.manage"
+        return "identity.manage"
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        if not self.has_view_permission(request):
+            return queryset.none()
+        if self.model is Organization:
+            return queryset.filter(pk=request.user.organization_id)
+        queryset = queryset.filter(organization_id=request.user.organization_id)
+        units = permitted_unit_ids(
+            request.user, self.tenant_permission(), request.user.organization
         )
+        if units is not ALL_UNITS:
+            if self.model is Item:
+                queryset = queryset.filter(unit_id__in=units)
+            elif self.model in (Movement, MovementEvent):
+                queryset = queryset.filter(item__unit_id__in=units)
+            elif self.model is AuditEvent:
+                # Generic audit objects cannot safely be scoped to units.
+                return queryset.none()
+        return queryset
+
+    def save_model(self, request, obj, form, change):
+        raise PermissionDenied
+
+    def delete_model(self, request, obj):
+        raise PermissionDenied
+
+
+@admin.register(Account)
+class AccountAdmin(TenantReadOnlyAdmin, UserAdmin):
+    fieldsets = (
+        ("SIGAB", {"fields": ("username", "organization", "person", "is_active", "revoked_at")}),
+    )
+    add_fieldsets = UserAdmin.add_fieldsets + (("SIGAB", {"fields": ("organization", "person")}),)
+
+
+class AuditedAdmin(TenantReadOnlyAdmin, admin.ModelAdmin):
+    def get_exclude(self, request, obj=None):
+        return ["cpf"] if self.model is Person else super().get_exclude(request, obj)
+
+    def get_readonly_fields(self, request, obj=None):
+        excluded = self.get_exclude(request, obj) or []
+        return [field.name for field in self.model._meta.fields if field.name not in excluded]
 
 
 for model in [Unit, StorageLocation, Person, Membership, Role, Grant, EquipmentType]:
@@ -102,46 +109,16 @@ for model in [Unit, StorageLocation, Person, Membership, Role, Grant, EquipmentT
 
 @admin.register(Organization)
 class OrganizationAdmin(AuditedAdmin):
-    def has_add_permission(self, request):
-        return request.user.is_superuser
-
-    def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser
+    pass
 
 
 @admin.register(Item)
 class ItemAdmin(AuditedAdmin):
-    # Lifecycle state changes only through services (decision 0004).
-    state_fields = ["administrative_status", "availability", "current_holder"]
-    condition_fields = ["condition", "condition_reason"]
-
-    def get_readonly_fields(self, request, obj=None):
-        if obj is None:
-            return self.state_fields
-        return self.state_fields + self.condition_fields
-
-    def save_model(self, request, obj, form, change):
-        if change:
-            super().save_model(request, obj, form, change)
-            return
-        obj.availability = (
-            Item.Availability.AVAILABLE
-            if obj.condition == Item.Condition.FIT
-            else Item.Availability.UNAVAILABLE
-        )
-        admin.ModelAdmin.save_model(self, request, obj, form, change)
-        record_incorporation(
-            CommandContext(
-                actor=request.user,
-                organization=obj.organization,
-                correlation_id=getattr(request, "correlation_id", str(uuid.uuid4())),
-            ),
-            obj,
-        )
+    pass
 
 
 @admin.register(Movement)
-class MovementAdmin(admin.ModelAdmin):
+class MovementAdmin(TenantReadOnlyAdmin, admin.ModelAdmin):
     readonly_fields = [field.name for field in Movement._meta.fields]
 
     def has_add_permission(self, request):
@@ -155,7 +132,7 @@ class MovementAdmin(admin.ModelAdmin):
 
 
 @admin.register(AuditEvent)
-class AuditEventAdmin(admin.ModelAdmin):
+class AuditEventAdmin(TenantReadOnlyAdmin, admin.ModelAdmin):
     list_display = ("occurred_at", "organization", "actor", "action", "object_type", "result")
 
     def get_readonly_fields(self, request, obj=None):

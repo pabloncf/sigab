@@ -1,5 +1,7 @@
 # SIGAB
 
+A [entrega Jira SIGAB-71–75](docs/validacao/jira-071-a-075.md) documenta login por organização/matrícula, restrições operacionais e Admin somente leitura. As chaves Jira correspondem aos IDs originais 047–051; consulte o mapeamento antes de atualizar o backlog.
+
 Primeira base executável do Sistema Integrado de Gestão de Acervo Bélico. Esta entrega cobre somente item físico individual: fundação multi-organização, identidade separada de conta, autorização explícita, incorporação, saída, devolução e histórico/auditoria.
 
 ## Estrutura

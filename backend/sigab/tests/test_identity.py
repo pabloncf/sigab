@@ -273,12 +273,15 @@ def test_identity_endpoints_hide_other_organization(identity):
 @pytest.mark.django_db
 def test_account_is_created_for_person_and_can_log_in(identity):
     person = _create_person(identity["client"])
+    _add_membership(identity, person["id"])
     response = _create_account(identity, person["id"])
     assert response.status_code == 201
     account = response.json()["data"]["accounts"][0]
     assert account["status"] == "active"
     assert PASSWORD not in response.content.decode()
-    assert Client().login(username="pessoa.sintetica", password=PASSWORD)
+    assert Client().login(
+        username="MAT-100", organization=str(identity["organization"].id), password=PASSWORD
+    )
     audit = AuditEvent.objects.get(action="account.create")
     assert PASSWORD not in json.dumps(audit.changes)
 
@@ -308,7 +311,9 @@ def test_suspension_blocks_login_without_touching_person_or_history(identity):
     _add_membership(identity, person["id"])
     account_id = _create_account(identity, person["id"]).json()["data"]["accounts"][0]["id"]
     session = Client()
-    assert session.login(username="pessoa.sintetica", password=PASSWORD)
+    assert session.login(
+        username="MAT-100", organization=str(identity["organization"].id), password=PASSWORD
+    )
     person_before = Person.objects.filter(pk=person["id"]).values().get()
     memberships_before = list(Membership.objects.filter(person_id=person["id"]).values())
 
@@ -340,7 +345,9 @@ def test_suspension_blocks_login_without_touching_person_or_history(identity):
         {"confirmed": True},
     )
     assert reactivated.status_code == 200
-    assert Client().login(username="pessoa.sintetica", password=PASSWORD)
+    assert Client().login(
+        username="MAT-100", organization=str(identity["organization"].id), password=PASSWORD
+    )
 
 
 @pytest.mark.django_db

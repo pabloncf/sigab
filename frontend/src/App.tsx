@@ -9,6 +9,7 @@ import { PeoplePage, PersonDetailPage } from "./features/identity";
 import { ItemDetailPage, ItemsPage } from "./features/inventory";
 import { ServiceBatchPage } from "./features/operations";
 import { MyPossessionsPage } from "./features/self-service";
+import { RestrictionsPage } from "./features/restrictions/RestrictionsPage";
 
 function routeId(prefix: string): string | null {
   return window.location.pathname.match(new RegExp(`^/${prefix}/([0-9a-f-]+)/?$`, "i"))?.[1] ?? null;
@@ -16,6 +17,7 @@ function routeId(prefix: string): string | null {
 
 function Page({ session }: { session: Session }) {
   const path = window.location.pathname;
+  if (session.permissions.can_manage_restrictions && /^\/restricoes\/?$/.test(path)) return <RestrictionsPage />;
   if (session.permissions.can_use_self_service && /^\/minha-posse\/?$/.test(path)) return <MyPossessionsPage />;
   if (session.permissions.can_checkout && /^\/atendimento\/?$/.test(path)) return <ServiceBatchPage />;
   const itemId = routeId("items");

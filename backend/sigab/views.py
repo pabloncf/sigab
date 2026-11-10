@@ -13,7 +13,14 @@ from .permissions import (
     VIEW_ITEM,
     has_permission,
 )
-from .services import CommandContext, checkout_item, return_item, set_item_condition
+from .services import (
+    CommandContext,
+    RestrictedCheckout,
+    audit,
+    checkout_item,
+    return_item,
+    set_item_condition,
+)
 
 
 def _organization(request):
@@ -78,6 +85,15 @@ def checkout(request, pk):
                 idempotency_key=form.cleaned_data["idempotency_key"],
                 confirmed=form.cleaned_data["confirmed"],
             )
+        except RestrictedCheckout as exc:
+            audit(
+                ctx,
+                "restriction.blocked_checkout",
+                item,
+                {"person_id": str(exc.person_id), "restriction_id": str(exc.restriction_id)},
+                result="denied",
+            )
+            form.add_error(None, exc)
         except ValidationError as exc:
             form.add_error(None, exc)
         else:

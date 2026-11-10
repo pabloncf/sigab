@@ -2,7 +2,7 @@
 
 - Tarefa: SIGAB-040
 - Data: 2026-11-02
-- Estado: **especificada**; implementação fora do escopo atual (CLAUDE.md) até haver tarefa própria
+- Estado: **implementação técnica parcial** nas tarefas originais 050/051 (Jira 74/75); homologação, anexos, classes agregadas e recolhimento automático continuam pendentes. Evidências em [Jira 71–75](../validacao/jira-071-a-075.md).
 - Requisitos: RF-30, RF-31, RF-32, RN-06 e RN-09 do [DOC-0011 v0.1](../fontes/DOC-0011-analise-de-requisitos-v0.1.md)
 - Base: OBR-07 e OBR-12 da [nota regulatória 0001](../notas-regulatorias/0001-guardas-municipais.md), [matriz de papéis 0002](0002-papeis-e-escopos.md), [política de dados pessoais](../politica-de-dados-pessoais.md), [contrato da saída](../contratos/saida-individual.md)
 

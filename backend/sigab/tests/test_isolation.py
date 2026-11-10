@@ -28,6 +28,7 @@ from sigab.models import (
     Movement,
     Organization,
     Person,
+    PersonRestriction,
     Role,
     ServiceBatch,
     StockBalance,
@@ -144,6 +145,15 @@ def _tenant(name, code, with_movement=False):
         expected_state=item.availability,
         counted_state="missing",
     )
+    restriction = PersonRestriction.objects.create(
+        organization=organization,
+        person=person,
+        category="administrativa",
+        summary=f"Privado {code}",
+        source="Comando",
+        starts_at=timezone.now(),
+        created_by=account,
+    )
     return {
         "movement": movement,
         "organization": organization,
@@ -162,6 +172,7 @@ def _tenant(name, code, with_movement=False):
         "stock_entry": stock_entry,
         "inventory": inventory,
         "divergence": divergence,
+        "restriction": restriction,
     }
 
 
@@ -210,6 +221,13 @@ def _key():
 
 # (route name, method, path builder, payload builder). Paths use the FOREIGN tenant ids.
 OBJECT_CASES = [
+    ("restriction-detail", "get", lambda f: f"restrictions/{f['restriction'].id}/", None),
+    (
+        "restriction-detail",
+        "post",
+        lambda f: f"restrictions/{f['restriction'].id}/",
+        lambda f: {"action": "close", "reason": "x", "confirmed": True},
+    ),
     ("item-detail", "get", lambda f: f"items/{f['item'].id}/", None),
     ("item-events", "get", lambda f: f"items/{f['item'].id}/events/", None),
     (
@@ -370,6 +388,7 @@ OBJECT_CASES = [
 
 # Collections: listing never shows foreign rows; creation never accepts foreign references.
 COLLECTION_CASES = {
+    "restriction-list",
     "item-list",
     "search",
     "activity",
@@ -434,6 +453,7 @@ def test_foreign_object_is_indistinguishable_from_missing(tenants, name, method,
         foreign["stock_entry"].id,
         foreign["inventory"].id,
         foreign["divergence"].id,
+        foreign["restriction"].id,
     ):
         missing = missing.replace(str(value), str(uuid.uuid4()))
     random = _call(tenants["client"], method, missing, payload(foreign) if payload else None)
@@ -451,6 +471,7 @@ def test_listings_and_search_never_return_foreign_rows(tenants):
     for path in (
         "items/",
         "items/?limit=500",
+        "restrictions/",
         f"items/?holder={foreign['person'].id}",
         "people/",
         "people/?q=Pessoa",

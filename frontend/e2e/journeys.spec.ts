@@ -20,6 +20,7 @@ async function session(page: Page, overrides = {}) {
         can_view_items: true,
         can_view_audit: true,
         can_checkout: true,
+        can_manage_restrictions: true,
         can_use_self_service: true,
         ...overrides
       }
@@ -60,6 +61,63 @@ test("sessão ausente redireciona para o login preservando o destino", async ({ 
   await page.goto("/");
   await expect(page).toHaveURL(/\/entrar\/\?next=%2F$/);
   await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
+});
+
+test("gestor cadastra, altera e encerra restrição com confirmação", async ({ page }) => {
+  await session(page);
+  const restrictionId = "a0000000-0000-4000-8000-000000000001";
+  let value: Record<string, unknown> | null = null;
+  const actions: string[] = [];
+  await page.route("**/api/v1/restrictions/", async (route) => {
+    if (route.request().method() === "POST") {
+      const body = route.request().postDataJSON();
+      expect(body.confirmed).toBe(true);
+      expect(body.person_id).toBe(ids.person);
+      value = { ...body, id: restrictionId, person_name: "Pessoa E2E", closed_at: null, history: [] };
+      await route.fulfill({ status: 201, json: { success: true, data: value } });
+    } else {
+      await route.fulfill({ json: { success: true, data: {
+        restrictions: value ? [value] : [], people: [{ id: ids.person, name: "Pessoa E2E" }], equipment_types: []
+      } } });
+    }
+  });
+  await page.route(`**/api/v1/restrictions/${restrictionId}/`, async (route) => {
+    if (route.request().method() === "POST") {
+      const body = route.request().postDataJSON();
+      expect(body.confirmed).toBe(true);
+      expect(body.reason).toBeTruthy();
+      actions.push(body.action);
+      value = { ...value, ...body, ...(body.action === "close" ? { closed_at: "2026-11-09T18:00:00Z" } : {}) };
+    }
+    await route.fulfill({ json: { success: true, data: value } });
+  });
+  await page.goto("/restricoes");
+  await page.getByRole("button", { name: "Cadastrar restrição" }).click();
+  await page.locator('select[name="person_id"]').selectOption(ids.person);
+  await page.getByLabel("Motivo resumido").fill("Impedimento administrativo");
+  await page.getByLabel("Fonte", { exact: true }).fill("Comando");
+  await page.getByLabel("Início", { exact: true }).fill("2026-11-09T08:00");
+  await page.getByText("Confirmo os dados e o escopo desta restrição.").click();
+  await page.getByRole("button", { name: "Confirmar", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Alterar", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Alterar", exact: true }).click();
+  await page.getByLabel("Motivo da alteração ou encerramento").fill("Prorrogação autorizada");
+  await page.getByText("Confirmo os dados e o escopo desta restrição.").click();
+  await page.getByRole("button", { name: "Confirmar", exact: true }).click();
+  await page.getByRole("button", { name: "Encerrar", exact: true }).click();
+  await page.getByLabel("Motivo da alteração ou encerramento").fill("Impedimento encerrado");
+  await page.getByText("Confirmo os dados e o escopo desta restrição.").click();
+  await page.getByRole("button", { name: "Confirmar", exact: true }).click();
+  await expect(page.getByText(/Encerrada · desde/)).toBeVisible();
+  expect(actions).toEqual(["change", "close"]);
+});
+
+test("operador não recebe navegação de gestão de restrições", async ({ page }) => {
+  await session(page, { can_manage_restrictions: false });
+  await page.route("**/api/v1/items/**", (route) => route.fulfill({ json: { success: true, data: [], meta: { count: 0 } } }));
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Organização E2E" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Restrições", exact: true })).toHaveCount(0);
 });
 test("incorporação percorre o formulário React e abre o item criado", async ({ page }) => {
   await session(page);

@@ -90,7 +90,12 @@
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ next }}">
           <div class="field">
-            <label for="id_username">Usuário</label>
+            <label for="id_organization">Organização</label>
+            <input id="id_organization" name="organization" type="text" maxlength="64" value="{{ form.organization.value|default_if_none:'' }}" autocapitalize="none" spellcheck="false" aria-describedby="organization-help">
+            <small id="organization-help">Informe o código da organização recebido do administrador. Contas técnicas deixam este campo vazio.</small>
+          </div>
+          <div class="field">
+            <label for="id_username">Matrícula ou usuário técnico</label>
             <input id="id_username" name="username" type="text" value="{{ form.username.value|default_if_none:'' }}" maxlength="150" autocomplete="username" autocapitalize="none" spellcheck="false" required{% if form.username.errors %} aria-invalid="true" aria-describedby="username-errors"{% endif %}>
             {% if form.username.errors %}<div class="field-errors" id="username-errors">{{ form.username.errors }}</div>{% endif %}
           </div>

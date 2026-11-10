@@ -40,16 +40,50 @@ def is_throttled(username, ip_address):
     return bool(ip_address) and recent.filter(ip_address=ip_address).count() >= IP_FAILURE_LIMIT
 
 
+def login_identity(username, organization=None):
+    if organization:
+        try:
+            organization = str(uuid.UUID(str(organization)))
+        except (TypeError, ValueError):
+            organization = str(organization)[:64]
+        return f"{organization}:{username}"
+    return username
+
+
 class ThrottledModelBackend(ModelBackend):
     """ModelBackend that refuses throttled attempts and accounts of suspended organizations."""
 
-    def authenticate(self, request, username=None, password=None, **kwargs):
+    def authenticate(self, request, username=None, password=None, organization=None, **kwargs):
         if username is None:
             username = kwargs.get(Account.USERNAME_FIELD)
-        if is_throttled(username, client_ip(request)):
+        if is_throttled(login_identity(username, organization), client_ip(request)):
             # PermissionDenied stops authentication; the form shows the generic message.
             raise PermissionDenied
-        return super().authenticate(request, username=username, password=password, **kwargs)
+        if organization:
+            try:
+                organization_id = uuid.UUID(str(organization))
+            except (TypeError, ValueError):
+                Account().set_password(password)
+                return None
+            accounts = Account.objects.filter(
+                organization_id=organization_id,
+                person__organization_id=organization_id,
+                person__memberships__organization_id=organization_id,
+                person__memberships__registration=username,
+                person__memberships__is_active=True,
+                person__is_active=True,
+                revoked_at__isnull=True,
+            ).distinct()
+            user = accounts.first() if accounts.count() == 1 else None
+            if user is None:
+                Account().set_password(password)
+                return None
+            if user.check_password(password) and self.user_can_authenticate(user):
+                return user
+            return None
+        # Accounts without a person are technical identities with a global username.
+        user = super().authenticate(request, username=username, password=password, **kwargs)
+        return user if user is not None and user.person_id is None else None
 
     def user_can_authenticate(self, user):
         organization = getattr(user, "organization", None)
@@ -65,13 +99,20 @@ def _correlation_id(request):
 @receiver(user_login_failed)
 def record_login_failure(sender, credentials, request=None, **kwargs):
     username = credentials.get(Account.USERNAME_FIELD, "")
-    digest = username_digest(username)
+    organization = credentials.get("organization")
+    digest = username_digest(login_identity(username, organization))
     now = timezone.now()
     AuthenticationFailure.objects.filter(occurred_at__lt=now - FAILURE_RETENTION).delete()
     AuthenticationFailure.objects.create(
         username_digest=digest, ip_address=client_ip(request), occurred_at=now
     )
-    account = Account.objects.filter(username=username).select_related("organization").first()
+    account = (
+        None
+        if organization
+        else Account.objects.filter(username=username, person__isnull=True)
+        .select_related("organization")
+        .first()
+    )
     AuditEvent.objects.create(
         organization=account.organization if account else None,
         actor=None,
@@ -88,7 +129,10 @@ def record_login_failure(sender, credentials, request=None, **kwargs):
 
 @receiver(user_logged_in)
 def record_login_success(sender, request, user, **kwargs):
-    AuthenticationFailure.objects.filter(username_digest=username_digest(user.username)).delete()
+    identifier = login_identity(
+        request.POST.get("username", user.username), request.POST.get("organization")
+    )
+    AuthenticationFailure.objects.filter(username_digest=username_digest(identifier)).delete()
     request.session[SESSION_VERSION_KEY] = user.session_version
     AuditEvent.objects.create(
         organization=user.organization,

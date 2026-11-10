@@ -6,6 +6,8 @@ O lote seguinte está em [tarefas-06-11-26/tarefas.csv](tarefas-06-11-26/tarefas
 
 ## Mapeamento
 
+A importação relatada em 09/11/2026 atribuiu as chaves Jira SIGAB-71–75 às tarefas originais SIGAB-047–051. As chaves reais não preservam o número entre colchetes da descrição. Consulte a [linha de base de 09/11](../validacao/linha-base-2026-11-09.md) e confira sempre o campo `ID original` antes de executar ou atualizar uma tarefa.
+
 | Coluna CSV | Campo Jira |
 |---|---|
 | Work Type | Work type |

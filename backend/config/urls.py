@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
+from sigab.forms import OrganizationAuthenticationForm
+
 handler500 = "sigab.api.views.server_error"
 
 urlpatterns = [
@@ -9,7 +11,10 @@ urlpatterns = [
     path("api/v1/", include("sigab.api.urls")),
     path(
         "entrar/",
-        auth_views.LoginView.as_view(template_name="registration/login.html"),
+        auth_views.LoginView.as_view(
+            template_name="registration/login.html",
+            authentication_form=OrganizationAuthenticationForm,
+        ),
         name="login",
     ),
     path("sair/", auth_views.LogoutView.as_view(), name="logout"),
