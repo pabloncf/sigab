@@ -99,7 +99,7 @@ def divergence_update(request, pk):
         _context(request),
         divergence_id=pk,
         status=_required_string(payload, "status", max_length=16),
-        assignee_id=payload.get("assignee_id") or None,
+        assignee_id=_required_uuid(payload, "assignee_id") if payload.get("assignee_id") else None,
         reason=_string(payload, "reason", max_length=500),
         resolution=_string(payload, "resolution", max_length=500),
     )

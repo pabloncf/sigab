@@ -1,5 +1,7 @@
 # Segurança e privacidade
 
+**Arquitetura vigente:** [single-tenant](adr/0007-single-tenant.md), com instalação, banco e credenciais exclusivos por cliente e uma única organização. Os filtros e testes de referências cruzadas permanecem como defesa sobre dados legados; não representam suporte a múltiplos clientes no mesmo banco.
+
 Controles presentes: hash de senha do Django, sessão HTTP-only expiráveis, CSRF, escaping de templates, negação por padrão, escopo no servidor, UUIDs não sequenciais, transações, bloqueio pessimista e atualização condicional, idempotência, auditoria minimizada, correlação de requisição e log técnico estruturado com mascaramento de CPF e segredos ([observabilidade](observabilidade.md)). Eventos não têm rotas de escrita e são somente leitura no admin.
 
 O CPF é opcional e não aparece em telas operacionais, eventos ou logs. Não há biometria, laudo, anexo ou exportação. Nunca habilite `DEBUG` em produção. TLS, gestão de segredos, rate limiting no proxy/IdP, criptografia de disco/backup, retenção, resposta a incidentes e revisão de infraestrutura são responsabilidades de implantação ainda abertas.

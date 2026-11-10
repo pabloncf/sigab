@@ -4,7 +4,7 @@ Este arquivo orienta agentes de IA que trabalham neste repositório. Leia també
 
 ## Objetivo atual
 
-O SIGAB é um sistema multi-organização para gestão de acervo bélico. A base atual cobre somente o fluxo vertical de **item físico individual**:
+O SIGAB é single-tenant: cada cliente tem instalação e banco exclusivos, uma organização e várias unidades internas. O ADR 0007 substitui a tenancy compartilhada anterior; manter filtros e vínculos para integridade, sem habilitar seleção/provisionamento de outro cliente na mesma base. A base atual cobre somente o fluxo vertical de **item físico individual**:
 
 1. organização, unidade e local de guarda;
 2. pessoa, vínculo e conta de acesso separados;

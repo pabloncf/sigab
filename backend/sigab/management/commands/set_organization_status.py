@@ -14,7 +14,9 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        parser.add_argument("--organization-id", required=True)
+        parser.add_argument(
+            "--organization-id", help="Compatibilidade: deve corresponder à organização local."
+        )
         parser.add_argument("--status", required=True, choices=Organization.Status.values)
         parser.add_argument("--reason", required=True)
 
@@ -23,9 +25,11 @@ class Command(BaseCommand):
         reason = options["reason"].strip()
         if not reason:
             raise CommandError("O motivo é obrigatório.")
-        organization = (
-            Organization.objects.select_for_update().filter(pk=options["organization_id"]).first()
-        )
+        organization = Organization.objects.select_for_update().filter(installation_key=1).first()
+        if options.get("organization_id") and (
+            organization is None or str(organization.id) != str(options["organization_id"])
+        ):
+            raise CommandError("O identificador não corresponde à organização desta instalação.")
         if not organization:
             raise CommandError("Organização não encontrada.")
         previous, status = organization.status, options["status"]

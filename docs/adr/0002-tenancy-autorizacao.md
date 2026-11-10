@@ -1,6 +1,6 @@
 # ADR 0002 — Tenancy compartilhada e autorização explícita
 
-Status: aceito para a base, 2026-10-15.
+Status: tenancy compartilhada substituída em 10/11/2026 pelo [ADR 0007 — single-tenant](0007-single-tenant.md), por definição do responsável pelo produto. As regras de autorização explícita e escopo de unidade continuam vigentes. O texto abaixo é histórico.
 
 Cada registro de negócio carrega ou deriva `organization_id`; Pessoa também é tenant-local. Toda entrada usa a organização da conta autenticada, nunca um tenant fornecido pelo navegador. Papéis contêm permissões explícitas e concessões têm escopo de organização ou unidade, sem hierarquia implícita.
 

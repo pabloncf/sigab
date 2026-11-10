@@ -217,3 +217,110 @@ def test_restriction_and_checkout_serialize_on_person(world):
     checkout = Movement.objects.filter(item=world["item"], movement_type="checkout").first()
     if checkout:
         assert checkout.confirmed_at <= restriction.created_at
+
+
+def test_inventory_open_serializes_per_unit(world):
+    from sigab.domain.inventory import open_inventory_session
+    from sigab.models import InventorySession
+
+    outcomes = _race(
+        world,
+        lambda ctx, key: (open_inventory_session(ctx, unit_id=world["unit"].id), True),
+        [uuid.uuid4(), uuid.uuid4()],
+    )
+    assert outcomes == ["accepted", "conflict"]
+    assert InventorySession.objects.filter(unit=world["unit"], status="open").count() == 1
+
+
+def test_different_units_can_open_inventory_sessions(world):
+    from sigab.domain.inventory import open_inventory_session
+    from sigab.models import InventorySession, Unit
+
+    other = Unit.objects.create(organization=world["org"], name="Outra unidade", code="OUTRA")
+    outcomes = _race(
+        world,
+        lambda ctx, key: (open_inventory_session(ctx, unit_id=key), True),
+        [world["unit"].id, other.id],
+    )
+    assert outcomes == ["accepted", "accepted"]
+    assert InventorySession.objects.filter(status="open").count() == 2
+
+
+def test_inventory_resolution_serializes_with_closure(world):
+    from sigab.domain.inventory import (
+        close_inventory_session,
+        open_inventory_session,
+        record_inventory_count,
+        update_divergence,
+    )
+    from sigab.models import InventoryDivergence, InventorySession
+    from sigab.tests.test_requirements_063_070 import _enable_inventory_approval
+
+    _enable_inventory_approval(world)
+    session = open_inventory_session(world["ctx"], unit_id=world["unit"].id)
+    record_inventory_count(
+        world["ctx"], session_id=session.id, item_id=world["item"].id, counted_state="missing"
+    )
+    divergence = InventoryDivergence.objects.get(session=session)
+    update_divergence(
+        world["ctx"],
+        divergence_id=divergence.id,
+        status="resolved",
+        assignee_id=world["account"].id,
+        resolution="Conferência inicial",
+    )
+    close_key = uuid.uuid4()
+
+    def operation(ctx, key):
+        if key == close_key:
+            return close_inventory_session(ctx, session_id=session.id), True
+        return update_divergence(
+            ctx,
+            divergence_id=divergence.id,
+            status="investigating",
+            assignee_id=world["account"].id,
+        ), True
+
+    assert _race(world, operation, [close_key, uuid.uuid4()]) == ["accepted", "conflict"]
+    session.refresh_from_db()
+    divergence.refresh_from_db()
+    assert not (
+        session.status == InventorySession.Status.CLOSED
+        and divergence.status == InventoryDivergence.Status.INVESTIGATING
+    )
+
+
+def test_same_key_quantitative_basket_race_debits_once(world):
+    equipment_type = EquipmentType.objects.create(
+        organization=world["org"], name="Quantitativo reenvio", classification="quantitative"
+    )
+    balance = StockBalance.objects.create(
+        organization=world["org"],
+        equipment_type=equipment_type,
+        unit=world["unit"],
+        storage_location=world["location"],
+        quantity=100,
+    )
+    key = uuid.uuid4()
+
+    def operation(ctx, attempt_key):
+        return checkout_basket(
+            ctx,
+            recipient_id=world["person"].id,
+            item_ids=[],
+            stock=[
+                StockRequest(
+                    equipment_type.id, world["unit"].id, world["location"].id, Decimal("50")
+                )
+            ],
+            idempotency_key=attempt_key,
+            custody_mode="indefinite",
+            due_at=None,
+            confirmed=True,
+        )
+
+    assert _race(world, operation, [key, key]) == ["accepted", "replayed"]
+    balance.refresh_from_db()
+    assert balance.quantity == 50
+    assert ServiceBatch.objects.count() == 1
+    assert StockLoan.objects.count() == 1

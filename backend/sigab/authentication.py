@@ -13,7 +13,7 @@ from django.core.exceptions import PermissionDenied
 from django.dispatch import receiver
 from django.utils import timezone
 
-from .models import Account, AuditEvent, AuthenticationFailure
+from .models import Account, AuditEvent, AuthenticationFailure, Organization
 
 USERNAME_FAILURE_LIMIT = 5
 IP_FAILURE_LIMIT = 20
@@ -41,55 +41,50 @@ def is_throttled(username, ip_address):
 
 
 def login_identity(username, organization=None):
-    if organization:
-        try:
-            organization = str(uuid.UUID(str(organization)))
-        except (TypeError, ValueError):
-            organization = str(organization)[:64]
-        return f"{organization}:{username}"
-    return username
+    # There is one installation identity space; a supplied organization cannot evade throttling.
+    return (username or "").strip()
 
 
 class ThrottledModelBackend(ModelBackend):
-    """ModelBackend that refuses throttled attempts and accounts of suspended organizations."""
+    """Authenticate against this installation only, by registration or technical username."""
 
     def authenticate(self, request, username=None, password=None, organization=None, **kwargs):
         if username is None:
             username = kwargs.get(Account.USERNAME_FIELD)
-        if is_throttled(login_identity(username, organization), client_ip(request)):
-            # PermissionDenied stops authentication; the form shows the generic message.
+        if is_throttled(login_identity(username), client_ip(request)):
             raise PermissionDenied
-        if organization:
-            try:
-                organization_id = uuid.UUID(str(organization))
-            except (TypeError, ValueError):
-                Account().set_password(password)
-                return None
-            accounts = Account.objects.filter(
-                organization_id=organization_id,
-                person__organization_id=organization_id,
-                person__memberships__organization_id=organization_id,
+        local = Organization.objects.filter(installation_key=1).first()
+        # Legacy callers may repeat the local id, but can never select another organization.
+        if organization and (local is None or str(organization) != str(local.id)):
+            Account().set_password(password)
+            return None
+        from django.db.models import Q
+
+        candidates = Account.objects.filter(
+            Q(person__isnull=True, username=username)
+            | Q(
+                organization=local,
+                person__is_active=True,
                 person__memberships__registration=username,
                 person__memberships__is_active=True,
-                person__is_active=True,
-                revoked_at__isnull=True,
-            ).distinct()
-            user = accounts.first() if accounts.count() == 1 else None
-            if user is None:
-                Account().set_password(password)
-                return None
-            if user.check_password(password) and self.user_can_authenticate(user):
-                return user
+                person__memberships__organization=local,
+            ),
+            revoked_at__isnull=True,
+        ).distinct()
+        users = [user for user in candidates if self.user_can_authenticate(user)]
+        if len(users) != 1:
+            Account().set_password(password)
             return None
-        # Accounts without a person are technical identities with a global username.
-        user = super().authenticate(request, username=username, password=password, **kwargs)
-        return user if user is not None and user.person_id is None else None
+        user = users[0]
+        return user if user.check_password(password) else None
 
     def user_can_authenticate(self, user):
-        organization = getattr(user, "organization", None)
-        if organization is not None and organization.status != "active":
+        if not super().user_can_authenticate(user):
             return False
-        return super().user_can_authenticate(user)
+        if user.organization_id is None:
+            return user.is_superuser
+        organization = user.organization
+        return organization.installation_key == 1 and organization.status == "active"
 
 
 def _correlation_id(request):
@@ -99,17 +94,16 @@ def _correlation_id(request):
 @receiver(user_login_failed)
 def record_login_failure(sender, credentials, request=None, **kwargs):
     username = credentials.get(Account.USERNAME_FIELD, "")
-    organization = credentials.get("organization")
-    digest = username_digest(login_identity(username, organization))
+    digest = username_digest(login_identity(username))
     now = timezone.now()
     AuthenticationFailure.objects.filter(occurred_at__lt=now - FAILURE_RETENTION).delete()
     AuthenticationFailure.objects.create(
         username_digest=digest, ip_address=client_ip(request), occurred_at=now
     )
     account = (
-        None
-        if organization
-        else Account.objects.filter(username=username, person__isnull=True)
+        Account.objects.filter(
+            username=username, person__isnull=True, organization__installation_key=1
+        )
         .select_related("organization")
         .first()
     )
@@ -129,9 +123,7 @@ def record_login_failure(sender, credentials, request=None, **kwargs):
 
 @receiver(user_logged_in)
 def record_login_success(sender, request, user, **kwargs):
-    identifier = login_identity(
-        request.POST.get("username", user.username), request.POST.get("organization")
-    )
+    identifier = login_identity(request.POST.get("username", user.username))
     AuthenticationFailure.objects.filter(username_digest=username_digest(identifier)).delete()
     request.session[SESSION_VERSION_KEY] = user.session_version
     AuditEvent.objects.create(

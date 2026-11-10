@@ -8,8 +8,6 @@ from .models import Item, Person
 
 
 class OrganizationAuthenticationForm(AuthenticationForm):
-    organization = forms.CharField(label="Organização", max_length=64, required=False)
-
     def clean(self):
         username = self.cleaned_data.get("username")
         password = self.cleaned_data.get("password")
@@ -18,7 +16,6 @@ class OrganizationAuthenticationForm(AuthenticationForm):
                 self.request,
                 username=username,
                 password=password,
-                organization=self.cleaned_data.get("organization") or None,
             )
             if self.user_cache is None:
                 raise self.get_invalid_login_error()

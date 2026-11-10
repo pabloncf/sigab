@@ -1,5 +1,7 @@
 # Decisões pendentes
 
+**Definição de arquitetura em 10/11/2026:** single-tenant, uma instalação e banco exclusivos por cliente ([ADR 0007](adr/0007-single-tenant.md)). Tenancy compartilhada e código de organização no login foram substituídos. As demais decisões de domínio/aceite continuam separadas; registros anteriores abaixo são históricos onde divergirem dessa arquitetura.
+
 | Tema | Tarefa | Estado/impacto |
 |---|---|---|
 | Primeiro segmento | SIGAB-001 | decidido e validado: Guardas Municipais; ver [decisão 0001](decisoes/0001-segmento-inicial.md) |

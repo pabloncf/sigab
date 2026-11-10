@@ -22,9 +22,17 @@ class Organization(TimestampedModel):
         INACTIVE = "inactive", "Inativa"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    installation_key = models.PositiveSmallIntegerField(default=1, unique=True, editable=False)
     name = models.CharField(max_length=160)
     timezone = models.CharField(max_length=64, default="America/Fortaleza")
     status = models.CharField(max_length=16, choices=Status, default=Status.ACTIVE)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(installation_key=1), name="single_organization_installation"
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -765,6 +773,15 @@ class InventorySession(TimestampedModel):
     reference_at = models.DateTimeField()
     closed_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=12, choices=Status, default=Status.OPEN)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["unit"],
+                condition=Q(status="open"),
+                name="uniq_open_inventory_per_unit",
+            )
+        ]
 
 
 class InventoryCount(TimestampedModel):

@@ -143,3 +143,6 @@ textarea { min-height: 92px; resize: vertical; }
   .item-row .status-badge { grid-column: 1 / -1; grid-row: auto; }
   .row-arrow { grid-column: 2; grid-row: 1; }
 }
+
+.stock-action { padding: 24px; margin-bottom: 24px; }
+.dialog-form fieldset { display: grid; gap: 16px; min-width: 0; }

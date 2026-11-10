@@ -1,8 +1,10 @@
 # SIGAB
 
-A [entrega Jira SIGAB-71–75](docs/validacao/jira-071-a-075.md) documenta login por organização/matrícula, restrições operacionais e Admin somente leitura. As chaves Jira correspondem aos IDs originais 047–051; consulte o mapeamento antes de atualizar o backlog.
+O SIGAB é **single-tenant: uma instalação e um banco exclusivos por cliente**, com uma única organização e várias unidades e reservas internas. O banco impede cadastrar uma segunda organização. A [decisão de arquitetura](docs/adr/0007-single-tenant.md) substitui a tenancy compartilhada anterior.
 
-Primeira base executável do Sistema Integrado de Gestão de Acervo Bélico. Esta entrega cobre somente item físico individual: fundação multi-organização, identidade separada de conta, autorização explícita, incorporação, saída, devolução e histórico/auditoria.
+A base inclui identidade separada de conta, autorização por papel/unidade, acervo individual, movimentação, restrições, cesta, estoque quantitativo básico, inventário via API, autosserviço e auditoria. Consulte os limites e evidências nas [entregas técnicas](docs/validacao/tarefas-074-a-078.md). O login usa matrícula e senha; contas técnicas usam seu usuário, sem informar organização.
+
+A [entrega histórica Jira SIGAB-71–75](docs/validacao/jira-071-a-075.md) corresponde aos IDs originais 047–051. Seu login por organização foi substituído pela decisão single-tenant; os identificadores de planejamento não são chaves reais do Jira.
 
 ## Estrutura
 
@@ -18,29 +20,62 @@ Só exige Docker. Sobe PostgreSQL 17, Django e Vite com o código montado: alter
 
 ```bash
 docker compose up -d --build
-docker compose exec backend python manage.py bootstrap_sigab \
-  --organization "Organização de demonstração" \
-  --username admin --email admin@example.invalid
 ```
 
-Para ver o sistema já povoado, gere dados sintéticos de demonstração (só com `DEBUG` ligado; roda uma vez por banco):
+Em uma instalação vazia, escolha **um** dos caminhos:
+
+- **Demonstração com dados sintéticos:**
+
+  ```bash
+  docker compose exec backend python manage.py seed_demo
+  ```
+
+  Cria uma organização “Batalhão Demonstração Alfa”, com duas companhias, reservas, tipos, pessoas, itens e movimentações. Exige `DEBUG` ligado.
+
+- **Instalação vazia para cadastro manual:**
+
+  ```bash
+  docker compose exec backend python manage.py bootstrap_sigab \
+    --organization "Minha organização" \
+    --username admin --email admin@example.invalid
+  ```
+
+Não execute `seed_demo` depois do bootstrap: ambos inicializam a organização única.
+
+### Seleção do banco e recuperação de uma demonstração antiga
+
+O Compose usa `SIGAB_DATABASE_NAME` do arquivo `.env` na raiz; sem essa variável, usa `sigab`. O nome é utilizado tanto pelo backend quanto pela inicialização do PostgreSQL. O `.env` é local e não é versionado.
+
+Em 10/11/2026, o ambiente local foi recuperado com uma **nova** demonstração, no banco `sigab_single_tenant_demo_20261110`. A base anterior `sigab`, com três organizações, foi preservada. O `.env` local aponta para a nova base:
+
+```dotenv
+SIGAB_DATABASE_NAME=sigab_single_tenant_demo_20261110
+```
+
+Alterar a variável não cria um banco dentro de um volume PostgreSQL já inicializado. Para preparar uma nova base vazia nesse volume, confirme que o nome está livre, crie-a explicitamente e reinicie o backend. Por exemplo, para o nome acima:
 
 ```bash
+docker compose up -d db
+docker compose exec db psql -U sigab -d postgres \
+  -c 'CREATE DATABASE sigab_single_tenant_demo_20261110 OWNER sigab'
+docker compose up -d backend frontend
 docker compose exec backend python manage.py seed_demo
 ```
 
-Cria os batalhões “Demonstração Alfa” e “Bravo” com unidades, reservas, tipos, pessoas, itens e movimentações em todos os estados (em posse, devolvido, inapto, liberado, estornado e lançado em contingência). Para recomeçar do zero, use `docker compose down -v`.
+O comando `CREATE DATABASE` recusa um nome já existente. Na configuração local atual, essa preparação **já foi executada**; use somente `docker compose up -d` para iniciar. Não use `docker compose down -v` como recuperação: isso remove o volume com todas as bases, inclusive a original preservada.
 
-Credenciais de teste (somente para o banco local de desenvolvimento):
+### Credenciais de teste
 
-| Login | Senha | Organização | Papéis |
-|---|---|---|---|
-| `alfa.admin` | `Demo-sigab-2026` | Batalhão Demonstração Alfa | Administrador de acesso e Gestor de acervo (organização) |
-| `alfa.operador` | `Demo-sigab-2026` | Batalhão Demonstração Alfa | Operador de reserva (1ª e 2ª Companhia) |
-| `bravo.admin` | `Demo-sigab-2026` | Batalhão Demonstração Bravo | Administrador de acesso e Gestor de acervo (organização) |
-| `bravo.operador` | `Demo-sigab-2026` | Batalhão Demonstração Bravo | Operador de reserva (Sede) |
+Somente para a instalação local criada por `seed_demo`. Todas usam a senha `Demo-sigab-2026` (personalizável com `seed_demo --password <senha>` antes da criação).
 
-Use as contas `alfa.*` e `bravo.*` para conferir o isolamento: uma organização não enxerga os dados da outra. A senha pode ser trocada com `seed_demo --password <senha>`.
+| Matrícula ou usuário | Pessoa | Papéis |
+|---|---|---|
+| `alfa.admin` | Conta técnica de administração | Administrador de acesso e Gestor de acervo |
+| `1001` | Sd Ana | Operador de reserva nas duas companhias |
+
+Informe somente matrícula/usuário e senha. A organização é determinada pela instalação; o formulário não pede UUID e não permite escolher outro cliente. Cada cliente adicional exige outro banco, credenciais, implantação e cópias de segurança próprios.
+
+Bancos antigos com Alfa e Bravo precisam ser separados antes da migração `0012`; a migração recusa várias organizações e preserva todos os dados. Não exclua uma organização nem misture seus registros para contornar a validação. Consulte o [procedimento de transição](docs/adr/0007-single-tenant.md).
 
 Acesse `http://localhost:5173`. As migrações rodam a cada início do backend. Comandos úteis:
 
@@ -104,7 +139,7 @@ Para suspender ou reativar uma organização pelo plano de controle:
 ```bash
 cd backend
 uv run python manage.py set_organization_status \
-  --organization-id UUID_DA_ORGANIZACAO --status inactive --reason "Motivo"
+  --status inactive --reason "Motivo"
 ```
 
 Também há um comando para criar conta sem interface (a senha é pedida sem eco):
@@ -112,7 +147,7 @@ Também há um comando para criar conta sem interface (a senha é pedida sem eco
 ```bash
 cd backend
 uv run python manage.py create_sigab_account \
-  --organization-id UUID_DA_ORGANIZACAO --person-id UUID_DA_PESSOA \
+  --person-id UUID_DA_PESSOA \
   --username usuario --email usuario@example.invalid
 ```
 

@@ -16,10 +16,10 @@ from sigab.models import (
     Item,
     Movement,
     MovementEvent,
-    Organization,
     Role,
 )
 from sigab.permissions import ITEM_VIEW, MOVEMENT_CHECKOUT, MOVEMENT_RETURN, MOVEMENT_REVERSE
+from sigab.tests.legacy_organizations import legacy_organization
 
 PASSWORD = "Senha-forte-123"
 
@@ -253,7 +253,7 @@ def test_contingency_requires_the_same_permission_as_live_checkout(paper):
 
 @pytest.mark.django_db
 def test_contingency_cannot_reach_an_item_of_another_organization(paper):
-    other = Organization.objects.create(name="Outra organização")
+    other = legacy_organization(name="Outra organização")
     stranger = Account.objects.create_user(
         username="operador-externo", password=PASSWORD, organization=other
     )
@@ -268,8 +268,8 @@ def test_contingency_cannot_reach_an_item_of_another_organization(paper):
 
     response = _checkout(paper, occurred_at=_ago(hours=1), client=client)
 
-    assert response.status_code == 404
-    assert response.json()["error"] == "Recurso não encontrado."
+    assert response.status_code == 401
+    assert response.json()["error"] == "Autenticação necessária."
     assert not Movement.objects.exists()
     assert not MovementEvent.objects.exists()
 

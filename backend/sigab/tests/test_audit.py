@@ -7,8 +7,9 @@ from django.db import connection
 from django.test import Client
 
 from sigab.management.commands.verify_audit_chain import verify_chain
-from sigab.models import Account, AuditEvent, Grant, Organization, Role
+from sigab.models import Account, AuditEvent, Grant, Role
 from sigab.permissions import AUDIT_VIEW, TENANT_PERMISSIONS
+from sigab.tests.legacy_organizations import legacy_organization
 
 PASSWORD = "Senha-forte-123"
 
@@ -157,7 +158,7 @@ def test_every_p0_operation_is_audited(admin, client):
 
 @pytest.mark.django_db
 def test_audit_trail_requires_permission_and_stays_in_tenant(admin, client, api_world):
-    other = Organization.objects.create(name="Outra")
+    other = legacy_organization(name="Outra")
     AuditEvent.objects.create(
         organization=other,
         action="segredo.externo",

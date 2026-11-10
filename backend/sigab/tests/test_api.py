@@ -7,10 +7,10 @@ from django.test import Client
 from sigab.models import (
     EquipmentType,
     Item,
-    Organization,
     StorageLocation,
     Unit,
 )
+from sigab.tests.legacy_organizations import legacy_organization
 
 
 def _post_json(client, url, payload):
@@ -30,7 +30,7 @@ def test_api_requires_authentication(client):
 
 @pytest.mark.django_db
 def test_api_lists_only_authorized_tenant_items(client, api_world):
-    other = Organization.objects.create(name="Outra organização")
+    other = legacy_organization(name="Outra organização")
     other_unit = Unit.objects.create(organization=other, name="Outra unidade", code="OUT")
     other_location = StorageLocation.objects.create(
         organization=other, unit=other_unit, name="Outra reserva", code="OUT-R"

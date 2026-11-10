@@ -39,7 +39,12 @@ def positive_quantity(value, field="quantity"):
         quantity = Decimal(str(value))
     except (InvalidOperation, TypeError, ValueError) as exc:
         raise ValidationError({field: "Informe uma quantidade válida."}) from exc
-    if quantity <= 0 or quantity.as_tuple().exponent < -3:
+    if (
+        not quantity.is_finite()
+        or quantity <= 0
+        or quantity > Decimal("99999999999.999")
+        or quantity.as_tuple().exponent < -3
+    ):
         raise ValidationError({field: "Use quantidade positiva com até três casas decimais."})
     return quantity
 
@@ -77,6 +82,16 @@ def _validate_mode(custody_mode, due_at):
         raise ValidationError({"due_at": "Esta modalidade não aceita prazo."})
 
 
+def _authorize_batch_replay(ctx, batch):
+    if batch.operator_id != ctx.actor.id:
+        raise PermissionDenied
+    unit_ids = set(batch.items.values_list("item__unit_id", flat=True))
+    unit_ids.update(batch.stock_loans.values_list("balance__unit_id", flat=True))
+    for unit in Unit.objects.filter(pk__in=unit_ids):
+        if not has_permission(ctx.actor, MOVEMENT_CHECKOUT, ctx.organization, unit):
+            raise PermissionDenied
+
+
 @transaction.atomic
 def checkout_basket(
     ctx: CommandContext,
@@ -93,7 +108,6 @@ def checkout_basket(
     """Atomically deliver a mixed basket; every retry returns the same batch."""
     if not confirmed:
         raise ValidationError("A confirmação explícita é obrigatória.")
-    _validate_mode(custody_mode, due_at)
     item_ids = list(dict.fromkeys(item_ids))
     if not item_ids and not stock:
         raise ValidationError("Inclua ao menos um item ou material quantitativo.")
@@ -113,8 +127,10 @@ def checkout_basket(
     if existing:
         if existing.request_hash != request_hash:
             raise ConflictError("A chave de idempotência já foi usada em outro atendimento.")
+        _authorize_batch_replay(ctx, existing)
         return existing, False
 
+    _validate_mode(custody_mode, due_at)
     recipient = (
         Person.objects.select_for_update()
         .filter(id=recipient_id, organization=ctx.organization, is_active=True)
@@ -122,6 +138,15 @@ def checkout_basket(
     )
     if not recipient or not recipient.memberships.filter(is_active=True).exists():
         raise ValidationError("Destinatário inválido ou sem vínculo ativo.")
+    # Another request with this key may have committed while we waited for the person.
+    existing = ServiceBatch.objects.filter(
+        organization=ctx.organization, idempotency_key=idempotency_key
+    ).first()
+    if existing:
+        if existing.request_hash != request_hash:
+            raise ConflictError("A chave de idempotência já foi usada em outro atendimento.")
+        _authorize_batch_replay(ctx, existing)
+        return existing, False
     pickup_person = None
     if pickup_person_id:
         raise ValidationError(
@@ -263,6 +288,10 @@ def settle_stock_loan(
             or existing.quantity != quantity
         ):
             raise ConflictError("A chave de idempotência já foi usada em outra operação.")
+        if not has_permission(ctx.actor, MOVEMENT_RETURN, ctx.organization, existing.balance.unit):
+            raise PermissionDenied
+        if existing.operator_id != ctx.actor.id or existing.reason != (reason or "").strip():
+            raise ConflictError("A chave de idempotência já foi usada em outra operação.")
         return existing, False
     loan = (
         StockLoan.objects.select_for_update(of=("self",))
@@ -397,6 +426,12 @@ def receive_stock(
             or existing.balance.unit_id != unit_id
             or existing.balance.storage_location_id != storage_location_id
         ):
+            raise ConflictError("A chave de idempotência já foi usada em outra operação.")
+        if not has_permission(
+            ctx.actor, "inventory.adjust.approve", ctx.organization, existing.balance.unit
+        ):
+            raise PermissionDenied
+        if existing.operator_id != ctx.actor.id or existing.reason != (reason or "").strip():
             raise ConflictError("A chave de idempotência já foi usada em outra operação.")
         return existing, False
     equipment_type = EquipmentType.objects.filter(

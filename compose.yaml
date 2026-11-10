@@ -3,13 +3,13 @@ services:
   db:
     image: postgres:17
     environment:
-      POSTGRES_DB: sigab
+      POSTGRES_DB: ${SIGAB_DATABASE_NAME:-sigab}
       POSTGRES_USER: sigab
       POSTGRES_PASSWORD: local-only
     ports: ["5432:5432"]
     volumes: ["sigab-postgres:/var/lib/postgresql/data"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sigab -d sigab"]
+      test: ["CMD-SHELL", "pg_isready -U sigab -d $$POSTGRES_DB"]
       interval: 2s
       timeout: 3s
       retries: 30
@@ -17,7 +17,7 @@ services:
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql://sigab:local-only@db:5432/sigab
+      DATABASE_URL: postgresql://sigab:local-only@db:5432/${SIGAB_DATABASE_NAME:-sigab}
       DJANGO_DEBUG: "true"
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
     ports: ["8000:8000"]

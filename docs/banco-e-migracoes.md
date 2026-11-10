@@ -1,5 +1,7 @@
 # Banco e migrações
 
+**Transição single-tenant (10/11/2026):** aplicar 0011 e 0012 em sequência na atualização. A 0012 recusa bases com mais de uma organização antes de alterar o esquema. Separar os clientes em bancos exclusivos conforme [ADR 0007](adr/0007-single-tenant.md); não apagar nem fundir dados para contornar a validação. Evidências na [revisão single-tenant](validacao/single-tenant-2026-11-10.md).
+
 - Tarefa: SIGAB-016
 - Revisão: 2026-11-02
 - Base: [ADR 0005](adr/0005-api-django-e-frontend-react.md), [modelo de domínio](modelo-de-dominio.md)

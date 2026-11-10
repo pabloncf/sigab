@@ -20,6 +20,8 @@ urlpatterns = [
     path(
         "service-batches/options/", operations.service_batch_options, name="service-batch-options"
     ),
+    path("stock/options/", operations.stock_options, name="stock-options"),
+    path("stock/loans/", operations.stock_loans, name="stock-loans"),
     path("stock/positions/", operations.stock_positions, name="stock-position-list"),
     path("stock/loans/<uuid:pk>/settle/", operations.stock_loan_settle, name="stock-loan-settle"),
     path(

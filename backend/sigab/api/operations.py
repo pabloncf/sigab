@@ -12,8 +12,15 @@ from sigab.domain.operations import (
     reverse_stock_entry,
     settle_stock_loan,
 )
-from sigab.models import Item, Person, ServiceBatch, StockBalance
-from sigab.permissions import ALL_UNITS, MOVEMENT_CHECKOUT, VIEW_ITEM, permitted_unit_ids
+from sigab.models import EquipmentType, Item, Person, ServiceBatch, StockBalance, StockLoan, Unit
+from sigab.permissions import (
+    ALL_UNITS,
+    MOVEMENT_CHECKOUT,
+    MOVEMENT_RETURN,
+    VIEW_ITEM,
+    has_permission,
+    permitted_unit_ids,
+)
 
 from .views import (
     _context,
@@ -193,12 +200,7 @@ def stock_positions(request):
             },
             status=201 if created else 200,
         )
-    view_units = permitted_unit_ids(request.user, VIEW_ITEM, organization)
-    adjust_units = permitted_unit_ids(request.user, "inventory.adjust.approve", organization)
-    if view_units is ALL_UNITS or adjust_units is ALL_UNITS:
-        allowed_units = ALL_UNITS
-    else:
-        allowed_units = view_units | adjust_units
+    allowed_units = _stock_units(request, organization)
     if not allowed_units:
         raise PermissionDenied
     balances = StockBalance.objects.filter(organization=organization).select_related(
@@ -274,4 +276,81 @@ def service_batch_options(request):
                 for balance in stock.order_by("equipment_type__name", "unit__code")
             ],
         }
+    )
+
+
+def _stock_units(request, organization):
+    scopes = [
+        permitted_unit_ids(request.user, code, organization)
+        for code in (VIEW_ITEM, MOVEMENT_RETURN, "inventory.adjust.approve")
+    ]
+    if any(scope is ALL_UNITS for scope in scopes):
+        return ALL_UNITS
+    return set().union(*scopes)
+
+
+@api_view(methods={"GET"})
+def stock_options(request):
+    organization = _organization(request)
+    unit_ids = _stock_units(request, organization)
+    if not unit_ids:
+        raise PermissionDenied
+    units = Unit.objects.filter(organization=organization, is_active=True).prefetch_related(
+        "locations"
+    )
+    if unit_ids is not ALL_UNITS:
+        units = units.filter(pk__in=unit_ids)
+    return _response(
+        {
+            "equipment_types": [
+                {"id": str(kind.id), "name": kind.name}
+                for kind in EquipmentType.objects.filter(
+                    organization=organization, is_active=True, classification="quantitative"
+                ).order_by("name", "id")
+            ],
+            "units": [
+                {
+                    "id": str(unit.id),
+                    "name": unit.name,
+                    "can_receive": has_permission(
+                        request.user, "inventory.adjust.approve", organization, unit
+                    ),
+                    "locations": [
+                        {"id": str(loc.id), "name": loc.name}
+                        for loc in unit.locations.all()
+                        if loc.is_active
+                    ],
+                }
+                for unit in units.order_by("name", "id")
+            ],
+        }
+    )
+
+
+@api_view(methods={"GET"})
+def stock_loans(request):
+    organization = _organization(request)
+    unit_ids = _stock_units(request, organization)
+    if not unit_ids:
+        raise PermissionDenied
+    loans = StockLoan.objects.filter(organization=organization, open_quantity__gt=0).select_related(
+        "recipient", "balance__equipment_type", "balance__unit", "balance__storage_location"
+    )
+    if unit_ids is not ALL_UNITS:
+        loans = loans.filter(balance__unit_id__in=unit_ids)
+    return _response(
+        [
+            {
+                "id": str(loan.id),
+                "person": str(loan.recipient),
+                "equipment_type": loan.balance.equipment_type.name,
+                "unit": loan.balance.unit.name,
+                "location": loan.balance.storage_location.name,
+                "quantity": str(loan.open_quantity),
+                "can_settle": has_permission(
+                    request.user, MOVEMENT_RETURN, organization, loan.balance.unit
+                ),
+            }
+            for loan in loans.order_by("recipient__name", "balance__equipment_type__name", "id")
+        ]
     )

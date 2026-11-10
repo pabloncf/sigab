@@ -400,6 +400,10 @@ def session_detail(request):
                 "can_manage_restrictions": has_permission(
                     request.user, "restriction.manage", organization
                 ),
+                "can_use_stock": any(
+                    has_any_scope(request.user, code, organization)
+                    for code in (VIEW_ITEM, MOVEMENT_RETURN, "inventory.adjust.approve")
+                ),
                 "can_use_self_service": bool(request.user.person_id),
             },
         }

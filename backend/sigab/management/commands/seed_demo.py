@@ -12,7 +12,7 @@ from sigab.services import CommandContext, Contingency
 
 DEMO_PASSWORD = "Demo-sigab-2026"
 
-# Entirely synthetic data. The second organization exists to show tenant isolation.
+# Entirely synthetic data for one customer installation, with multiple internal units.
 ORGANIZATIONS = [
     {
         "name": "Batalhão Demonstração Alfa",
@@ -37,17 +37,6 @@ ORGANIZATIONS = [
         ],
         "items_per_type": 4,
     },
-    {
-        "name": "Batalhão Demonstração Bravo",
-        "prefix": "bravo",
-        "units": [("BRAVO-SEDE", "Sede", [("BRAVO-R1", "Reserva da Sede")])],
-        "types": [("Pistola 9mm", "Pistola semiautomática de dotação.")],
-        "people": [
-            ("Gustavo Lopes Dias", "Sd Gustavo", "Soldado", "2001"),
-            ("Helena Batista Prado", "Cb Helena", "Cabo", "2002"),
-        ],
-        "items_per_type": 3,
-    },
 ]
 
 
@@ -56,7 +45,7 @@ def _key():
 
 
 class Command(BaseCommand):
-    help = "Popula o banco local com organizações e movimentações sintéticas para demonstração."
+    help = "Popula uma instalação vazia com uma organização e movimentações sintéticas."
 
     def add_arguments(self, parser):
         parser.add_argument("--password", default=DEMO_PASSWORD)
@@ -64,9 +53,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if not settings.DEBUG:
             raise CommandError("Dados de demonstração só podem ser criados com DEBUG ligado.")
-        names = [spec["name"] for spec in ORGANIZATIONS]
-        if Organization.objects.filter(name__in=names).exists():
-            raise CommandError("Os dados de demonstração já existem neste banco.")
+        if Organization.objects.exists():
+            raise CommandError("A instalação já possui organização ou dados de demonstração.")
         password = options["password"]
         with transaction.atomic():
             for spec in ORGANIZATIONS:

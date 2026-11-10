@@ -1,5 +1,7 @@
 # Modelo de domínio
 
+**Atualização de 10/11/2026:** [ADR 0007](adr/0007-single-tenant.md) define uma única organização por instalação, garantida por `installation_key=1` único e restrição de banco. As FKs de organização permanecem para integridade e histórico. Menções a tenancy compartilhada neste documento descrevem a arquitetura anterior; papéis e escopos de unidade permanecem válidos.
+
 - Tarefa: SIGAB-011
 - Revisão: 2026-11-02, conferida com `backend/sigab/models.py` (migrações `0001` a `0007`)
 - Requisitos: RF-01, RF-03, RF-10, RF-12 e RF-60 do [DOC-0011 v0.1](fontes/DOC-0011-analise-de-requisitos-v0.1.md)

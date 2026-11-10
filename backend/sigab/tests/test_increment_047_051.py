@@ -18,13 +18,13 @@ from sigab.models import (
     Item,
     Membership,
     Movement,
-    Organization,
     Person,
     ServiceBatch,
     StockBalance,
     Unit,
 )
 from sigab.services import RestrictedCheckout, checkout_item, create_account, return_item
+from sigab.tests.legacy_organizations import legacy_organization
 
 
 def grant_manager(world):
@@ -183,34 +183,39 @@ def test_restriction_changes_keep_history_and_audit_omits_private_text(world, cl
 
 
 @pytest.mark.django_db
-def test_login_same_registration_two_tenants_and_generic_failures(client):
+def test_login_has_no_organization_selector_and_cannot_select_legacy_client(client):
     password = "Senha-forte-123"
     accounts = []
     for index in range(2):
-        org = Organization.objects.create(name=f"Org {index}")
+        org = legacy_organization(name=f"Org {index}")
         unit = Unit.objects.create(organization=org, name="Reserva", code="R")
         person = Person.objects.create(organization=org, name=f"Pessoa {index}")
         Membership.objects.create(
             organization=org, person=person, main_unit=unit, registration="MAT-IGUAL"
         )
-        account = Account.objects.create_user(
-            username=f"interno-{index}", person=person, organization=org, password=password
+        accounts.append(
+            Account.objects.create_user(
+                username=f"interno-{index}", person=person, organization=org, password=password
+            )
         )
-        accounts.append(account)
-        session = Client()
-        response = session.post(
-            "/entrar/", {"organization": str(org.pk), "username": "MAT-IGUAL", "password": password}
-        )
-        assert response.status_code == 302
-        assert session.session["_auth_user_id"] == str(account.pk)
-    assert not Client().login(username=accounts[0].username, password=password)
-    for org in (str(accounts[0].organization_id), str(uuid4())):
-        response = client.post(
-            "/entrar/", {"organization": org, "username": "inexistente", "password": password}
-        )
-        assert response.status_code == 200
-        assert "conta institucional" in response.content.decode()
-        assert "Org 0" not in response.content.decode()
+    response = client.post(
+        "/entrar/",
+        {
+            "organization": str(accounts[1].organization_id),
+            "username": "MAT-IGUAL",
+            "password": password,
+        },
+    )
+    assert response.status_code == 302
+    assert client.session["_auth_user_id"] == str(accounts[0].id)
+    assert not Client().login(
+        username="MAT-IGUAL", password=password, organization=str(accounts[1].organization_id)
+    )
+    response = Client().get("/entrar/")
+    assert 'name="organization"' not in response.content.decode()
+    response = Client().post("/entrar/", {"username": "inexistente", "password": password})
+    assert response.status_code == 200
+    assert "Org 0" not in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -290,7 +295,7 @@ def test_new_accounts_allow_same_requested_username_across_tenants(world):
     role = world["account"].grants.get().role
     role.permissions = [*role.permissions, "identity.manage"]
     role.save()
-    other = Organization.objects.create(name="Outro cliente")
+    other = legacy_organization(name="Outro cliente")
     Account.objects.create_user(
         username="matricula-repetida", password="Senha-forte-123", organization=other
     )

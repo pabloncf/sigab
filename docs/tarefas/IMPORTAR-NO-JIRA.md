@@ -4,6 +4,8 @@ O arquivo `tarefas-15-10-26/tarefas.csv` está preparado para o importador CSV a
 
 O lote seguinte está em [tarefas-06-11-26/tarefas.csv](tarefas-06-11-26/tarefas.csv), com SIGAB-047 a SIGAB-073. Consulte o [guia do incremento](tarefas-06-11-26/README.md) para ordem sugerida e dependências do lote anterior. Ele contém apenas novas tarefas e épicos do incremento; não reimporte o lote inicial para adicionar essas tarefas.
 
+A revisão de 10/11 está em [tarefas-10-11-26/tarefas.csv](tarefas-10-11-26/tarefas.csv): cinco tarefas novas, IDs originais SIGAB-074 a SIGAB-078, e um épico com ID local 3001. O [guia da revisão](tarefas-10-11-26/README.md) também registra complementos de aceite nas tarefas existentes, sem duplicá-las no CSV. Os IDs originais 074/075 não são as chaves Jira SIGAB-74/75 já atribuídas a outros registros. Nenhuma importação desse novo lote foi executada.
+
 ## Mapeamento
 
 A importação relatada em 09/11/2026 atribuiu as chaves Jira SIGAB-71–75 às tarefas originais SIGAB-047–051. As chaves reais não preservam o número entre colchetes da descrição. Consulte a [linha de base de 09/11](../validacao/linha-base-2026-11-09.md) e confira sempre o campo `ID original` antes de executar ou atualizar uma tarefa.

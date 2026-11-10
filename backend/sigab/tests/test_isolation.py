@@ -26,7 +26,6 @@ from sigab.models import (
     Item,
     Membership,
     Movement,
-    Organization,
     Person,
     PersonRestriction,
     Role,
@@ -39,13 +38,14 @@ from sigab.models import (
 )
 from sigab.permissions import AUDIT_EXPORT, TENANT_PERMISSIONS
 from sigab.services import CommandContext, checkout_item
+from sigab.tests.legacy_organizations import legacy_organization
 
 PASSWORD = "Senha-forte-123"
 NOT_FOUND = {"success": False, "error": "Recurso não encontrado."}
 
 
 def _tenant(name, code, with_movement=False):
-    organization = Organization.objects.create(name=name)
+    organization = legacy_organization(name=name)
     unit = Unit.objects.create(organization=organization, name=f"Unidade {code}", code=f"U-{code}")
     location = StorageLocation.objects.create(
         organization=organization, unit=unit, name=f"Reserva {code}", code=f"R-{code}"
@@ -400,6 +400,8 @@ COLLECTION_CASES = {
     "service-batch-create",
     "service-batch-options",
     "stock-position-list",
+    "stock-options",
+    "stock-loans",
     "inventory-open",
     "possession-list",
     "possession-export",
@@ -488,6 +490,8 @@ def test_listings_and_search_never_return_foreign_rows(tenants):
         "audit/",
         "service-batches/options/",
         "stock/positions/",
+        "stock/options/",
+        "stock/loans/",
         "possessions/",
         "possessions/export/",
         "me/possessions/",

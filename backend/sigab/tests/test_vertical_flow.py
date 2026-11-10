@@ -6,7 +6,7 @@ import uuid
 import pytest
 from django.test import Client
 
-from sigab.models import Account, AuditEvent, Grant, Item, Movement, Organization, Role
+from sigab.models import Account, AuditEvent, Grant, Item, Movement, Role
 from sigab.permissions import (
     CATALOG_MANAGE,
     ITEM_CREATE,
@@ -15,11 +15,12 @@ from sigab.permissions import (
     MOVEMENT_CHECKOUT,
     MOVEMENT_RETURN,
 )
+from sigab.tests.legacy_organizations import legacy_organization
 
 
 @pytest.mark.django_db
 def test_vertical_flow_from_registration_to_return():
-    organization = Organization.objects.create(name="Guarda sintética")
+    organization = legacy_organization(name="Guarda sintética")
     password = "Synthetic-test-only-123!"
 
     def session(username, permissions, tenant=organization):
@@ -88,19 +89,12 @@ def test_vertical_flow_from_registration_to_return():
     )
     assert operator.get(f"/api/v1/{path}").json()["data"]["availability"] == "in_custody"
 
-    other = session(
-        "other",
-        [ITEM_VIEW, MOVEMENT_CHECKOUT, MOVEMENT_RETURN],
-        Organization.objects.create(name="Outra guarda sintética"),
-    )
-    assert other.get(f"/api/v1/{path}").status_code == 404
-    assert other.get(f"/api/v1/{path}events/").status_code == 404
-    post(
-        other,
-        path + "return/",
-        {"condition": "fit", "confirmed": True, "idempotency_key": str(uuid.uuid4())},
-        expected=404,
-    )
+    # An account from a malformed legacy foreign organization cannot log into this installation.
+    foreign = legacy_organization(name="Outra guarda sintética")
+    Account.objects.create_user(username="other", password=password, organization=foreign)
+    other = Client()
+    assert not other.login(username="other", password=password)
+    assert other.get(f"/api/v1/{path}").status_code == 401
     post(
         operator,
         path + "return/",

@@ -29,3 +29,11 @@ Estado: aprovado para implementação no incremento de 06/11/2026 (SIGAB-067).
 
 - `backend/sigab/tests/test_requirements_063_070.py`
 - `frontend/e2e/journeys.spec.ts`
+
+## Reenvio e interface — revisão de 10/11/2026
+
+O React conserva o conteúdo e a chave da tentativa em `sessionStorage`, sob chave de organização/conta. Enquanto não há confirmação, bloqueia edição e oferece recuperação pelo mesmo pedido, inclusive após recarga. Uma recusa HTTP definitiva na primeira tentativa permite corrigir os campos; uma tentativa anterior incerta mantém seu conteúdo original. Após confirmação, limpa o formulário e usa outra chave somente para novo atendimento.
+
+A atualização das opções após sucesso tem estado próprio: sua falha não muda o resultado da saída e precisa ser recuperada antes de iniciar outro atendimento. O backend valida acesso e operador no replay; um prazo já vencido não invalida o retorno de um atendimento previamente confirmado.
+
+A área `/estoque` reutiliza os serviços quantitativos para entrada, devolução parcial apta e consumo justificado, com revisão e confirmação antes da escrita. Material inapto e ajustes com aprovação independente dependem das decisões 008/041; não são habilitados nessa interface. Evidências e limites na [entrega 074–078](../validacao/tarefas-074-a-078.md).

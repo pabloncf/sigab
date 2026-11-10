@@ -27,6 +27,7 @@ from sigab.services import (
     return_item,
     set_item_condition,
 )
+from sigab.tests.legacy_organizations import legacy_organization
 
 
 @pytest.mark.django_db
@@ -47,7 +48,7 @@ def test_controlled_bootstrap_creates_admin_grant_and_audit():
 
 @pytest.mark.django_db
 def test_controlled_account_creation_keeps_person_separate():
-    org = Organization.objects.create(name="A")
+    org = legacy_organization(name="A")
     person = Person.objects.create(organization=org, name="Pessoa")
     call_command(
         "create_sigab_account",
@@ -65,7 +66,7 @@ def test_controlled_account_creation_keeps_person_separate():
 
 @pytest.mark.django_db
 def test_person_can_exist_without_account():
-    org = Organization.objects.create(name="A")
+    org = legacy_organization(name="A")
     person = Person.objects.create(organization=org, name="Sem conta")
     assert not Account.objects.filter(person=person).exists()
 
@@ -80,7 +81,7 @@ def test_suspended_account_cannot_login(client):
 
 @pytest.mark.django_db
 def test_cross_tenant_references_are_rejected(world):
-    other = Organization.objects.create(name="B")
+    other = legacy_organization(name="B")
     other_unit = Unit.objects.create(organization=other, name="Outra", code="B")
     world["item"].unit = other_unit
     with pytest.raises(ValidationError):
@@ -241,25 +242,25 @@ def test_bulk_update_and_delete_are_blocked(world, model):
 
 
 @pytest.mark.django_db
-def test_tenant_dashboard_does_not_leak_items(client, world):
-    other = Organization.objects.create(name="B")
+def test_legacy_foreign_account_cannot_open_local_dashboard(client, world):
+    other = legacy_organization(name="B")
     other_account = Account.objects.create_user(
         username="other", password="Senha-forte-123", organization=other
     )
     client.force_login(other_account)
     response = client.get("/")
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert b"SYN-001" not in response.content
 
 
 @pytest.mark.django_db
-def test_direct_item_route_hides_cross_tenant_item(client, world):
-    other = Organization.objects.create(name="B")
+def test_legacy_foreign_account_cannot_open_item_route(client, world):
+    other = legacy_organization(name="B")
     other_account = Account.objects.create_user(
         username="other2", password="Senha-forte-123", organization=other
     )
     client.force_login(other_account)
-    assert client.get(f"/itens/{world['item'].id}/").status_code == 404
+    assert client.get(f"/itens/{world['item'].id}/").status_code == 302
 
 
 @pytest.mark.django_db(transaction=True)
@@ -453,7 +454,7 @@ def test_condition_change_requires_permission(world):
 
 @pytest.mark.django_db
 def test_condition_change_hides_cross_tenant_item(world):
-    other = Organization.objects.create(name="B")
+    other = legacy_organization(name="B")
     other_account = Account.objects.create_user(
         username="outro", password="Senha-forte-123", organization=other
     )

@@ -16,8 +16,8 @@ def test_seed_demo_creates_items_in_every_state(settings):
     assert items.filter(availability=Item.Availability.UNAVAILABLE).count() == 1
     assert Movement.objects.filter(organization=alfa, movement_type="reversal").count() == 1
     assert Movement.objects.filter(organization=alfa, origin="contingency").count() == 1
-    bravo = Organization.objects.get(name="Batalhão Demonstração Bravo")
-    assert not Movement.objects.filter(organization=bravo, item__organization=alfa).exists()
+    assert Organization.objects.count() == 1
+    assert items.values("unit_id").distinct().count() == 2
 
 
 @pytest.mark.django_db

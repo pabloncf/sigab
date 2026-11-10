@@ -11,7 +11,7 @@ from sigab.roles import INITIAL_ADMINISTRATOR_ROLES, create_tenant_roles
 
 
 class Command(BaseCommand):
-    help = "Cria uma organização e seu primeiro administrador de forma atômica."
+    help = "Inicializa a organização única desta instalação e seu primeiro administrador."
 
     def add_arguments(self, parser):
         parser.add_argument("--organization", required=True)
@@ -21,6 +21,11 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        if Organization.objects.exists():
+            raise CommandError(
+                "Esta instalação já possui uma organização. "
+                "Use outra instalação e banco para outro cliente."
+            )
         if Account.objects.filter(username=options["username"]).exists():
             raise CommandError("O identificador de login já existe.")
         password = options["password"] or getpass("Senha inicial: ")

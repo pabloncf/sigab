@@ -1,0 +1,117 @@
+Work Type,Status,Summary,Description,Priority,Labels,Labels,Labels,Labels,Component,Work item ID,Parent,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By
+Epic,To Do,SIGAB — Correções da revisão de requisitos (2026-11-10),Agrupa somente novas correções e complementos identificados na revisão de 10/11/2026. Pendências existentes são acompanhadas no README sem recriar tarefas.,High,sigab,epic,revisao-requisitos,lote-2026-11-10,Garantias operacionais,3001,,,,,,,
+Task,Done,[SIGAB-074] Reabrir divergências após recontagem e preservar resoluções,"A recontagem de uma divergência resolvida conserva status e resolução anteriores e permite fechar a sessão sem nova análise. O cenário foi reproduzido em banco de teste em memória.
+
+ID original: SIGAB-074
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Correções da revisão de 10/11 (sem data comprometida)
+
+Responsável sugerido: Backend/QA
+
+Entregável: Reabrir divergências após recontagem e preservar resoluções; implementação e evidências dos critérios de aceite.
+
+Critério de aceite: Alterar o resultado contado reabre a divergência e invalida a resolução anterior como autorização de fechamento, preservando-a no histórico. Responsável é obrigatório para investigação/resolução conforme regra documentada. Recontagem coincidente com o esperado preserva a ocorrência e sua trilha, sem exclusão física. Fechamento recusa divergência reaberta. Testes cobrem estados resolvido/justificado, recontagem igual/diferente, responsável ausente e disputa entre atualização e fechamento no PostgreSQL.
+
+Requisitos relacionados: RF-41; RF-42; RF-60
+
+Dependências originais: SIGAB-063; SIGAB-055
+
+Evidências a revisar: backend/sigab/domain/inventory.py; backend/sigab/models.py; backend/sigab/tests/test_requirements_063_070.py
+
+Observações: Origem: docs/validacao/diferencas-requisitos-2026-11-10.md. IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências anteriores devem ser resolvidas com o mapeamento de chaves reais. Inspeção estática não equivale a reprodução; registrar evidência após corrigir. Nenhuma homologação ou mudança de status externa é presumida.
+
+Execução em 10/11/2026: Concluída tecnicamente; critérios verificados nos testes e evidências. Evidência: docs/validacao/tarefas-074-a-078.md. Estado local, sem atualização externa no Jira.",Highest,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-10,correcao-operacional,Garantias operacionais,74,3001,,,,,,
+Task,Done,[SIGAB-075] Garantir uma única sessão de inventário aberta por unidade,"A abertura consulta se há sessão aberta sem bloqueio da unidade e sem restrição de unicidade condicional. Duas requisições concorrentes precisam ser verificadas.
+
+ID original: SIGAB-075
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Correções da revisão de 10/11 (sem data comprometida)
+
+Responsável sugerido: Backend/QA
+
+Entregável: Garantir uma única sessão de inventário aberta por unidade; implementação e evidências dos critérios de aceite.
+
+Critério de aceite: Duas aberturas simultâneas na mesma unidade produzem exatamente uma sessão aberta e uma resposta de conflito controlada. Unidades distintas podem abrir sessões independentemente. A proteção é transacional e possui garantia persistente apropriada; eventual migração trata duplicidades preexistentes sem apagar histórico. Teste concorrente usa PostgreSQL; SQLite não comprova o critério.
+
+Requisitos relacionados: RF-41; RF-42
+
+Dependências originais: SIGAB-062; SIGAB-063
+
+Evidências a revisar: backend/sigab/domain/inventory.py; backend/sigab/models.py; backend/sigab/api/inventory.py
+
+Observações: Origem: docs/validacao/diferencas-requisitos-2026-11-10.md. IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências anteriores devem ser resolvidas com o mapeamento de chaves reais. Inspeção estática não equivale a reprodução; registrar evidência após corrigir. Nenhuma homologação ou mudança de status externa é presumida.
+
+Execução em 10/11/2026: Concluída tecnicamente; critérios verificados nos testes e evidências. Evidência: docs/validacao/tarefas-074-a-078.md. Estado local, sem atualização externa no Jira.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-10,correcao-operacional,Garantias operacionais,75,3001,,,,,,
+Task,Done,[SIGAB-076] Corrigir conclusão assíncrona do atendimento no React,"O submit acessa event.currentTarget após await. A referência pode estar nula depois da confirmação no servidor, exibindo erro e conservando seleções antigas.
+
+ID original: SIGAB-076
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Correções da revisão de 10/11 (sem data comprometida)
+
+Responsável sugerido: Frontend/QA
+
+Entregável: Corrigir conclusão assíncrona do atendimento no React; implementação e evidências dos critérios de aceite.
+
+Critério de aceite: Referência do formulário é capturada antes da espera assíncrona. Após sucesso, comprovante é exibido, seleções e campos são reiniciados, opções são atualizadas e não existe mensagem de erro. Falha real da API preserva dados para correção. Falha de atualização das opções após gravação é distinguida de falha da saída. E2E verifica sucesso completo, ausência de erro, limpeza, opções atualizadas e comportamento de falha.
+
+Requisitos relacionados: RF-20; RF-21; RNF-06
+
+Dependências originais: SIGAB-068; SIGAB-066
+
+Evidências a revisar: frontend/src/features/operations/ServiceBatchPage.tsx; frontend/e2e/journeys.spec.ts
+
+Observações: Origem: docs/validacao/diferencas-requisitos-2026-11-10.md. IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências anteriores devem ser resolvidas com o mapeamento de chaves reais. Inspeção estática não equivale a reprodução; registrar evidência após corrigir. Nenhuma homologação ou mudança de status externa é presumida.
+
+Execução em 10/11/2026: Concluída tecnicamente; critérios verificados nos testes e evidências. Evidência: docs/validacao/tarefas-074-a-078.md. Estado local, sem atualização externa no Jira.",Highest,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-10,correcao-operacional,Garantias operacionais,76,3001,,,,,,
+Task,Done,[SIGAB-077] Preservar idempotência da cesta após resposta perdida,"A tela gera nova chave em cada submissão. Se a operação for gravada e a resposta se perder, novo envio quantitativo pode consumir saldo novamente.
+
+ID original: SIGAB-077
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Correções da revisão de 10/11 (sem data comprometida)
+
+Responsável sugerido: Frontend/Backend/QA
+
+Entregável: Preservar idempotência da cesta após resposta perdida; implementação e evidências dos critérios de aceite.
+
+Critério de aceite: Chave e conteúdo da tentativa são preservados enquanto seu resultado for incerto. Reenvio do mesmo atendimento usa a mesma chave; alteração de conteúdo possui tratamento explícito e um novo atendimento recebe nova chave. Simular gravação seguida de perda de resposta em cesta exclusivamente quantitativa, mista e individual. Confirmar um único atendimento, comprovante, conjunto de movimentos e débito no banco. Cobrir timeout e duplo clique; verificar persistência das garantias em integração com PostgreSQL e navegador.
+
+Requisitos relacionados: RF-20; RF-21; RN-04; RN-05
+
+Dependências originais: SIGAB-068; SIGAB-066;SIGAB-076
+
+Evidências a revisar: frontend/src/features/operations/ServiceBatchPage.tsx; backend/sigab/domain/operations.py; frontend/e2e/journeys.spec.ts
+
+Observações: Origem: docs/validacao/diferencas-requisitos-2026-11-10.md. IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências anteriores devem ser resolvidas com o mapeamento de chaves reais. Inspeção estática não equivale a reprodução; registrar evidência após corrigir. Nenhuma homologação ou mudança de status externa é presumida.
+
+Execução em 10/11/2026: Concluída tecnicamente; critérios verificados nos testes e evidências. Evidência: docs/validacao/tarefas-074-a-078.md. Estado local, sem atualização externa no Jira.",Highest,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-10,correcao-operacional,Garantias operacionais,77,3001,76,,,,,
+Task,To Do,[SIGAB-078] Completar jornada React de entrada e liquidação quantitativa,"Entrada, devolução parcial e consumo quantitativo existem na API, mas não há jornada React completa para o operador. Complementa o livro e as consultas já existentes sem reimplementá-los.
+
+ID original: SIGAB-078
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Correções da revisão de 10/11 (sem data comprometida)
+
+Responsável sugerido: Frontend/Backend/QA
+
+Entregável: Completar jornada React de entrada e liquidação quantitativa; implementação e evidências dos critérios de aceite.
+
+Critério de aceite: Operador autorizado registra entrada, consulta pendência, devolve parte e justifica consumo sem chamadas manuais à API. Exibir resumo e confirmação antes da mutação, quantidade restante após cada operação e motivo obrigatório de consumo. Entregar 50, devolver 20 aptos e consumir 10 deixa 20 pendentes. Reusar serviços existentes e contratos aprovados; dependências de modelo disponível/inapto, unidade e permissões precisam estar decididas antes de habilitar fluxos afetados. Cobrir falta de permissão, outro tenant, saldo insuficiente, reenvio e erros. Consulta consolidada permanece na SIGAB-069; inventário React na SIGAB-062/063.
+
+Requisitos relacionados: RF-13; RF-21; RF-24; RF-27; RN-04; RN-09
+
+Dependências originais: SIGAB-008; SIGAB-041; SIGAB-054; SIGAB-069; SIGAB-067;SIGAB-076;SIGAB-077
+
+Evidências a revisar: frontend/src/features/operations/; backend/sigab/api/operations.py; backend/sigab/api/self_service.py
+
+Observações: Origem: docs/validacao/diferencas-requisitos-2026-11-10.md. IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências anteriores devem ser resolvidas com o mapeamento de chaves reais. Inspeção estática não equivale a reprodução; registrar evidência após corrigir. Nenhuma homologação ou mudança de status externa é presumida.
+
+Execução em 10/11/2026: Parcial: jornada React apta implementada. Aceite integral depende das decisões SIGAB-008/041; estoque inapto e aprovação independente de ajustes permanecem pendentes. Evidência: docs/validacao/tarefas-074-a-078.md. Estado local, sem atualização externa no Jira.",High,sigab,tipo-desenvolvimento,origem-auditoria-2026-11-10,correcao-operacional,Garantias operacionais,78,3001,76,77,,,,

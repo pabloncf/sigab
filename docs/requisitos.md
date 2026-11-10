@@ -1,5 +1,7 @@
 # Requisitos e rastreabilidade
 
+**Definição vigente em 10/11/2026:** produto single-tenant, uma instalação e banco exclusivos por cliente. RF-01 e RNF-05 da fonte original são substituídos pelo isolamento entre instalações e pela autorização entre unidades; login não recebe organização. Ver [ADR 0007](adr/0007-single-tenant.md). As fotografias anteriores abaixo permanecem históricas.
+
 O documento inicial está preservado em [DOC-0011 v0.1](fontes/DOC-0011-analise-de-requisitos-v0.1.md). As decisões posteriores refinam seu escopo e domínio; não alteram retroativamente a fonte. Validação de referência, validação com organização-alvo, implementação e aceite do fluxo são estados distintos e precisam de evidência própria.
 
 ## Fotografia atual — 2026-11-06

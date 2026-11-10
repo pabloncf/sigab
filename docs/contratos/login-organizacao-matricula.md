@@ -1,5 +1,7 @@
 # Login por organização e matrícula — original 049 / Jira 73
 
+**Contrato histórico, substituído em 10/11/2026 pelo [ADR 0007](../adr/0007-single-tenant.md).** O login atual recebe apenas matrícula/usuário técnico e senha, na organização única da instalação. Não divulgar nem solicitar UUID de organização para entrar. Limitação de tentativas usa identificador local e IP. O conteúdo abaixo registra a implementação anterior.
+
 O formulário `/entrar/` recebe organização (UUID institucional), matrícula e senha. O administrador informa o UUID da organização ao provisionar o acesso. A matrícula é resolvida em `Membership` ativa na organização e deve identificar uma pessoa ativa com uma conta ativa e não revogada. Duas organizações podem usar a mesma matrícula e senhas independentes.
 
 Contas técnicas sem pessoa continuam usando username global e organização vazia. Uma conta vinculada a pessoa não autentica por esse caminho. Não existe seleção pública de organizações ou recuperação que confirme a existência de outra conta.

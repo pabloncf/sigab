@@ -11,6 +11,7 @@ function areas(session: Session) {
   return [
     { href: "/", label: "Acervo" },
     ...(session.permissions.can_manage_restrictions ? [{ href: "/restricoes", label: "Restrições" }] : []),
+    ...(session.permissions.can_use_stock ? [{ href: "/estoque", label: "Estoque" }] : []),
     ...(session.permissions.can_checkout ? [{ href: "/atendimento", label: "Atendimento" }] : []),
     ...(session.permissions.can_use_self_service ? [{ href: "/minha-posse", label: "Minha posse" }] : []),
     ...(session.permissions.can_view_items ? [{ href: "/atividade", label: "Atividade" }] : []),

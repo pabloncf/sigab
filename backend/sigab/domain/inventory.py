@@ -16,7 +16,9 @@ from sigab.services import ConflictError, NotFoundError, audit
 
 @transaction.atomic
 def open_inventory_session(ctx, *, unit_id):
-    unit = Unit.objects.filter(pk=unit_id, organization=ctx.organization).first()
+    unit = (
+        Unit.objects.select_for_update().filter(pk=unit_id, organization=ctx.organization).first()
+    )
     if not unit or not has_permission(ctx.actor, VIEW_ITEM, ctx.organization, unit):
         raise PermissionDenied
     if InventorySession.objects.filter(unit=unit, status=InventorySession.Status.OPEN).exists():
@@ -77,20 +79,47 @@ def record_inventory_count(ctx, *, session_id, item_id, counted_state):
     count.counted_at = timezone.now()
     count.counted_by = ctx.actor
     count.save(update_fields=["counted_state", "counted_at", "counted_by", "updated_at"])
+    divergence = InventoryDivergence.objects.filter(count=count).first()
     if counted_state != count.expected_state:
-        InventoryDivergence.objects.update_or_create(
-            count=count,
-            defaults={
-                "session": session,
-                "expected_state": count.expected_state,
-                "counted_state": counted_state,
-            },
+        if divergence is None:
+            divergence = InventoryDivergence.objects.create(
+                count=count,
+                session=session,
+                expected_state=count.expected_state,
+                counted_state=counted_state,
+            )
+        elif previous != counted_state:
+            before = divergence_snapshot(divergence)
+            divergence.counted_state = counted_state
+            divergence.status = InventoryDivergence.Status.OPEN
+            divergence.reason = ""
+            divergence.resolution = ""
+            divergence.resolved_by = None
+            divergence.resolved_at = None
+            divergence.save()
+            audit(
+                ctx,
+                "inventory.divergence.reopened",
+                divergence,
+                {"before": before, "after": divergence_snapshot(divergence)},
+            )
+    elif divergence is not None and previous != counted_state:
+        before = divergence_snapshot(divergence)
+        divergence.counted_state = counted_state
+        divergence.status = InventoryDivergence.Status.DISMISSED
+        divergence.assignee = ctx.actor
+        divergence.reason = "Recontagem coincide com a situação esperada."
+        divergence.resolution = divergence.reason
+        divergence.resolved_by = ctx.actor
+        divergence.resolved_at = timezone.now()
+        divergence.save()
+        audit(
+            ctx,
+            "inventory.divergence.recount_matched",
+            divergence,
+            {"before": before, "after": divergence_snapshot(divergence)},
+            reason=divergence.reason,
         )
-    else:
-        InventoryDivergence.objects.filter(
-            count=count,
-            status__in=[InventoryDivergence.Status.OPEN, InventoryDivergence.Status.INVESTIGATING],
-        ).delete()
     audit(
         ctx,
         "inventory.count",
@@ -98,6 +127,19 @@ def record_inventory_count(ctx, *, session_id, item_id, counted_state):
         {"counted_state": {"from": previous, "to": counted_state}},
     )
     return count
+
+
+def divergence_snapshot(divergence):
+    return {
+        "status": divergence.status,
+        "expected_state": divergence.expected_state,
+        "counted_state": divergence.counted_state,
+        "assignee_id": str(divergence.assignee_id) if divergence.assignee_id else None,
+        "reason": divergence.reason,
+        "resolution": divergence.resolution,
+        "resolved_by": str(divergence.resolved_by_id) if divergence.resolved_by_id else None,
+        "resolved_at": divergence.resolved_at.isoformat() if divergence.resolved_at else None,
+    }
 
 
 @transaction.atomic
@@ -110,16 +152,23 @@ def update_divergence(
     reason="",
     resolution="",
 ):
-    divergence = (
-        InventoryDivergence.objects.select_for_update()
-        .filter(pk=divergence_id, session__organization=ctx.organization)
-        .select_related("session__unit")
+    # Lock the session first, as count and close do, so a resolution cannot race closure.
+    session_id = (
+        InventoryDivergence.objects.filter(pk=divergence_id, session__organization=ctx.organization)
+        .values_list("session_id", flat=True)
         .first()
     )
-    if not divergence:
+    if session_id is None:
         raise NotFoundError
-    if divergence.session.status != InventorySession.Status.OPEN:
+    session = InventorySession.objects.select_for_update().get(pk=session_id)
+    if session.status != InventorySession.Status.OPEN:
         raise ConflictError("Divergência de inventário fechado não pode ser alterada.")
+    divergence = (
+        InventoryDivergence.objects.select_for_update(of=("self",))
+        .select_related("session__unit")
+        .get(pk=divergence_id)
+    )
+    before = divergence_snapshot(divergence)
     if not has_permission(
         ctx.actor, "inventory.adjust.approve", ctx.organization, divergence.session.unit
     ):
@@ -143,7 +192,8 @@ def update_divergence(
         ).first()
         if not assignee:
             raise ValidationError({"assignee_id": "Responsável inválido."})
-    previous = divergence.status
+    if status != InventoryDivergence.Status.OPEN and assignee is None:
+        raise ValidationError({"assignee_id": "Investigação e encerramento exigem responsável."})
     divergence.status = status
     divergence.assignee = assignee
     divergence.reason = reason
@@ -153,7 +203,7 @@ def update_divergence(
         ctx,
         "inventory.divergence.update",
         divergence,
-        {"status": {"from": previous, "to": status}, "assignee_id": str(assignee_id or "")},
+        {"before": before, "after": divergence_snapshot(divergence)},
         reason=reason or resolution,
     )
     return divergence
@@ -177,6 +227,8 @@ def close_inventory_session(ctx, *, session_id):
         status__in=[InventoryDivergence.Status.RESOLVED, InventoryDivergence.Status.DISMISSED]
     ).exists():
         raise ConflictError("Resolva ou justifique todas as divergências antes de fechar.")
+    if session.divergences.filter(assignee__isnull=True).exists():
+        raise ConflictError("Toda divergência encerrada deve ter responsável.")
     if session.counts.filter(counted_at__isnull=True).exists():
         raise ConflictError("Todos os itens esperados devem ser contados.")
     session.status = InventorySession.Status.CLOSED

@@ -12,7 +12,9 @@ class Command(BaseCommand):
     help = "Cria uma conta separada para uma pessoa já cadastrada."
 
     def add_arguments(self, parser):
-        parser.add_argument("--organization-id", required=True)
+        parser.add_argument(
+            "--organization-id", help="Compatibilidade: deve corresponder à organização local."
+        )
         parser.add_argument("--person-id", required=True)
         parser.add_argument("--username", required=True)
         parser.add_argument("--email", required=True)
@@ -20,12 +22,16 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        organization = Organization.objects.filter(pk=options["organization_id"]).first()
+        organization = Organization.objects.filter(installation_key=1).first()
         person = Person.objects.filter(
             pk=options["person_id"], organization=organization, is_active=True
         ).first()
+        if options.get("organization_id") and (
+            organization is None or str(organization.id) != str(options["organization_id"])
+        ):
+            raise CommandError("O identificador não corresponde à organização desta instalação.")
         if not organization or not person:
-            raise CommandError("Organização ou pessoa ativa não encontrada no mesmo tenant.")
+            raise CommandError("Organização ou pessoa ativa não encontrada nesta instalação.")
         if Account.objects.filter(username=options["username"]).exists():
             raise CommandError("O identificador de login já existe.")
         password = options["password"] or getpass("Senha inicial: ")

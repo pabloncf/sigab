@@ -10,12 +10,12 @@ from sigab.models import (
     Grant,
     Membership,
     Movement,
-    Organization,
     Person,
     Role,
     Unit,
 )
 from sigab.permissions import MANAGE_IDENTITY, MOVEMENT_CHECKOUT
+from sigab.tests.legacy_organizations import legacy_organization
 
 PASSWORD = "Senha-forte-123"
 
@@ -115,7 +115,7 @@ def test_cpf_is_unique_per_organization(identity):
         identity["client"], "post", "/api/v1/people/", {"name": "Outra", "cpf": CPF_B}
     )
     assert duplicate.status_code == 400
-    other = Organization.objects.create(name="Outra organização")
+    other = legacy_organization(name="Outra organização")
     Person(organization=other, name="Mesma pessoa em outro órgão", cpf=CPF_B).full_clean()
 
 
@@ -129,7 +129,7 @@ def test_registration_is_unique_per_organization(identity):
     assert duplicate.json()["details"] == {
         "non_field_errors": ["Matrícula já cadastrada nesta organização."]
     }
-    other = Organization.objects.create(name="Outra organização")
+    other = legacy_organization(name="Outra organização")
     other_unit = Unit.objects.create(organization=other, name="U", code="U")
     other_person = Person.objects.create(organization=other, name="P")
     Membership(
@@ -140,7 +140,7 @@ def test_registration_is_unique_per_organization(identity):
 @pytest.mark.django_db
 def test_membership_rejects_unit_from_other_organization(identity):
     person = _create_person(identity["client"])
-    other = Organization.objects.create(name="Outra organização")
+    other = legacy_organization(name="Outra organização")
     foreign_unit = Unit.objects.create(organization=other, name="U", code="U-X")
     response = _json(
         identity["client"],
@@ -239,7 +239,7 @@ def test_identity_requires_manage_permission(client, api_world):
 
 @pytest.mark.django_db
 def test_identity_endpoints_hide_other_organization(identity):
-    other = Organization.objects.create(name="Outra organização")
+    other = legacy_organization(name="Outra organização")
     unit = Unit.objects.create(organization=other, name="U", code="U-O")
     person = Person.objects.create(organization=other, name="Pessoa externa")
     membership = Membership.objects.create(

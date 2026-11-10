@@ -7,6 +7,7 @@ import { ActivityPage } from "./features/audit";
 import { CatalogPage } from "./features/catalog";
 import { PeoplePage, PersonDetailPage } from "./features/identity";
 import { ItemDetailPage, ItemsPage } from "./features/inventory";
+import { StockPage } from "./features/operations/StockPage";
 import { ServiceBatchPage } from "./features/operations";
 import { MyPossessionsPage } from "./features/self-service";
 import { RestrictionsPage } from "./features/restrictions/RestrictionsPage";
@@ -19,7 +20,8 @@ function Page({ session }: { session: Session }) {
   const path = window.location.pathname;
   if (session.permissions.can_manage_restrictions && /^\/restricoes\/?$/.test(path)) return <RestrictionsPage />;
   if (session.permissions.can_use_self_service && /^\/minha-posse\/?$/.test(path)) return <MyPossessionsPage />;
-  if (session.permissions.can_checkout && /^\/atendimento\/?$/.test(path)) return <ServiceBatchPage />;
+  if (session.permissions.can_checkout && /^\/atendimento\/?$/.test(path)) return <ServiceBatchPage session={session} />;
+  if (session.permissions.can_use_stock && /^\/estoque\/?$/.test(path)) return <StockPage session={session} />;
   const itemId = routeId("items");
   if (itemId) return <ItemDetailPage itemId={itemId} />;
   if (session.permissions.can_manage_catalog && /^\/cadastros\/?$/.test(path)) return <CatalogPage />;

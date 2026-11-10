@@ -149,3 +149,11 @@ Toda rota nova precisa de caso em `backend/sigab/tests/test_isolation.py`; um te
 - CPF é **somente escrita**: a resposta traz apenas `cpf_masked` (`***.***.***-09`). Erro de CPF não ecoa o valor enviado.
 - Telefone e CPF só aparecem nos recursos de `/people/`, que exigem `identity.manage`. Listas operacionais (destinatários, responsável do item) trazem só `id` e nome.
 - Senha nunca é devolvida, nem em erro de validação.
+
+## Operação quantitativa — revisão de 10/11/2026
+
+- `GET /api/v1/stock/options/`: tipos quantitativos ativos e unidades/locais ativos no escopo da conta. Cada unidade informa `can_receive`; entrada exige `inventory.adjust.approve` naquela unidade.
+- `GET /api/v1/stock/loans/`: pendências quantitativas abertas, com pessoa, tipo, unidade, local, quantidade restante e `can_settle`. A ação exige `movement.return` na unidade.
+- `GET /api/v1/stock/positions/`: leitura nas unidades com `item.view`, `movement.return` ou `inventory.adjust.approve`; sem concessão, responde 403.
+
+Organização vem da conta autenticada; flags da interface não substituem autorização no serviço. Escritas existentes de entrada e liquidação continuam exigindo confirmação e chave de idempotência. A tela de estoque expõe somente devolução apta; fluxo quantitativo inapto permanece pendente. Consulte a [entrega 074–078](validacao/tarefas-074-a-078.md).

@@ -19,6 +19,7 @@ from sigab.permissions import (
     has_permission,
 )
 from sigab.roles import ROLE_TEMPLATES
+from sigab.tests.legacy_organizations import legacy_organization
 
 MATRIX = Path(__file__).resolve().parents[3] / "docs/decisoes/0002-papeis-e-escopos.json"
 PASSWORD = "Senha-forte-123"
@@ -151,7 +152,7 @@ def test_superuser_has_no_operational_permission_in_tenant(scoped):
 
 @pytest.mark.django_db
 def test_role_of_one_organization_grants_nothing_in_another(scoped):
-    other = Organization.objects.create(name="Outra")
+    other = legacy_organization(name="Outra")
     foreign_role = _role(other, [ITEM_VIEW])
     with pytest.raises(ValidationError):
         Grant(
@@ -282,7 +283,7 @@ def test_independent_auditor_conflict(access_admin):
 
 @pytest.mark.django_db
 def test_grant_endpoints_hide_other_organization(access_admin):
-    other = Organization.objects.create(name="Outra")
+    other = legacy_organization(name="Outra")
     outsider = Account.objects.create_user(
         username="externo", password=PASSWORD, organization=other
     )

@@ -8,6 +8,7 @@ export interface Session {
     can_view_items: boolean;
     can_view_audit: boolean;
     can_checkout: boolean;
+    can_use_stock: boolean;
     can_manage_restrictions: boolean;
     can_use_self_service: boolean;
   };
