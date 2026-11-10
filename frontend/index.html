@@ -3,8 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#12332c" />
+    <meta name="theme-color" content="#1d5c4a" />
     <title>SIGAB</title>
+    <script>
+      // Aplica a aparência escolhida antes do primeiro paint (ver theme/ThemeProvider.tsx).
+      try {
+        var scheme = localStorage.getItem("sigab:color-scheme");
+        if (scheme === "light" || scheme === "dark") document.documentElement.dataset.theme = scheme;
+      } catch (error) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

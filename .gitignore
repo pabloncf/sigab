@@ -13,6 +13,9 @@ frontend/dist/
 frontend/test-results/
 frontend/playwright-report/
 frontend/*.tsbuildinfo
+# Identidade visual de cada instalação; o repositório só versiona o exemplo.
+frontend/public/brand.json
+frontend/public/brand/
 graphify-out/cache/ast/
 graphify-out/
 # Operational backups and private restoration keys

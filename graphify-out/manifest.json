@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "frontend/src/App.tsx": {
-    "mtime": 1794324295.694486,
-    "ast_hash": "db247db1a7a17cadb36f5fd77953d922",
+    "mtime": 1794330950.428014,
+    "ast_hash": "c6c216ccf69aeafc1e23d5fbe20f0e36",
     "semantic_hash": ""
   },
   "frontend/src/api/client.ts": {
@@ -145,8 +145,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/AppShell.tsx": {
-    "mtime": 1794324295.695029,
-    "ast_hash": "edc0e10f3b55a4741b699cf6d7b370cf",
+    "mtime": 1794331242.894744,
+    "ast_hash": "e4eb7afb6e3d2951fcde0e846c707ee4",
     "semantic_hash": ""
   },
   "frontend/src/components/Feedback.tsx": {
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "frontend/src/main.tsx": {
-    "mtime": 1792439785.3935947,
-    "ast_hash": "0c32fb00a6ed49502d82356334f6354a",
+    "mtime": 1794330951.2102256,
+    "ast_hash": "777be1b1633a398bfc02846e9bea79a3",
     "semantic_hash": ""
   },
   "frontend/src/pages/ItemDetailPage.tsx": {
@@ -205,13 +205,13 @@
     "semantic_hash": ""
   },
   "frontend/README.md": {
-    "mtime": 1793638426.981096,
-    "ast_hash": "d12c26a81cf8c9107209503f398e6151",
+    "mtime": 1794331253.2610245,
+    "ast_hash": "2accf55334311c373c624875b2ee6105",
     "semantic_hash": ""
   },
   "frontend/index.html": {
-    "mtime": 1792439785.2300568,
-    "ast_hash": "4932c9cfb8236330ca53505c4c95f368",
+    "mtime": 1794331079.9340167,
+    "ast_hash": "226f9265e41dbd834b47d2a83310263d",
     "semantic_hash": ""
   },
   "backend/config/__init__.py": {
@@ -902,6 +902,31 @@
   "docs/validacao/single-tenant-2026-11-10.md": {
     "mtime": 1794329499.6136196,
     "ast_hash": "0156ff67060160e03ceb87f72cc3f1aa",
+    "semantic_hash": ""
+  },
+  "frontend/public/brand.example.json": {
+    "mtime": 1794331080.7134454,
+    "ast_hash": "8e2a60fba2639ba3588ef5579551fdd5",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/modules.tsx": {
+    "mtime": 1794330926.9996164,
+    "ast_hash": "e077dae3a3ec9114da197c6b08aa2ad7",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/Icon.tsx": {
+    "mtime": 1794330926.2210298,
+    "ast_hash": "1d0b637802f63abefc44e880af8ad7ae",
+    "semantic_hash": ""
+  },
+  "frontend/src/theme/ThemeProvider.tsx": {
+    "mtime": 1794330899.3708758,
+    "ast_hash": "e36d821675e27adb3b36359fc8e9c0b3",
+    "semantic_hash": ""
+  },
+  "frontend/src/theme/brand.ts": {
+    "mtime": 1794331181.5173461,
+    "ast_hash": "da85324592cbe828f73674d98c941183",
     "semantic_hash": ""
   }
 }

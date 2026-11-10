@@ -1,0 +1,17 @@
+{
+  "name": "SIGAB",
+  "tagline": "Reserva de armamento — 3º BPM",
+  "monogram": "3B",
+  "logoUrl": "/brand/logo.svg",
+  "colors": {
+    "primary": "#1f3f8a",
+    "accent": "#e0a526",
+    "sidebar": "#101c3d"
+  },
+  "radius": 8,
+  "density": "compact",
+  "modules": {
+    "acervo": { "label": "Reserva" },
+    "minha-posse": { "hidden": true }
+  }
+}

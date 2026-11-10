@@ -1,0 +1,7 @@
+/* Ordem de precedência explícita: camadas posteriores vencem as anteriores. */
+@layer tokens, base, layout, components, utilities;
+
+@import "./tokens.css";
+@import "./base.css";
+@import "./layout.css";
+@import "./components.css";
