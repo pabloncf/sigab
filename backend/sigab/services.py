@@ -74,6 +74,22 @@ class Contingency:
     paper_reference: str
 
 
+OWN_OPERATION_MESSAGE = (
+    "O operador não registra a própria retirada ou devolução. Outro operador deve atender."
+)
+
+
+def ensure_not_own_operation(ctx, person_id):
+    """Segregation at the counter: the operator never serves himself.
+
+    An operator who takes or returns material is identified like any servidor, and the
+    operation is registered by another operator.
+    """
+    own_person = getattr(ctx.actor, "person_id", None)
+    if own_person is not None and own_person == person_id:
+        raise ConflictError(OWN_OPERATION_MESSAGE)
+
+
 def audit(ctx, action, instance, changes=None, result="success", reason=""):
     return AuditEvent.objects.create(
         organization=ctx.organization,
@@ -242,6 +258,7 @@ def checkout_item(
         raise PermissionDenied
     from sigab.domain.restrictions import assert_eligible
 
+    ensure_not_own_operation(ctx, recipient.id)
     assert_eligible(ctx, recipient, item.equipment_type_id)
     if not recipient.memberships.filter(organization=ctx.organization, is_active=True).exists():
         raise ValidationError("O destinatário não possui vínculo ativo.")
@@ -351,6 +368,7 @@ def return_item(
     checkout = _open_checkout(ctx, item)
     if item.availability != Item.Availability.IN_CUSTODY or not checkout:
         raise _state_conflict(origin, "O item não possui saída aberta.")
+    ensure_not_own_operation(ctx, item.current_holder_id)
     reason = _condition_reason(condition, reason)
     item_reason = reason if condition == Item.Condition.UNFIT else ""
     now = timezone.now()
@@ -632,6 +650,11 @@ def set_membership_active(ctx, *, membership_id, is_active, confirmed, reason=""
         {"is_active": {"from": not is_active, "to": is_active}},
         reason=reason.strip(),
     )
+    if not is_active:
+        # ADR 0008: the facial template lives only while an active membership exists.
+        from sigab.domain.biometrics import purge_after_last_membership
+
+        purge_after_last_membership(ctx, membership.person)
     return membership
 
 

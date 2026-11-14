@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { postJson } from "../api/client";
 import type { Session } from "../api/types";
 import { AppModule, groupLabels, ModuleGroup } from "../app/modules";
@@ -36,15 +36,16 @@ function BrandMark() {
 function SchemeSwitch() {
   const { scheme, setScheme } = useTheme();
   return (
-    <div className="segmented" role="radiogroup" aria-label="Aparência">
+    <fieldset className="theme-switch" aria-label="Aparência">
+      <legend className="sr-only">Aparência</legend>
       {schemes.map((option) => (
-        <button key={option.value} type="button" role="radio" aria-checked={scheme === option.value}
-          title={option.label} onClick={() => setScheme(option.value)}>
+        <label key={option.value} title={option.label}>
+          <input type="radio" name="appearance" value={option.value} checked={scheme === option.value} onChange={() => setScheme(option.value)} />
           <Icon name={option.icon} size={16} />
           <span className="sr-only">{option.label}</span>
-        </button>
+        </label>
       ))}
-    </div>
+    </fieldset>
   );
 }
 
@@ -54,14 +55,34 @@ function initials(name: string) {
 
 export function AppShell({ session, modules, active, children }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const sidebar = useRef<HTMLElement>(null);
+  const menuButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
     // Leva o foco para a navegação aberta, para quem usa teclado ou leitor de tela.
-    document.querySelector<HTMLElement>("#sidebar .sidebar-nav a")?.focus();
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); };
+    sidebar.current?.querySelector<HTMLElement>(".sidebar-nav a")?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setMenuOpen(false); }
+      if (event.key !== "Tab") return;
+      const controls = [...(sidebar.current?.querySelectorAll<HTMLElement>("a[href], button, input:not(:disabled)") ?? [])].filter((element) => element.offsetParent !== null);
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (event.shiftKey && (document.activeElement === first || !sidebar.current?.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !sidebar.current?.contains(document.activeElement))) { event.preventDefault(); first?.focus(); }
+    };
+    const desktop = window.matchMedia("(min-width: 1081px)");
+    const closeOnDesktop = () => { if (desktop.matches) setMenuOpen(false); };
+    desktop.addEventListener("change", closeOnDesktop);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      desktop.removeEventListener("change", closeOnDesktop);
+      document.body.style.overflow = previousOverflow;
+      menuButton.current?.focus();
+    };
   }, [menuOpen]);
 
   async function handleLogout() {
@@ -79,15 +100,15 @@ export function AppShell({ session, modules, active, children }: AppShellProps) 
 
       <header className="mobile-bar">
         <BrandMark />
-        <button className="icon-button" type="button" aria-expanded={menuOpen} aria-controls="sidebar"
+        <button ref={menuButton} className="icon-button" type="button" aria-expanded={menuOpen} aria-controls="sidebar"
           onClick={() => setMenuOpen((open) => !open)}>
           <Icon name={menuOpen ? "close" : "menu"} />
           <span className="sr-only">{menuOpen ? "Fechar menu" : "Abrir menu"}</span>
         </button>
       </header>
 
-      <aside className="sidebar" id="sidebar">
-        <div className="sidebar-brand"><BrandMark /></div>
+      <aside className="sidebar" id="sidebar" ref={sidebar} role={menuOpen ? "dialog" : undefined} aria-modal={menuOpen || undefined} aria-label={menuOpen ? "Menu de navegação" : undefined}>
+        <div className="sidebar-brand"><BrandMark /><button className="icon-button sidebar-close" type="button" aria-label="Fechar menu" onClick={() => setMenuOpen(false)}><Icon name="close" /></button></div>
         <nav className="sidebar-nav" aria-label="Áreas">
           {groups.map(({ group, items }) => (
             <div className="nav-group" key={group}>
@@ -122,7 +143,7 @@ export function AppShell({ session, modules, active, children }: AppShellProps) 
       </aside>
       <button className="sidebar-scrim" type="button" tabIndex={-1} aria-hidden="true" onClick={() => setMenuOpen(false)} />
 
-      <main className="content" id="conteudo" tabIndex={-1}>{children}</main>
+      <main className="content" id="conteudo" tabIndex={-1} inert={menuOpen || undefined}>{children}</main>
     </div>
   );
 }

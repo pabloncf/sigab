@@ -324,3 +324,176 @@ def test_same_key_quantitative_basket_race_debits_once(world):
     assert balance.quantity == 50
     assert ServiceBatch.objects.count() == 1
     assert StockLoan.objects.count() == 1
+
+
+def _return_basket(world, loan, items):
+    from sigab.domain.operations import ItemReturnLine, StockReturnLine, return_basket
+
+    return lambda ctx, key: return_basket(
+        ctx,
+        person_id=world["person"].id,
+        items=[ItemReturnLine(item.id, "fit") for item in items],
+        stock=[StockReturnLine(loan.id, Decimal("10"))],
+        idempotency_key=key,
+        confirmed=True,
+    )
+
+
+def _delivered_basket(world):
+    kind = EquipmentType.objects.create(
+        organization=world["org"], name="Munição corrida", classification="quantitative"
+    )
+    StockBalance.objects.create(
+        organization=world["org"],
+        equipment_type=kind,
+        unit=world["unit"],
+        storage_location=world["location"],
+        quantity=Decimal("100"),
+    )
+    batch, _ = checkout_basket(
+        world["ctx"],
+        recipient_id=world["person"].id,
+        item_ids=[world["item"].id],
+        stock=[StockRequest(kind.id, world["unit"].id, world["location"].id, Decimal("10"))],
+        idempotency_key=uuid.uuid4(),
+        custody_mode="indefinite",
+        due_at=None,
+        confirmed=True,
+    )
+    return StockLoan.objects.get(batch=batch)
+
+
+def test_two_simultaneous_return_batches_accept_exactly_one(world):
+    from sigab.models import ReturnBatch
+
+    loan = _delivered_basket(world)
+    results = _race(
+        world, _return_basket(world, loan, [world["item"]]), [uuid.uuid4(), uuid.uuid4()]
+    )
+    assert results == ["accepted", "conflict"]
+    assert ReturnBatch.objects.count() == 1
+    assert Movement.objects.filter(movement_type="return").count() == 1
+    assert StockLedgerEntry.objects.filter(entry_type="return").count() == 1
+    assert StockBalance.objects.get(equipment_type__name="Munição corrida").quantity == 100
+    assert verify_chain(world["org"]) is None
+
+
+def test_same_key_return_batch_race_records_once(world):
+    from sigab.models import ReturnBatch
+
+    loan = _delivered_basket(world)
+    key = uuid.uuid4()
+    results = _race(world, _return_basket(world, loan, [world["item"]]), [key, key])
+    assert results == ["accepted", "replayed"]
+    assert ReturnBatch.objects.count() == 1
+    assert StockLedgerEntry.objects.filter(entry_type="return").count() == 1
+
+
+@pytest.mark.identity_check
+def test_one_approved_face_verification_authorizes_exactly_one_checkout(world):
+    from datetime import timedelta
+
+    from sigab.models import FaceVerification
+
+    second = Item.objects.create(
+        organization=world["org"],
+        equipment_type=world["item"].equipment_type,
+        unit=world["unit"],
+        storage_location=world["location"],
+        serial_number="SYN-RACE-2",
+    )
+    now = timezone.now()
+    verification = FaceVerification.objects.create(
+        organization=world["org"],
+        person=world["person"],
+        operator=world["account"],
+        operation="checkout",
+        result="approved",
+        operator_confirmed=True,
+        engine_version="synthetic",
+        verified_at=now,
+        expires_at=now + timedelta(minutes=2),
+    )
+    keys = [uuid.uuid4(), uuid.uuid4()]
+    chosen = dict(zip(keys, [world["item"], second], strict=True))
+
+    def operation(ctx, key):
+        item = chosen[key]
+        return checkout_basket(
+            ctx,
+            recipient_id=world["person"].id,
+            item_ids=[item.id],
+            stock=[],
+            idempotency_key=key,
+            custody_mode="indefinite",
+            due_at=None,
+            confirmed=True,
+            face_verification_id=verification.id,
+        )
+
+    assert _race(world, operation, keys) == ["accepted", "conflict"]
+    assert ServiceBatch.objects.count() == 1
+
+
+def test_two_administrators_approving_the_same_term_execute_once(world):
+    from sigab.domain.biometrics import decide_identity_exception, request_identity_exception
+    from sigab.models import Grant, IdentityException, ReturnBatch, Role
+
+    checkout_item(
+        world["ctx"],
+        item_id=world["item"].id,
+        recipient_id=world["person"].id,
+        idempotency_key=uuid.uuid4(),
+        confirmed=True,
+    )
+    term, _ = request_identity_exception(
+        world["ctx"],
+        operation="return",
+        person_id=world["person"].id,
+        reason_code="camera_unavailable",
+        reason="",
+        request={"items": [{"item_id": str(world["item"].id), "condition": "fit"}], "stock": []},
+        idempotency_key=uuid.uuid4(),
+        confirmed=True,
+    )
+    IdentityException.objects.filter(pk=term.pk).update(status="pending_approval")
+    role = Role.objects.create(
+        organization=world["org"], name="Gestor", permissions=["movement.exception.approve"]
+    )
+    approvers = []
+    for name in ("gestor-a", "gestor-b"):
+        account = Account.objects.create_user(
+            username=name, password="Senha-forte-123", organization=world["org"]
+        )
+        Grant.objects.create(
+            organization=world["org"],
+            account=account,
+            role=role,
+            scope_type=Grant.Scope.ORGANIZATION,
+            granted_by=world["account"],
+        )
+        approvers.append(account)
+    barrier = threading.Barrier(2)
+
+    def attempt(account):
+        close_old_connections()
+        ctx = CommandContext(
+            Account.objects.get(pk=account.pk),
+            Organization.objects.get(pk=world["org"].pk),
+            f"approve-{account.username}",
+        )
+        barrier.wait()
+        try:
+            decide_identity_exception(
+                ctx, exception_id=term.id, approve=True, reason="", confirmed=True
+            )
+            return "accepted"
+        except ConflictError:
+            return "conflict"
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sorted(pool.map(attempt, approvers)) == ["accepted", "conflict"]
+    assert ReturnBatch.objects.count() == 1
+    assert Movement.objects.filter(movement_type="return").count() == 1

@@ -3,7 +3,15 @@ name = "sigab"
 version = "0.1.0"
 description = "Base do Sistema Integrado de Gestão de Acervo Bélico"
 requires-python = ">=3.12"
-dependencies = ["Django==5.2.18", "psycopg[binary]>=3.2,<4"]
+dependencies = [
+    "cryptography>=44,<47",
+    "Django==5.2.18",
+    "psycopg[binary]>=3.2,<4",
+]
+
+[project.optional-dependencies]
+# Local face engine (ADR 0008); model files are configured per installation.
+face = ["opencv-python-headless>=4.10,<5", "numpy>=2,<3"]
 
 [dependency-groups]
 dev = [
@@ -17,6 +25,7 @@ dev = [
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
 addopts = "--strict-markers"
+markers = ["identity_check: run with the ADR 0008 identity requirement enabled"]
 
 [tool.ruff]
 line-length = 100

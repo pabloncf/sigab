@@ -330,4 +330,6 @@ def test_bootstrap_creates_matrix_roles_and_initial_admin():
     }
     assert has_permission(account, IDENTITY_MANAGE, organization)
     assert has_permission(account, CATALOG_MANAGE, organization)
-    assert not has_permission(account, MOVEMENT_CHECKOUT, organization)
+    # Matrix 1.5.0: the initial administrator also registers checkout and return.
+    assert has_permission(account, MOVEMENT_CHECKOUT, organization)
+    assert has_permission(account, MOVEMENT_RETURN, organization)

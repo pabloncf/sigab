@@ -23,6 +23,7 @@ export function useConfirmedRequest<T>(key: string) {
   const busy = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const lastStatus = useRef<number | null>(null);
 
   async function execute(path?: string, body?: Body, summary?: string): Promise<T | undefined> {
     if (busy.current) return;
@@ -32,6 +33,7 @@ export function useConfirmedRequest<T>(key: string) {
     } : null);
     if (!attempt) return;
     busy.current = true;
+    lastStatus.current = null;
     setSubmitting(true);
     setError("");
     try {
@@ -61,6 +63,7 @@ export function useConfirmedRequest<T>(key: string) {
         pendingRef.current = null;
         setPending(null);
       }
+      lastStatus.current = requestError instanceof ApiError ? requestError.status : null;
       setError(requestError instanceof ApiError ? requestError.message : "Sem confirmação do servidor. Verifique o resultado antes de iniciar outra operação.");
     } finally {
       busy.current = false;
@@ -68,5 +71,8 @@ export function useConfirmedRequest<T>(key: string) {
     }
   }
 
-  return { pending, submitting, error, execute };
+  /** HTTP status of the last refused attempt, or null when it succeeded or had no answer. */
+  const failureStatus = () => lastStatus.current;
+
+  return { pending, submitting, error, execute, failureStatus };
 }

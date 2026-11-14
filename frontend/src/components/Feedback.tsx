@@ -1,3 +1,7 @@
+export function UpdatingState() {
+  return <p className="updating-state" role="status">Atualizando resultados…</p>;
+}
+
 export function LoadingState({ label = "Carregando dados" }: { label?: string }) {
   return (
     <div className="loading-state" role="status" aria-live="polite">

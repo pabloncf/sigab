@@ -2,19 +2,37 @@ import { FormEvent, useEffect, useState } from "react";
 import { ApiError, apiRequest } from "../../api/client";
 import type { ServiceBatchOptions, ServiceBatchResult, Session } from "../../api/types";
 import { ErrorState, LoadingState } from "../../components/Feedback";
+import { formatQuantity } from "../../components/format";
 import { useConfirmedRequest } from "../../hooks/useConfirmedRequest";
+import { CounterEntry } from "./CounterEntry";
+import { IdentityCheck } from "./IdentityCheck";
+import { RegisteredPicker, UnregisteredPicker } from "./MaterialPickers";
+import { PersonCard, useCounterPerson } from "./PersonCard";
+import { useCounterArrival } from "./useCounterArrival";
 
+type Body = Record<string, unknown> & { recipient_id: string; item_ids: string[]; stock: unknown[]; custody_mode: string; due_at: string | null };
+
+/**
+ * Retirada no balcão: a pessoa é identificada pela matrícula (e pelo rosto), depois o
+ * operador digita os materiais, sempre em listas separadas com e sem registro.
+ */
 export function ServiceBatchPage({ session }: { session: Session }) {
-  const [error, setError] = useState("");
-  const [result, setResult] = useState<ServiceBatchResult | null>(null);
+  const faceRequired = Boolean(session.permissions.identity_check_required);
+  const arrival = useCounterArrival();
+  const { person, error: personError } = useCounterPerson(arrival.personId);
   const request = useConfirmedRequest<ServiceBatchResult>(
     `sigab:${session.organization.id}:${session.user.id}:basket`
   );
+  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
+  const [result, setResult] = useState<ServiceBatchResult | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState("");
   const [options, setOptions] = useState<ServiceBatchOptions | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [stockQuantities, setStockQuantities] = useState<Record<string, string>>({});
+  const [custodyMode, setCustodyMode] = useState("indefinite");
+  const [identity, setIdentity] = useState<{ body: Body; summary: string } | null>(null);
 
   async function loadOptions(afterSuccess = false) {
     setRefreshing(true);
@@ -24,7 +42,7 @@ export function ServiceBatchPage({ session }: { session: Session }) {
       setOptions(await apiRequest<ServiceBatchOptions>("/service-batches/options/"));
     } catch (requestError) {
       const message = requestError instanceof ApiError ? requestError.message : "Não foi possível atualizar os materiais.";
-      if (afterSuccess) setRefreshError(`Atendimento confirmado. Falha ao atualizar opções: ${message}`);
+      if (afterSuccess) setRefreshError(`Retirada confirmada. Falha ao atualizar opções: ${message}`);
       else setError(message);
     } finally {
       setRefreshing(false);
@@ -33,66 +51,153 @@ export function ServiceBatchPage({ session }: { session: Session }) {
 
   useEffect(() => { void loadOptions(); }, []);
 
-  async function complete(result: ServiceBatchResult | undefined, form?: HTMLFormElement) {
-    if (!result) return;
-    setResult(result);
+  async function complete(value: ServiceBatchResult | undefined, form?: HTMLFormElement) {
+    if (!value) return;
+    setResult(value);
+    setIdentity(null);
     form?.reset();
     setSelectedItems([]);
     setStockQuantities({});
+    setCustodyMode("indefinite");
+    // O balcão volta a pedir a próxima matrícula.
+    arrival.reset();
     await loadOptions(true);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!options) return;
     const element = event.currentTarget;
     const form = new FormData(element);
+    const stockLines = options.stock.filter((line) => Number(stockQuantities[line.id]) > 0);
+    if (selectedItems.length === 0 && stockLines.length === 0) {
+      setFormError("Adicione ao menos um material com ou sem registro.");
+      return;
+    }
+    setFormError("");
     const rawDue = String(form.get("due_at") ?? "");
-    const stock = (options?.stock ?? []).flatMap((line) => {
-      const quantity = stockQuantities[line.id]?.trim();
-      return quantity && Number(quantity) > 0 ? [{
-        equipment_type_id: line.equipment_type_id, unit_id: line.unit_id,
-        storage_location_id: line.storage_location_id, quantity
-      }] : [];
-    });
-    const person = options?.people.find((entry) => entry.id === form.get("recipient_id"));
-    const itemNames = (options?.items ?? []).filter((item) => selectedItems.includes(item.id)).map((item) => item.identifier);
-    const stockNames = (options?.stock ?? []).filter((line) => Number(stockQuantities[line.id]) > 0)
-      .map((line) => `${line.equipment_type}: ${stockQuantities[line.id]}`);
+    const stock = stockLines.map((line) => ({
+      equipment_type_id: line.equipment_type_id, unit_id: line.unit_id,
+      storage_location_id: line.storage_location_id, quantity: stockQuantities[line.id]
+    }));
+    const itemNames = options.items.filter((item) => selectedItems.includes(item.id)).map((item) => item.identifier);
+    const stockNames = stockLines.map((line) => `${line.equipment_type}: ${stockQuantities[line.id]}`);
     const summary = `${person?.name ?? "Destinatário"} · ${[...itemNames, ...stockNames].join(", ")}`;
-    await complete(await request.execute("/service-batches/", {
-      recipient_id: String(form.get("recipient_id") ?? ""), item_ids: selectedItems,
-      stock, custody_mode: String(form.get("custody_mode")),
-      due_at: rawDue ? new Date(rawDue).toISOString() : null,
+    const body: Body = {
+      recipient_id: arrival.personId, item_ids: selectedItems,
+      stock, custody_mode: custodyMode,
+      due_at: custodyMode === "fixed_term" && rawDue ? new Date(rawDue).toISOString() : null,
       confirmed: form.get("confirmed") === "on"
-    }, summary), element);
+    };
+    if (faceRequired && arrival.verificationId) {
+      const value = await request.execute("/service-batches/", { ...body, face_verification_id: arrival.verificationId }, summary);
+      // Erro de preenchimento não gasta a verificação (a transação é desfeita no servidor);
+      // só sucesso ou conflito, como verificação vencida, exigem nova identificação.
+      if (value || request.failureStatus() === 409) arrival.consume();
+      await complete(value, element);
+      return;
+    }
+    if (faceRequired) {
+      // ADR 0008: sem verificação válida, a identidade é confirmada antes do envio.
+      setIdentity({ body, summary });
+      return;
+    }
+    await complete(await request.execute("/service-batches/", body, summary), element);
   }
 
-  const pending = request.pending && <section className="feedback warning" role="status"><p>Atendimento aguardando confirmação: {request.pending.summary}</p><p>Recupere o resultado desta tentativa antes de iniciar outro atendimento.</p><button className="button button-secondary" disabled={request.submitting} onClick={() => void request.execute().then((value) => complete(value))}>Verificar atendimento</button></section>;
-  if (!options) return <>{pending}{request.error && <p role="alert">{request.error}</p>}{error ? <ErrorState message={error} onRetry={() => void loadOptions()} /> : <LoadingState />}</>;
+  async function confirmWithVerification(verificationId: string) {
+    if (!identity) return;
+    await complete(await request.execute("/service-batches/", { ...identity.body, face_verification_id: verificationId }, identity.summary));
+  }
+
+  const pending = request.pending && <section className="feedback warning" role="status"><p>Retirada aguardando confirmação: {request.pending.summary}</p><p>Recupere o resultado desta tentativa antes de iniciar outra retirada.</p><button className="button button-secondary" disabled={request.submitting} onClick={() => void request.execute().then((value) => complete(value))}>Verificar retirada</button></section>;
+  const heading = (
+    <section className="page-heading">
+      <div><p className="context-label">Operação de balcão</p><h1>Retirada</h1><p>Identifique a pessoa pela matrícula e pelo rosto. Depois digite os materiais: com registro pelo número, sem registro pelo nome e quantidade.</p></div>
+    </section>
+  );
+  const success = result && <div className="feedback success" role="status">Retirada confirmada. Comprovante <strong>{result.receipt_code}</strong>.</div>;
+
+  if (!arrival.personId) {
+    return (
+      <>
+        {heading}{success}{pending}
+        {request.error && <div className="feedback error" role="alert">{request.error}</div>}
+        {refreshError && <div className="feedback warning" role="status">{refreshError}<button className="button button-secondary" onClick={() => void loadOptions(true)}>Atualizar materiais</button></div>}
+        <CounterEntry fixedOperation="checkout" faceRequired={faceRequired} />
+      </>
+    );
+  }
+  if (personError) {
+    return <>{heading}<div className="feedback error" role="alert">{personError}</div><button className="button button-secondary" type="button" onClick={arrival.reset}>Identificar outra pessoa</button></>;
+  }
+  if (!options || !person) return <>{heading}{pending}{error ? <ErrorState message={error} onRetry={() => void loadOptions()} /> : <LoadingState />}</>;
+
+  const available = options.items.filter((item) => !selectedItems.includes(item.id));
+  const pickedItems = options.items.filter((item) => selectedItems.includes(item.id));
+  const pickedStock = options.stock.filter((line) => Number(stockQuantities[line.id]) > 0);
+  const locked = refreshing || request.submitting || Boolean(request.pending) || Boolean(refreshError) || Boolean(error);
+
   return (
     <>
-      <section className="page-heading">
-        <div><p className="context-label">Operação de balcão</p><h1>Novo atendimento</h1><p>Selecione a pessoa e materiais individuais ou quantitativos. A confirmação é atômica.</p></div>
-      </section>
+      {heading}
       {request.error && <div className="feedback error" role="alert">{request.error}</div>}
       {pending}
       {refreshError && <div className="feedback warning" role="status">{refreshError}<button className="button button-secondary" onClick={() => void loadOptions(true)}>Atualizar materiais</button></div>}
       {error && <div className="feedback error" role="alert">{error}</div>}
-      {result && <div className="feedback success" role="status">Atendimento confirmado. Comprovante <strong>{result.receipt_code}</strong>.</div>}
-      <section className="detail-card">
-        <form className="dialog-form" onSubmit={submit}>
-          <fieldset disabled={refreshing || request.submitting || Boolean(request.pending) || Boolean(refreshError) || Boolean(error)}>
-          <legend>Materiais do atendimento</legend>
-          <label><span>Pessoa destinatária</span><select name="recipient_id" required defaultValue=""><option value="" disabled>Selecione</option>{options.people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
-          <fieldset><legend>Itens individuais</legend>{options.items.length === 0 ? <p className="muted">Nenhum item disponível.</p> : options.items.map((item) => <label className="checkbox" key={item.id}><input type="checkbox" checked={selectedItems.includes(item.id)} onChange={(event) => setSelectedItems((current) => event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))} /><span>{item.identifier} · {item.equipment_type} · {item.unit}</span></label>)}</fieldset>
-          <fieldset><legend>Materiais quantitativos</legend>{options.stock.length === 0 ? <p className="muted">Nenhum saldo quantitativo disponível.</p> : options.stock.map((line) => <label key={line.id}><span>{line.equipment_type} · {line.unit} · saldo {line.quantity}</span><input type="number" min="0" max={line.quantity} step="0.001" value={stockQuantities[line.id] ?? ""} onChange={(event) => setStockQuantities((current) => ({ ...current, [line.id]: event.target.value }))} /></label>)}</fieldset>
-          <label><span>Modalidade</span><select name="custody_mode" defaultValue="indefinite"><option value="shift">Por turno</option><option value="fixed_term">Prazo determinado</option><option value="indefinite">Prazo indeterminado</option></select></label>
-          <label><span>Prazo, quando determinado</span><input name="due_at" type="datetime-local" /></label>
-          <label className="checkbox"><input name="confirmed" type="checkbox" required /><span>Confirmo destinatário, itens e modalidade.</span></label>
-          <button className="button button-primary" disabled={request.submitting}>{request.submitting ? "Confirmando…" : "Confirmar atendimento"}</button>
-          </fieldset>
-        </form>
-      </section>
+      <PersonCard person={person} operation="checkout" verified={Boolean(arrival.verificationId)} faceRequired={faceRequired} disabled={request.submitting} onCancel={arrival.cancel} />
+      {identity && (
+        <IdentityCheck operation="checkout" personId={arrival.personId} personName={person.name}
+          summary={identity.summary} busy={request.submitting}
+          request={{ items: identity.body.item_ids, stock: identity.body.stock, custody_mode: identity.body.custody_mode, due_at: identity.body.due_at }}
+          onApproved={(id) => void confirmWithVerification(id)} onBack={() => setIdentity(null)} />
+      )}
+      <form className="dialog-form" onSubmit={submit} hidden={Boolean(identity)} aria-label="Materiais da retirada">
+        <fieldset disabled={locked}>
+          <section className="detail-card material-section" aria-label="Materiais com registro">
+            <h2>Com registro</h2>
+            {options.items.length === 0 ? <p className="muted">Nenhum material com registro disponível.</p> : <RegisteredPicker options={available} onAdd={(id) => setSelectedItems((current) => [...current, id])} />}
+            {pickedItems.length > 0 && (
+              <ul className="picked" aria-label="Com registro selecionados">
+                {pickedItems.map((item) => (
+                  <li key={item.id}>
+                    <span><strong>{item.identifier}</strong> · {item.equipment_type} · {item.unit}</span>
+                    <button className="button button-quiet" type="button" aria-label={`Remover ${item.identifier}`} onClick={() => setSelectedItems((current) => current.filter((id) => id !== item.id))}>Remover</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="detail-card material-section" aria-label="Materiais sem registro">
+            <h2>Sem registro</h2>
+            {options.stock.length === 0 ? <p className="muted">Nenhum saldo de material sem registro disponível.</p> : (
+              <UnregisteredPicker
+                options={options.stock.map((line) => ({ id: line.id, name: line.equipment_type, detail: `${line.unit} · ${line.storage_location}`, max: line.quantity }))}
+                onAdd={(id, quantity) => setStockQuantities((current) => ({ ...current, [id]: quantity }))} />
+            )}
+            {pickedStock.length > 0 && (
+              <ul className="picked" aria-label="Sem registro selecionados">
+                {pickedStock.map((line) => (
+                  <li key={line.id}>
+                    <span><strong>{formatQuantity(stockQuantities[line.id])}</strong> · {line.equipment_type} · {line.unit} · {line.storage_location}</span>
+                    <button className="button button-quiet" type="button" aria-label={`Remover ${line.equipment_type}`} onClick={() => setStockQuantities((current) => { const next = { ...current }; delete next[line.id]; return next; })}>Remover</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="detail-card material-section">
+            <label><span>Modalidade</span><select name="custody_mode" value={custodyMode} onChange={(event) => setCustodyMode(event.target.value)}><option value="shift">Por turno</option><option value="fixed_term">Prazo determinado</option><option value="indefinite">Prazo indeterminado</option></select></label>
+            {/* Só o prazo determinado tem data; nas demais modalidades o servidor recusa prazo. */}
+            {custodyMode === "fixed_term" && <label><span>Prazo de devolução</span><input name="due_at" type="datetime-local" required /></label>}
+            {formError && <div className="feedback error" role="alert">{formError}</div>}
+            <label className="checkbox"><input name="confirmed" type="checkbox" required /><span>Confirmo pessoa, materiais e modalidade.</span></label>
+            <button className="button button-primary" disabled={request.submitting}>{request.submitting ? "Confirmando…" : faceRequired && !arrival.verificationId ? "Confirmar identidade" : "Confirmar retirada"}</button>
+          </section>
+        </fieldset>
+      </form>
     </>
   );
 }

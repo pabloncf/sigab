@@ -1,7 +1,10 @@
+import { useUrlQuery } from "../components/Query";
+import { useLatestRequest } from "../hooks/useLatestRequest";
 import { FormEvent, useEffect, useState } from "react";
-import { ApiError, apiPage } from "../api/client";
-import type { ActivityEvent } from "../api/types";
+import { apiPage, describeError } from "../api/client";
+import type { ActivityEvent, Session } from "../api/types";
 import { ErrorState, LoadingState } from "../components/Feedback";
+import { scopeLabel } from "../components/format";
 
 const PAGE = 30;
 const ACTIONS: Record<string, string> = {
@@ -18,39 +21,37 @@ function query(filters: Record<string, string>, offset: number) {
   return `/activity/?${params}`;
 }
 
-export function ActivityPage() {
-  const initial = new URLSearchParams(window.location.search);
-  const [filters, setFilters] = useState({
-    action: "",
-    from: "",
-    to: "",
-    item: initial.get("item") ?? "",
-    person: initial.get("person") ?? ""
-  });
+export function ActivityPage({ session }: { session?: Session }) {
+  const [applied, applyFilters] = useUrlQuery({ action: "", from: "", to: "", item: "", person: "" });
+  const [filters, setFilters] = useState(applied);
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [count, setCount] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  async function load(nextFilters = filters, offset = 0) {
-    setLoading(offset === 0);
+  const beginRequest = useLatestRequest();
+
+  async function load(nextFilters = applied, offset = 0) {
+    const isCurrent = beginRequest();
+    setLoading(true);
     setError("");
     try {
       const page = await apiPage<ActivityEvent>(query(nextFilters, offset));
-      setEvents(offset === 0 ? page.rows : [...events, ...page.rows]);
+      if (!isCurrent()) return;
+      setEvents((current) => offset === 0 ? page.rows : [...current, ...page.rows]);
       setCount(page.count);
     } catch (requestError) {
-      setError(requestError instanceof ApiError ? requestError.message : "Erro inesperado.");
+      if (isCurrent()) setError(describeError(requestError));
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { setFilters(applied); void load(); }, [applied]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void load(filters, 0);
+    applyFilters(filters);
   }
 
   return (
@@ -59,21 +60,21 @@ export function ActivityPage() {
         <div>
           <p className="context-label">Atividade</p>
           <h1>Movimentações recentes</h1>
-          <p>Fatos confirmados do acervo no seu escopo, do mais recente ao mais antigo. A trilha de auditoria completa é separada.</p>
+          <p>Consulte as movimentações registradas {session ? scopeLabel(session) : "nas unidades permitidas à sua conta"}, da mais recente à mais antiga.</p>
         </div>
       </section>
 
       <form className="filter-bar" onSubmit={handleSubmit}>
-        <label><span>Ação</span><select value={filters.action} onChange={(event) => setFilters({ ...filters, action: event.target.value })}><option value="">Todas</option>{Object.entries(ACTIONS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label><span>De</span><input type="date" value={filters.from} onChange={(event) => setFilters({ ...filters, from: event.target.value })} /></label>
-        <label><span>Até</span><input type="date" value={filters.to} onChange={(event) => setFilters({ ...filters, to: event.target.value })} /></label>
+        <label className="field"><span>Ação</span><select value={filters.action} onChange={(event) => setFilters({ ...filters, action: event.target.value })}><option value="">Todas</option>{Object.entries(ACTIONS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label className="field"><span>De</span><input type="date" value={filters.from} onChange={(event) => setFilters({ ...filters, from: event.target.value })} /></label>
+        <label className="field"><span>Até</span><input type="date" value={filters.to} onChange={(event) => setFilters({ ...filters, to: event.target.value })} /></label>
         <button className="button button-secondary">Filtrar</button>
-        {(filters.item || filters.person) && <button className="button button-quiet" type="button" onClick={() => { const cleared = { ...filters, item: "", person: "" }; setFilters(cleared); void load(cleared, 0); }}>Limpar item/pessoa</button>}
+        {(filters.item || filters.person) && <button className="button button-quiet" type="button" onClick={() => { const cleared = { ...filters, item: "", person: "" }; setFilters(cleared); applyFilters(cleared); }}>Limpar item/pessoa</button>}
       </form>
 
       {loading ? <LoadingState /> : error ? <ErrorState message={error} onRetry={() => void load()} /> : (
         <section className="list-panel" aria-label="Atividade">
-          <div className="list-summary"><strong>{count}</strong> {count === 1 ? "registro" : "registros"}</div>
+          <div className="list-summary"><span><strong>{count}</strong> {count === 1 ? "registro" : "registros"}</span></div>
           {events.length === 0 ? <div className="empty-state"><h2>Nenhuma atividade</h2><p>Revise os filtros ou o período.</p></div> : (
             <ul className="sub-list feed">
               {events.map((event) => (
@@ -90,7 +91,7 @@ export function ActivityPage() {
               ))}
             </ul>
           )}
-          {events.length < count && <div className="actions"><button className="button button-secondary" onClick={() => void load(filters, events.length)}>Carregar mais ({count - events.length})</button></div>}
+          {events.length < count && <div className="actions"><button className="button button-secondary" onClick={() => void load(applied, events.length)}>Carregar mais ({count - events.length})</button></div>}
         </section>
       )}
     </>

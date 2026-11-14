@@ -1,6 +1,15 @@
 from django.urls import path, re_path
 
-from . import inventory, operations, restrictions, self_service, views
+from . import (
+    collection,
+    counter,
+    identity,
+    inventory,
+    operations,
+    restrictions,
+    self_service,
+    views,
+)
 
 app_name = "api"
 
@@ -20,6 +29,52 @@ urlpatterns = [
     path(
         "service-batches/options/", operations.service_batch_options, name="service-batch-options"
     ),
+    path("biometrics/", identity.biometric_list, name="biometric-list"),
+    path("people/<uuid:pk>/biometric/", identity.person_biometric, name="person-biometric"),
+    path(
+        "people/<uuid:pk>/biometric/delete/",
+        identity.person_biometric_delete,
+        name="person-biometric-delete",
+    ),
+    path("face-verifications/", identity.face_verification_create, name="face-verification-create"),
+    path(
+        "face-verifications/<uuid:pk>/cancel/",
+        identity.face_verification_cancel,
+        name="face-verification-cancel",
+    ),
+    path("identity-exceptions/", identity.identity_exception_list, name="identity-exception-list"),
+    path(
+        "identity-exceptions/<uuid:pk>/",
+        identity.identity_exception_detail,
+        name="identity-exception-detail",
+    ),
+    path(
+        "identity-exceptions/<uuid:pk>/signed/",
+        identity.identity_exception_signed,
+        name="identity-exception-signed",
+    ),
+    path(
+        "identity-exceptions/<uuid:pk>/cancel/",
+        identity.identity_exception_cancel,
+        name="identity-exception-cancel",
+    ),
+    path(
+        "identity-exceptions/<uuid:pk>/decision/",
+        identity.identity_exception_decision,
+        name="identity-exception-decision",
+    ),
+    path("return-batches/", counter.return_batch_create, name="return-batch-create"),
+    path("return-batches/options/", counter.return_options, name="return-options"),
+    path("counter/identify/", counter.counter_identify, name="counter-identify"),
+    path("movements/", counter.movement_register, name="movement-register"),
+    path(
+        "movements/options/",
+        counter.movement_register_options,
+        name="movement-register-options",
+    ),
+    path("overview/", collection.overview, name="overview"),
+    path("stock/summary/", collection.stock_summary, name="stock-summary"),
+    path("stock/entries/", collection.stock_history, name="stock-history"),
     path("stock/options/", operations.stock_options, name="stock-options"),
     path("stock/loans/", operations.stock_loans, name="stock-loans"),
     path("stock/positions/", operations.stock_positions, name="stock-position-list"),

@@ -24,16 +24,16 @@
     --color-surface-muted: color-mix(in oklch, var(--brand-primary) 5%, #f9fafa);
     --color-surface-hover: color-mix(in oklch, var(--brand-primary) 7%, #ffffff);
     --color-text: color-mix(in oklch, var(--brand-primary) 20%, #111816);
-    --color-text-muted: color-mix(in oklch, var(--brand-primary) 15%, #5f6966);
+    --color-text-muted: color-mix(in oklch, var(--brand-primary) 5%, #56625d);
     --color-border: color-mix(in oklch, var(--brand-primary) 10%, #e2e6e5);
-    --color-border-strong: color-mix(in oklch, var(--brand-primary) 14%, #c3cbc9);
+    --color-border-strong: color-mix(in oklch, var(--brand-primary) 10%, #7c8782);
 
     --color-primary: var(--brand-primary);
-    --color-primary-hover: color-mix(in oklch, var(--brand-primary) 82%, #000);
+    --color-primary-hover: var(--brand-primary);
     --color-primary-soft: color-mix(in oklch, var(--brand-primary) 11%, var(--color-surface));
-    --color-primary-text: color-mix(in oklch, var(--brand-primary) 85%, #000);
-    --color-on-primary: #ffffff;
-    --color-focus: color-mix(in oklch, var(--brand-accent) 70%, transparent);
+    --color-primary-text: color-mix(in oklch, var(--brand-primary) 45%, #000);
+    --color-on-primary: var(--brand-on-primary, #ffffff);
+    --color-focus: var(--color-primary-text);
 
     --color-success: #1d6b4c;
     --color-success-soft: #e2f3ea;
@@ -41,9 +41,10 @@
     --color-warning-soft: #fbf0d9;
     --color-danger: #a33a3a;
     --color-danger-soft: #fbe6e5;
+    --color-danger-strong: #a33a3a;
 
     /* Navegação lateral: sempre escura, derivada da marca */
-    --nav-bg: var(--brand-sidebar);
+    --nav-bg: color-mix(in oklch, var(--brand-sidebar) 25%, #07110e);
     --nav-text: color-mix(in oklch, #fff 72%, var(--nav-bg));
     --nav-text-strong: #ffffff;
     --nav-hover: color-mix(in oklch, #fff 8%, transparent);
@@ -67,8 +68,8 @@
     --radius-lg: calc(var(--radius) * 1.4);
     --radius-pill: 999px;
 
-    --text-xs: .75rem;
-    --text-sm: .8125rem;
+    --text-xs: .8125rem;
+    --text-sm: .875rem;
     --text-base: .9375rem;
     --text-lg: 1.0625rem;
     --text-xl: 1.375rem;
@@ -102,11 +103,11 @@
       --color-text: #e7ecea;
       --color-text-muted: #9aa6a2;
       --color-border: color-mix(in oklch, var(--brand-primary) 10%, #262d2b);
-      --color-border-strong: color-mix(in oklch, var(--brand-primary) 12%, #3a4340);
-      --color-primary: color-mix(in oklch, var(--brand-primary) 70%, #fff);
-      --color-primary-hover: color-mix(in oklch, var(--brand-primary) 58%, #fff);
+      --color-border-strong: color-mix(in oklch, var(--brand-primary) 5%, #7a8b82);
+      --color-primary: color-mix(in oklch, var(--brand-primary) 40%, #fff);
+      --color-primary-hover: var(--color-primary);
       --color-primary-soft: color-mix(in oklch, var(--brand-primary) 26%, var(--color-surface));
-      --color-primary-text: color-mix(in oklch, var(--brand-primary) 45%, #fff);
+      --color-primary-text: color-mix(in oklch, var(--brand-primary) 30%, #fff);
       --color-on-primary: #0b1110;
       --color-success: #7fd3ad;
       --color-success-soft: #173328;
@@ -114,7 +115,7 @@
       --color-warning-soft: #3a2d15;
       --color-danger: #f0a09c;
       --color-danger-soft: #3d1b1a;
-      --nav-bg: color-mix(in oklch, var(--brand-sidebar) 45%, #0a0d0c);
+      --nav-bg: color-mix(in oklch, var(--brand-sidebar) 20%, #0a0d0c);
       --shadow-md: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25);
     }
   }
@@ -128,11 +129,11 @@
     --color-text: #e7ecea;
     --color-text-muted: #9aa6a2;
     --color-border: color-mix(in oklch, var(--brand-primary) 10%, #262d2b);
-    --color-border-strong: color-mix(in oklch, var(--brand-primary) 12%, #3a4340);
-    --color-primary: color-mix(in oklch, var(--brand-primary) 70%, #fff);
-    --color-primary-hover: color-mix(in oklch, var(--brand-primary) 58%, #fff);
+    --color-border-strong: color-mix(in oklch, var(--brand-primary) 5%, #7a8b82);
+    --color-primary: color-mix(in oklch, var(--brand-primary) 40%, #fff);
+    --color-primary-hover: var(--color-primary);
     --color-primary-soft: color-mix(in oklch, var(--brand-primary) 26%, var(--color-surface));
-    --color-primary-text: color-mix(in oklch, var(--brand-primary) 45%, #fff);
+    --color-primary-text: color-mix(in oklch, var(--brand-primary) 30%, #fff);
     --color-on-primary: #0b1110;
     --color-success: #7fd3ad;
     --color-success-soft: #173328;
@@ -140,7 +141,7 @@
     --color-warning-soft: #3a2d15;
     --color-danger: #f0a09c;
     --color-danger-soft: #3d1b1a;
-    --nav-bg: color-mix(in oklch, var(--brand-sidebar) 45%, #0a0d0c);
+    --nav-bg: color-mix(in oklch, var(--brand-sidebar) 20%, #0a0d0c);
     --shadow-md: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25);
   }
 }

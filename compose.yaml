@@ -20,6 +20,12 @@ services:
       DATABASE_URL: postgresql://sigab:local-only@db:5432/${SIGAB_DATABASE_NAME:-sigab}
       DJANGO_DEBUG: "true"
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      # ADR 0008: identity check on by default; see README for the face engine variables.
+      SIGAB_REQUIRE_IDENTITY_CHECK: ${SIGAB_REQUIRE_IDENTITY_CHECK:-true}
+      SIGAB_BIOMETRIC_KEY: ${SIGAB_BIOMETRIC_KEY:-}
+      SIGAB_FACE_ENGINE: ${SIGAB_FACE_ENGINE:-}
+      SIGAB_FACE_DETECTOR_MODEL: ${SIGAB_FACE_DETECTOR_MODEL:-}
+      SIGAB_FACE_RECOGNIZER_MODEL: ${SIGAB_FACE_RECOGNIZER_MODEL:-}
     ports: ["8000:8000"]
     # docs/ sits beside the code as in the repository: tests read the approved role matrix.
     volumes: ["./backend:/app", "./docs:/docs:ro"]

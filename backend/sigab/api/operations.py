@@ -88,6 +88,7 @@ def batch_resource(batch):
             else None
         ),
         "custody_mode": batch.custody_mode,
+        "identity_method": batch.identity_method,
         "due_at": batch.due_at.isoformat() if batch.due_at else None,
         "confirmed_at": batch.confirmed_at.isoformat(),
         "items": [
@@ -130,6 +131,7 @@ def service_batch_create(request):
         custody_mode=_required_string(payload, "custody_mode", max_length=16),
         due_at=_due_at(payload),
         confirmed=_required_confirmation(payload),
+        face_verification_id=_optional_uuid(payload, "face_verification_id"),
     )
     batch = ServiceBatch.objects.select_related("recipient", "pickup_person", "operator").get(
         pk=batch.pk
@@ -257,6 +259,7 @@ def service_batch_options(request):
                 {
                     "id": str(item.id),
                     "identifier": item.display_identifier,
+                    "codes": [code for code in (item.serial_number, item.asset_number) if code],
                     "equipment_type": item.equipment_type.name,
                     "unit": item.unit.name,
                 }

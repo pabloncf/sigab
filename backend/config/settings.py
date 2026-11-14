@@ -91,6 +91,25 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 CSRF_FAILURE_VIEW = "sigab.api.views.csrf_failure"
 
+# Facial biometrics (ADR 0008). Checkout and return require an approved face verification
+# or an approved signed term. Production keeps the requirement on; disabling it is only
+# for development and for tests of the underlying movement rules.
+SIGAB_REQUIRE_IDENTITY_CHECK = os.getenv("SIGAB_REQUIRE_IDENTITY_CHECK", "true").lower() == "true"
+# Fernet key (urlsafe base64, 32 bytes) used to encrypt biometric templates. Keep it out of
+# the database and of database backups.
+SIGAB_BIOMETRIC_KEY = os.getenv("SIGAB_BIOMETRIC_KEY", "")
+# Dotted path of the face engine; empty means no engine configured (verification unavailable).
+SIGAB_FACE_ENGINE = os.getenv("SIGAB_FACE_ENGINE", "")
+SIGAB_FACE_DETECTOR_MODEL = os.getenv("SIGAB_FACE_DETECTOR_MODEL", "")
+SIGAB_FACE_RECOGNIZER_MODEL = os.getenv("SIGAB_FACE_RECOGNIZER_MODEL", "")
+SIGAB_FACE_THRESHOLD = float(os.getenv("SIGAB_FACE_THRESHOLD", "0.363"))
+SIGAB_FACE_MAX_IMAGE_BYTES = 2 * 1024 * 1024
+# The counter identifies the person first (registration + face) and then picks materials;
+# the approved verification stays usable for this window, once, by the same operator.
+SIGAB_FACE_VERIFICATION_TTL_SECONDS = int(os.getenv("SIGAB_FACE_VERIFICATION_TTL_SECONDS", "600"))
+SIGAB_BIOMETRIC_LEGAL_BASIS = os.getenv("SIGAB_BIOMETRIC_LEGAL_BASIS", "lgpd-art-11-ii-g")
+DATA_UPLOAD_MAX_MEMORY_SIZE = 3 * 1024 * 1024
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

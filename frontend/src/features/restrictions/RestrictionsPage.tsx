@@ -1,3 +1,4 @@
+import { Field } from "../../components/Field";
 import { useEffect, useState } from "react";
 import { ApiError, apiRequest, postJson } from "../../api/client";
 import { ActionDialog, text } from "../../components/ActionDialog";
@@ -65,18 +66,18 @@ export function RestrictionsPage() {
       {data.restrictions.length === 0 ? <p>Nenhuma restrição cadastrada.</p> : <ul className="sub-list">{data.restrictions.map((value) => <li key={value.id}><span><strong>{value.person_name}</strong><small>{value.closed_at ? "Encerrada" : value.ends_at && Date.parse(value.ends_at) <= Date.now() ? "Expirada" : Date.parse(value.starts_at) > Date.now() ? "Futura" : "Vigente"} · desde {dateLabel(value.starts_at)}</small></span><div className="actions"><button className="button button-secondary" onClick={() => void open(value, "history")}>Histórico de {value.person_name}</button>{!value.closed_at && <><button className="button button-secondary" onClick={() => void open(value, "change")}>Alterar</button><button className="button button-quiet" onClick={() => void open(value, "close")}>Encerrar</button></>}</div></li>)}</ul>}
     </section>
     {selected && !dialog && <section className="history-card" aria-label="Histórico da restrição"><h2>{selected.person_name}</h2><p>{selected.summary} · {selected.source} · {selected.reference}</p><ol>{selected.history?.map((event) => <li key={event.id}>{event.action} · {dateLabel(event.occurred_at)} · {event.reason}</li>)}</ol></section>}
-    {dialog && <ActionDialog title={dialog === "create" ? "Cadastrar restrição" : dialog === "change" ? "Alterar restrição" : "Encerrar restrição"} confirmation="Confirmo os dados e o escopo desta restrição." onClose={() => setDialog(null)} onSubmit={submit}>
+    {dialog && <ActionDialog title={dialog === "create" ? "Cadastrar restrição" : dialog === "change" ? "Alterar restrição" : "Encerrar restrição"} confirmation="Confirmo os dados e o escopo desta restrição." submitLabel={dialog === "create" ? "Cadastrar restrição" : dialog === "change" ? "Salvar alteração" : "Encerrar restrição"} tone={dialog === "close" ? "danger" : "default"} onClose={() => setDialog(null)} onSubmit={submit}>
       {dialog !== "close" && <>
-        {dialog === "create" && <label><span>Pessoa</span><select name="person_id" required defaultValue=""><option value="" disabled>Selecione</option>{data.people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>}
-        <label><span>Categoria</span><select name="category" defaultValue={selected?.category ?? "administrativa"}><option value="administrativa">Administrativa</option><option value="judicial">Judicial</option><option value="saude">Saúde</option><option value="outra">Outra</option></select></label>
-        <label><span>Motivo resumido</span><textarea name="summary" required maxLength={200} defaultValue={selected?.summary} /></label>
-        <label><span>Fonte</span><input name="source" required maxLength={160} defaultValue={selected?.source} /></label>
-        <label><span>Referência do documento</span><input name="reference" maxLength={160} defaultValue={selected?.reference} /></label>
-        <label><span>Início</span><input name="starts_at" type="datetime-local" required defaultValue={localInstant(selected?.starts_at)} /></label>
-        <label><span>Fim opcional</span><input name="ends_at" type="datetime-local" defaultValue={localInstant(selected?.ends_at)} /></label>
+        {dialog === "create" && <Field label="Pessoa"><select name="person_id" required defaultValue=""><option value="" disabled>Selecione</option>{data.people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></Field>}
+        <Field label="Categoria" optional><select name="category" defaultValue={selected?.category ?? "administrativa"}><option value="administrativa">Administrativa</option><option value="judicial">Judicial</option><option value="saude">Saúde</option><option value="outra">Outra</option></select></Field>
+        <Field label="Motivo resumido"><textarea name="summary" required maxLength={200} defaultValue={selected?.summary} /></Field>
+        <Field label="Fonte"><input name="source" required maxLength={160} defaultValue={selected?.source} /></Field>
+        <label><span>Referência do documento <span className="field-optional">(opcional)</span></span><input name="reference" maxLength={160} defaultValue={selected?.reference} /></label>
+        <Field label="Início"><input name="starts_at" type="datetime-local" required defaultValue={localInstant(selected?.starts_at)} /></Field>
+        <label><span>Fim <span className="field-optional">(opcional)</span></span><input name="ends_at" type="datetime-local" defaultValue={localInstant(selected?.ends_at)} /></label>
         <fieldset><legend>Tipos de material — nenhum selecionado aplica a todos</legend>{data.equipment_types.map((kind) => <label className="confirmation" key={kind.id}><input name="equipment_type_ids" value={kind.id} type="checkbox" defaultChecked={selected?.equipment_type_ids.includes(kind.id)} /><span>{kind.name}</span></label>)}</fieldset>
       </>}
-      {dialog !== "create" && <label><span>Motivo da alteração ou encerramento</span><textarea name="reason" required maxLength={200} /></label>}
+      {dialog !== "create" && <Field label="Motivo da alteração ou encerramento"><textarea name="reason" required maxLength={200} /></Field>}
     </ActionDialog>}
   </>;
 }

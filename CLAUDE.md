@@ -90,7 +90,7 @@ docker compose down
 - Pessoa pode existir sem conta; suspender conta não altera ou apaga pessoa e histórico.
 - Não registre senha, token ou CPF completo em logs, eventos ou mensagens de erro.
 - CPF é opcional e deve permanecer fora das telas operacionais comuns.
-- Não implemente biometria, laudos, anexos sensíveis ou restrições pessoais sem política aprovada.
+- Não implemente laudos, anexos sensíveis ou restrições pessoais sem política aprovada.
 
 ### Acervo e movimentações
 
@@ -140,7 +140,6 @@ Ao corrigir um defeito, adicione primeiro ou junto um teste que reproduza a falh
 ## Fora do escopo sem autorização explícita
 
 - estoque quantitativo, munição e lotes;
-- biometria;
 - operação offline ou sincronização;
 - retirada em nome de terceiro;
 - restrições médicas, judiciais ou administrativas;

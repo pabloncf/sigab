@@ -1,12 +1,14 @@
 import json
+from decimal import Decimal
 from functools import wraps
 from json import JSONDecodeError
 from uuid import UUID
 
+from django.conf import settings
 from django.contrib.auth import logout
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import IntegrityError
-from django.db.models import Q
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Q, Sum
 from django.http import Http404, JsonResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
@@ -14,6 +16,7 @@ from django.views import defaults
 from django.views.csrf import csrf_failure as django_csrf_failure
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from sigab.biometrics import FaceEngineUnavailable
 from sigab.domain.catalog import (
     create_equipment_type,
     create_storage_location,
@@ -48,6 +51,7 @@ from sigab.domain.movements import (
     reverse_movement,
     set_item_condition,
 )
+from sigab.domain.queries import quantity
 from sigab.models import (
     Account,
     AuditEvent,
@@ -57,6 +61,8 @@ from sigab.models import (
     MovementEvent,
     Person,
     Role,
+    StockBalance,
+    StockLoan,
     StorageLocation,
     Unit,
 )
@@ -64,10 +70,12 @@ from sigab.observability import correlation_id_var
 from sigab.permissions import (
     ALL_UNITS,
     AUDIT_VIEW,
+    BIOMETRIC_MANAGE,
     CATALOG_MANAGE,
     ITEM_CREATE,
     MANAGE_IDENTITY,
     MOVEMENT_CHECKOUT,
+    MOVEMENT_EXCEPTION_APPROVE,
     MOVEMENT_RETURN,
     MOVEMENT_REVERSE,
     PERSON_VIEW_MINIMAL,
@@ -86,6 +94,8 @@ from sigab.services import (
 )
 
 MAX_JSON_BODY_BYTES = 16 * 1024
+# Stock entries require the inventory approval permission (SIGAB-078).
+STOCK_RECEIVE = "inventory.adjust.approve"
 DEFAULT_PAGE_SIZE = 100
 MAX_PAGE_SIZE = 500
 
@@ -162,6 +172,8 @@ def api_view(*, methods):
                 # A concurrent request won a unique constraint; the client may reload and retry.
                 _audit_refusal(request, kwargs, "conflict")
                 return _error("A operação conflita com outro registro.", status=409)
+            except FaceEngineUnavailable as exc:
+                return _error(str(exc), status=503)
             except (JSONDecodeError, UnicodeDecodeError):
                 return _error("JSON inválido.", status=400)
             except ValidationError as exc:
@@ -397,17 +409,39 @@ def session_detail(request):
                 "can_view_items": has_any_scope(request.user, VIEW_ITEM, organization),
                 "can_view_audit": has_permission(request.user, AUDIT_VIEW, organization),
                 "can_checkout": has_any_scope(request.user, MOVEMENT_CHECKOUT, organization),
+                "can_return": has_any_scope(request.user, MOVEMENT_RETURN, organization),
                 "can_manage_restrictions": has_permission(
                     request.user, "restriction.manage", organization
                 ),
                 "can_use_stock": any(
                     has_any_scope(request.user, code, organization)
-                    for code in (VIEW_ITEM, MOVEMENT_RETURN, "inventory.adjust.approve")
+                    for code in (VIEW_ITEM, MOVEMENT_RETURN, STOCK_RECEIVE)
                 ),
+                "can_receive_stock": has_any_scope(request.user, STOCK_RECEIVE, organization),
                 "can_use_self_service": bool(request.user.person_id),
+                "can_manage_biometrics": has_permission(
+                    request.user, BIOMETRIC_MANAGE, organization
+                ),
+                "can_approve_identity_exceptions": has_any_scope(
+                    request.user, MOVEMENT_EXCEPTION_APPROVE, organization
+                ),
+                "identity_check_required": settings.SIGAB_REQUIRE_IDENTITY_CHECK,
             },
+            "item_scope": _item_scope(request.user, organization),
         }
     )
+
+
+def _item_scope(account, organization):
+    """Units whose collection the account may consult, so the UI names them concretely."""
+    unit_ids = permitted_unit_ids(account, VIEW_ITEM, organization)
+    if unit_ids is ALL_UNITS:
+        return {"all_units": True, "units": []}
+    units = Unit.objects.filter(organization=organization, id__in=unit_ids).order_by("code")
+    return {
+        "all_units": False,
+        "units": [{"id": str(unit.id), "code": unit.code, "name": unit.name} for unit in units],
+    }
 
 
 @api_view(methods={"POST"})
@@ -506,6 +540,17 @@ def _movement_response(request, item, movement, created):
     )
 
 
+def _counter_contingency(payload):
+    """Outside paper contingency, single-item movements go through the counter (ADR 0008)."""
+    contingency = _contingency(payload)
+    if contingency is None and settings.SIGAB_REQUIRE_IDENTITY_CHECK:
+        raise ValidationError(
+            "Registre pela tela Retirada e devolução, com biometria facial ou termo aprovado. "
+            "Aqui só é aceito o lançamento do livro de contingência."
+        )
+    return contingency
+
+
 def _contingency(payload):
     """Optional paper record being reconciled (SIGAB-046); absent for a live registration."""
     value = payload.get("contingency")
@@ -532,7 +577,7 @@ def item_checkout(request, pk):
         recipient_id=_required_uuid(payload, "recipient_id"),
         idempotency_key=_required_uuid(payload, "idempotency_key"),
         confirmed=_required_confirmation(payload),
-        contingency=_contingency(payload),
+        contingency=_counter_contingency(payload),
     )
     return _movement_response(request, item, movement, created)
 
@@ -548,7 +593,7 @@ def item_return(request, pk):
         reason=_string(payload, "reason"),
         idempotency_key=_required_uuid(payload, "idempotency_key"),
         confirmed=_required_confirmation(payload),
-        contingency=_contingency(payload),
+        contingency=_counter_contingency(payload),
     )
     return _movement_response(request, item, movement, created)
 
@@ -676,13 +721,26 @@ def person_list(request):
     organization = _identity_organization(request)
     if request.method == "POST":
         payload = _parse_json(request)
-        person = create_person(
-            _context(request),
-            name=_required_string(payload, "name", max_length=180),
-            functional_name=_string(payload, "functional_name", max_length=120),
-            cpf=_string(payload, "cpf", max_length=14),
-            phone=_string(payload, "phone", max_length=24),
-        )
+        ctx = _context(request)
+        registration = _string(payload, "registration", max_length=64).strip()
+        # Optional first membership in the same transaction, so the person can be enrolled
+        # for facial verification right after (SIGAB-085); no orphan person on failure.
+        with transaction.atomic():
+            person = create_person(
+                ctx,
+                name=_required_string(payload, "name", max_length=180),
+                functional_name=_string(payload, "functional_name", max_length=120),
+                cpf=_string(payload, "cpf", max_length=14),
+                phone=_string(payload, "phone", max_length=24),
+            )
+            if registration:
+                create_membership(
+                    ctx,
+                    person_id=person.id,
+                    registration=registration,
+                    main_unit_id=_required_uuid(payload, "main_unit_id"),
+                    rank=_string(payload, "rank", max_length=80),
+                )
         return _response(_person_resource(_person(request, person.pk)), status=201)
     people = _people(organization)
     query = request.GET.get("q", "").strip()
@@ -1007,10 +1065,55 @@ def equipment_type_list(request):
     if not (
         has_permission(request.user, CATALOG_MANAGE, organization)
         or has_any_scope(request.user, ITEM_CREATE, organization)
+        or has_any_scope(request.user, STOCK_RECEIVE, organization)
     ):
         raise PermissionDenied
     types = EquipmentType.objects.filter(organization=organization).order_by("name")
-    return _response([_type_resource(t) for t in types])
+    counts = _type_counts(request, organization)
+    return _response([{**_type_resource(t), **counts(t)} for t in types])
+
+
+def _type_counts(request, organization):
+    """Item count or stock quantity per type, only inside the reader's item.view scope.
+
+    Readers without item.view anywhere receive null counts instead of organization totals.
+    """
+    scope = permitted_unit_ids(request.user, VIEW_ITEM, organization)
+    if scope is not ALL_UNITS and not scope:
+        return lambda equipment_type: {"item_count": None, "stock_quantity": None}
+    items = Item.objects.filter(
+        organization=organization, administrative_status=Item.AdministrativeStatus.ACTIVE
+    )
+    balances = StockBalance.objects.filter(organization=organization)
+    loans = StockLoan.objects.filter(organization=organization, open_quantity__gt=0)
+    if scope is not ALL_UNITS:
+        items = items.filter(unit_id__in=scope)
+        balances = balances.filter(unit_id__in=scope)
+        loans = loans.filter(balance__unit_id__in=scope)
+    item_counts = dict(
+        items.values("equipment_type_id")
+        .annotate(total=Count("id"))
+        .values_list("equipment_type_id", "total")
+    )
+    quantities = {}
+    for queryset, key, field in (
+        (balances, "equipment_type_id", "quantity"),
+        (loans, "balance__equipment_type_id", "open_quantity"),
+    ):
+        for type_id, total in (
+            queryset.values(key).annotate(total=Sum(field)).values_list(key, "total")
+        ):
+            quantities[type_id] = quantities.get(type_id, Decimal("0")) + total
+
+    def counts(equipment_type):
+        if equipment_type.classification == EquipmentType.Classification.INDIVIDUAL:
+            return {"item_count": item_counts.get(equipment_type.id, 0), "stock_quantity": None}
+        return {
+            "item_count": None,
+            "stock_quantity": str(quantity(quantities.get(equipment_type.id))),
+        }
+
+    return counts
 
 
 @api_view(methods={"PATCH"})

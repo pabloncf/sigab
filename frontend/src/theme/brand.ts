@@ -11,12 +11,15 @@
  */
 
 export type ModuleId =
+  | "inicio"
   | "acervo"
+  | "equipamentos"
   | "atendimento"
   | "estoque"
   | "minha-posse"
   | "restricoes"
   | "pessoas"
+  | "biometria"
   | "cadastros"
   | "atividade";
 
@@ -80,7 +83,7 @@ function mergeBrand(override: BrandOverride): BrandConfig {
     ...(typeof override.name === "string" && { name: override.name }),
     ...(typeof override.tagline === "string" && { tagline: override.tagline }),
     ...(typeof override.monogram === "string" && { monogram: override.monogram.slice(0, 2) }),
-    ...(typeof override.logoUrl === "string" && override.logoUrl.startsWith("/") && { logoUrl: override.logoUrl }),
+    ...(typeof override.logoUrl === "string" && override.logoUrl.startsWith("/") && !override.logoUrl.startsWith("//") && { logoUrl: override.logoUrl }),
     ...(typeof override.radius === "number" && { radius: Math.min(Math.max(override.radius, 0), 20) }),
     ...(typeof override.fontFamily === "string" && { fontFamily: override.fontFamily }),
     ...((override.density === "compact" || override.density === "comfortable") && { density: override.density }),

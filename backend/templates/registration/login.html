@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
   <title>Entrar | SIGAB</title>
+  <script src="/login-theme.js"></script>
   <style>
     :root { font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; color: #18302b; background: #f2f5f2; font-synthesis: none; text-rendering: optimizeLegibility; }
     * { box-sizing: border-box; }
@@ -59,14 +60,42 @@
     }
     @media (max-width: 400px) { .access-label { display: none; } }
     @media (prefers-reduced-motion: reduce) { .submit { transition: none; } }
+    :root {
+      --login-primary: #1d5c4a; --login-on-primary: #fff; --login-radius: 10px;
+      --login-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      --login-bg: #f2f5f2; --login-surface: #fff; --login-text: #18302b; --login-muted: #53665e; --login-border: #7c8782;
+      --login-link: color-mix(in oklch, var(--login-primary) 45%, #000);
+      font-family: var(--login-font); color: var(--login-text); background: var(--login-bg); color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --login-bg: #0d1110; --login-surface: #151a19; --login-text: #e7ecea; --login-muted: #a7b5ae; --login-border: #64736c;
+        --login-link: color-mix(in oklch, var(--login-primary) 30%, #fff); color-scheme: dark;
+      }
+    }
+    :root[data-theme="dark"] {
+      --login-bg: #0d1110; --login-surface: #151a19; --login-text: #e7ecea; --login-muted: #a7b5ae; --login-border: #64736c;
+      --login-link: color-mix(in oklch, var(--login-primary) 30%, #fff); color-scheme: dark;
+    }
+    .brand-mark, .login-card, input, .submit { border-radius: var(--login-radius); }
+    .brand-mark { border-color: var(--login-link); }
+    .brand-logo { width: 42px; height: 42px; object-fit: contain; }
+    .login-card, input { color: var(--login-text); background: var(--login-surface); border-color: var(--login-border); }
+    .brand-copy small, .access-label, .intro-description, .scope dd, .form-description, .help p, .page-footer { color: var(--login-muted); }
+    .eyebrow, .scope dt, .help summary, .password-toggle { color: var(--login-link); }
+    .scope, .help { border-color: var(--login-border); }
+    .submit, .submit:hover { color: var(--login-on-primary); background: var(--login-primary); border-color: var(--login-primary); }
+    .submit:hover { box-shadow: inset 0 0 0 2px currentColor; }
+    .password-toggle:hover { background: color-mix(in oklch, var(--login-link) 12%, var(--login-surface)); }
+    button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible { outline-color: var(--login-link); }
   </style>
 </head>
 <body>
   <div class="login-page">
     <header class="page-header">
       <a class="brand" href="/" aria-label="SIGAB, início">
-        <span class="brand-mark" aria-hidden="true">S</span>
-        <span class="brand-copy"><strong>SIGAB</strong><small>Gestão de acervo</small></span>
+        <span class="brand-mark" data-brand-monogram aria-hidden="true">S</span>
+        <span class="brand-copy"><strong data-brand-name>SIGAB</strong><small data-brand-tagline>Gestão de acervo</small></span>
       </a>
       <span class="access-label">Acesso institucional</span>
     </header>

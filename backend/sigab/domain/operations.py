@@ -10,10 +10,15 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
+from sigab.domain.biometrics import pending_return_lines, resolve_identity
 from sigab.models import (
     EquipmentType,
+    IdentityOperation,
     Item,
     Person,
+    ReturnBatch,
+    ReturnBatchItem,
+    ReturnBatchStock,
     ServiceBatch,
     ServiceBatchItem,
     StockBalance,
@@ -23,7 +28,15 @@ from sigab.models import (
     Unit,
 )
 from sigab.permissions import MOVEMENT_CHECKOUT, MOVEMENT_RETURN, has_permission
-from sigab.services import CommandContext, ConflictError, NotFoundError, audit, checkout_item
+from sigab.services import (
+    CommandContext,
+    ConflictError,
+    NotFoundError,
+    audit,
+    checkout_item,
+    ensure_not_own_operation,
+    return_item,
+)
 
 
 @dataclass(frozen=True)
@@ -104,8 +117,14 @@ def checkout_basket(
     due_at: datetime | None,
     confirmed: bool,
     pickup_person_id: UUID | None = None,
+    face_verification_id: UUID | None = None,
+    identity_exception=None,
 ):
-    """Atomically deliver a mixed basket; every retry returns the same batch."""
+    """Atomically deliver a mixed basket; every retry returns the same batch.
+
+    The recipient's identity must be proven by an approved facial verification or by an
+    approved signed term (ADR 0008); a retry with the same key returns the batch first.
+    """
     if not confirmed:
         raise ValidationError("A confirmação explícita é obrigatória.")
     item_ids = list(dict.fromkeys(item_ids))
@@ -138,6 +157,7 @@ def checkout_basket(
     )
     if not recipient or not recipient.memberships.filter(is_active=True).exists():
         raise ValidationError("Destinatário inválido ou sem vínculo ativo.")
+    ensure_not_own_operation(ctx, recipient.id)
     # Another request with this key may have committed while we waited for the person.
     existing = ServiceBatch.objects.filter(
         organization=ctx.organization, idempotency_key=idempotency_key
@@ -197,6 +217,14 @@ def checkout_basket(
             raise ConflictError("Saldo quantitativo insuficiente.")
         locked_balances[position_key] = (balance, line_quantity)
 
+    # Consume the verification only after every authorization and availability check.
+    identity = resolve_identity(
+        ctx,
+        person=recipient,
+        operation=IdentityOperation.CHECKOUT,
+        face_verification_id=face_verification_id,
+        identity_exception=identity_exception,
+    )
     now = timezone.now()
     batch = ServiceBatch.objects.create(
         organization=ctx.organization,
@@ -209,6 +237,7 @@ def checkout_basket(
         request_hash=request_hash,
         confirmed_at=now,
         receipt_code=f"AT-{idempotency_key.hex[:16].upper()}",
+        **identity,
     )
     for item in items:
         movement, _ = checkout_item(
@@ -563,3 +592,189 @@ def reverse_stock_entry(ctx, *, entry_id, idempotency_key, reason, confirmed):
         reason=reason,
     )
     return reversal, True
+
+
+# Counter return of several materials of one person (SIGAB-082, RF-20 to RF-23).
+
+
+@dataclass(frozen=True)
+class ItemReturnLine:
+    item_id: UUID
+    condition: str
+    reason: str = ""
+
+
+@dataclass(frozen=True)
+class StockReturnLine:
+    loan_id: UUID
+    quantity: Decimal
+
+
+def _return_hash(*, person_id, items, stock):
+    payload = {
+        "person_id": str(person_id),
+        "items": sorted(
+            (str(line.item_id), line.condition, (line.reason or "").strip()) for line in items
+        ),
+        "stock": sorted((str(line.loan_id), str(line.quantity)) for line in stock),
+    }
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def _replay_return(ctx, batch, request_hash):
+    if batch.request_hash != request_hash:
+        raise ConflictError("A chave de idempotência já foi usada em outra devolução.")
+    if batch.operator_id != ctx.actor.id:
+        raise PermissionDenied
+    unit_ids = set(batch.items.values_list("movement__item__unit_id", flat=True))
+    unit_ids.update(batch.stock_lines.values_list("entry__balance__unit_id", flat=True))
+    for unit in Unit.objects.filter(pk__in=unit_ids):
+        if not has_permission(ctx.actor, MOVEMENT_RETURN, ctx.organization, unit):
+            raise PermissionDenied
+    return batch, False
+
+
+@transaction.atomic
+def return_basket(
+    ctx: CommandContext,
+    *,
+    person_id: UUID,
+    items: list[ItemReturnLine],
+    stock: list[StockReturnLine],
+    idempotency_key: UUID,
+    confirmed: bool,
+    face_verification_id: UUID | None = None,
+    identity_exception=None,
+):
+    """Atomically return several materials held by one person.
+
+    Every line is checked item by item (fit or unfit for registered items; fit return
+    of an open quantity for material without registration). Concurrent confirmations
+    for the same person serialize on the person row: exactly one is accepted and a
+    retry with the same key returns the same batch.
+    """
+    if not confirmed:
+        raise ValidationError("A confirmação explícita é obrigatória.")
+    if not items and not stock:
+        raise ValidationError("Inclua ao menos um item ou material sem registro.")
+    if len(items) > 100 or len(stock) > 100:
+        raise ValidationError("Uma devolução aceita no máximo 100 linhas de cada modalidade.")
+    if len({line.item_id for line in items}) != len(items):
+        raise ValidationError({"items": "Cada item deve aparecer uma vez."})
+    if len({line.loan_id for line in stock}) != len(stock):
+        raise ValidationError({"stock": "Cada pendência deve aparecer uma vez."})
+    for line in items:
+        if line.condition not in Item.Condition.values:
+            raise ValidationError({"items": "Informe apto ou inapto para cada item."})
+    stock = [StockReturnLine(line.loan_id, positive_quantity(line.quantity)) for line in stock]
+    request_hash = _return_hash(person_id=person_id, items=items, stock=stock)
+
+    existing = ReturnBatch.objects.filter(
+        organization=ctx.organization, idempotency_key=idempotency_key
+    ).first()
+    if existing:
+        return _replay_return(ctx, existing, request_hash)
+    # Returns are never blocked by an inactive person or membership (RN-07).
+    person = (
+        Person.objects.select_for_update()
+        .filter(id=person_id, organization=ctx.organization)
+        .first()
+    )
+    if not person:
+        raise ValidationError("Pessoa inválida.")
+    ensure_not_own_operation(ctx, person.id)
+    existing = ReturnBatch.objects.filter(
+        organization=ctx.organization, idempotency_key=idempotency_key
+    ).first()
+    if existing:
+        return _replay_return(ctx, existing, request_hash)
+
+    locked_items = {
+        item.id: item
+        for item in Item.objects.select_for_update()
+        .filter(id__in=[line.item_id for line in items], organization=ctx.organization)
+        .select_related("unit")
+    }
+    if len(locked_items) != len(items):
+        raise ValidationError("A devolução contém item inválido.")
+    for item in locked_items.values():
+        if not has_permission(ctx.actor, MOVEMENT_RETURN, ctx.organization, item.unit):
+            raise PermissionDenied
+        if item.availability != Item.Availability.IN_CUSTODY or item.current_holder_id != person.id:
+            raise ConflictError(f"O item {item.display_identifier} não está em posse desta pessoa.")
+    loans = {
+        loan.id: loan
+        for loan in StockLoan.objects.select_for_update(of=("self",))
+        .filter(id__in=[line.loan_id for line in stock], organization=ctx.organization)
+        .select_related("balance__unit")
+    }
+    if len(loans) != len(stock):
+        raise ValidationError("A devolução contém pendência inválida.")
+    if identity_exception is None:
+        # Material covered by an open signed term waits for the administrator's decision.
+        pending_items, pending_loans = pending_return_lines(ctx.organization, person.id)
+        if {str(line.item_id) for line in items} & pending_items or {
+            str(line.loan_id) for line in stock
+        } & pending_loans:
+            raise ConflictError("Há material desta devolução em termo aguardando aprovação.")
+    for line in stock:
+        loan = loans[line.loan_id]
+        if not has_permission(ctx.actor, MOVEMENT_RETURN, ctx.organization, loan.balance.unit):
+            raise PermissionDenied
+        if loan.recipient_id != person.id:
+            raise ConflictError("A pendência não pertence a esta pessoa.")
+        if line.quantity > loan.open_quantity:
+            raise ConflictError("A quantidade excede a pendência aberta.")
+
+    identity = resolve_identity(
+        ctx,
+        person=person,
+        operation=IdentityOperation.RETURN,
+        face_verification_id=face_verification_id,
+        identity_exception=identity_exception,
+    )
+    now = timezone.now()
+    batch = ReturnBatch.objects.create(
+        organization=ctx.organization,
+        person=person,
+        operator=ctx.actor,
+        idempotency_key=idempotency_key,
+        request_hash=request_hash,
+        confirmed_at=now,
+        receipt_code=f"DV-{idempotency_key.hex[:16].upper()}",
+        **identity,
+    )
+    for line in sorted(items, key=lambda value: str(value.item_id)):
+        movement, _ = return_item(
+            ctx,
+            item_id=line.item_id,
+            condition=line.condition,
+            reason=line.reason,
+            idempotency_key=uuid5(idempotency_key, f"item:{line.item_id}"),
+            confirmed=True,
+        )
+        ReturnBatchItem.objects.create(batch=batch, movement=movement)
+    for line in sorted(stock, key=lambda value: str(value.loan_id)):
+        entry, _ = settle_stock_loan(
+            ctx,
+            loan_id=line.loan_id,
+            quantity=line.quantity,
+            disposition=StockLedgerEntry.Type.RETURN,
+            idempotency_key=uuid5(idempotency_key, f"loan:{line.loan_id}"),
+            confirmed=True,
+        )
+        ReturnBatchStock.objects.create(batch=batch, entry=entry)
+    audit(
+        ctx,
+        "return_batch.confirmed",
+        batch,
+        {
+            "person_id": str(person.id),
+            "individual_items": len(items),
+            "unfit_items": sum(1 for line in items if line.condition == Item.Condition.UNFIT),
+            "stock_lines": len(stock),
+            "receipt_code": batch.receipt_code,
+        },
+    )
+    return batch, True

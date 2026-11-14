@@ -11,10 +11,22 @@ export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
-    readonly details?: Record<string, string[]>
+    readonly details?: Record<string, string[]>,
+    /** Mensagem geral, sem os erros por campo (exibidos junto de cada campo). */
+    readonly summary: string = message
   ) {
     super(message);
   }
+}
+
+const NETWORK_ERROR = "Sem resposta do servidor. Verifique a conexão e tente novamente.";
+const UNKNOWN_ERROR = "Não foi possível concluir a ação. Recarregue a página e tente de novo; se persistir, informe ao suporte o horário da tentativa.";
+
+/** Mensagem que orienta a recuperação, em vez de um genérico "erro inesperado". */
+export function describeError(cause: unknown): string {
+  if (cause instanceof ApiError) return cause.message;
+  if (cause instanceof TypeError) return NETWORK_ERROR;
+  return UNKNOWN_ERROR;
 }
 
 function getCookie(name: string): string | undefined {
@@ -29,7 +41,8 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   const method = init.method?.toUpperCase() ?? "GET";
   const headers = new Headers(init.headers);
 
-  if (init.body) {
+  // FormData (captures) lets the browser set the multipart boundary itself.
+  if (init.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
   if (!(["GET", "HEAD", "OPTIONS"].includes(method))) {
@@ -56,8 +69,8 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
 
   if (!response.ok || !payload.success) {
     const fieldMessages = Object.values(payload.details ?? {}).flat();
-    const message = [payload.error ?? "Não foi possível concluir a solicitação.", ...fieldMessages].join(" ");
-    throw new ApiError(message, response.status, payload.details);
+    const summary = payload.error ?? "Não foi possível concluir a solicitação.";
+    throw new ApiError([summary, ...fieldMessages].join(" "), response.status, payload.details, summary);
   }
   return payload.data as T;
 }
@@ -67,7 +80,8 @@ export async function apiWithMeta<T, M>(path: string): Promise<{ data: T; meta: 
   const payload = (await response.json().catch(() => ({ success: false }))) as ApiEnvelope<T> & { meta?: M };
   if (!response.ok || !payload.success) {
     const fieldMessages = Object.values(payload.details ?? {}).flat();
-    throw new ApiError([payload.error ?? "Não foi possível concluir a solicitação.", ...fieldMessages].join(" "), response.status, payload.details);
+    const summary = payload.error ?? "Não foi possível concluir a solicitação.";
+    throw new ApiError([summary, ...fieldMessages].join(" "), response.status, payload.details, summary);
   }
   return { data: payload.data as T, meta: payload.meta as M };
 }
@@ -86,4 +100,9 @@ export function sendJson<T>(method: "POST" | "PATCH", path: string, body?: unkno
     method,
     body: JSON.stringify(body ?? {})
   });
+}
+
+/** Multipart POST, used only for face captures; the image is never kept by the client. */
+export function postForm<T>(path: string, form: FormData): Promise<T> {
+  return apiRequest<T>(path, { method: "POST", body: form });
 }

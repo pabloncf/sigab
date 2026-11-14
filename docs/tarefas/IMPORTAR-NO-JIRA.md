@@ -6,6 +6,8 @@ O lote seguinte está em [tarefas-06-11-26/tarefas.csv](tarefas-06-11-26/tarefas
 
 A revisão de 10/11 está em [tarefas-10-11-26/tarefas.csv](tarefas-10-11-26/tarefas.csv): cinco tarefas novas, IDs originais SIGAB-074 a SIGAB-078, e um épico com ID local 3001. O [guia da revisão](tarefas-10-11-26/README.md) também registra complementos de aceite nas tarefas existentes, sem duplicá-las no CSV. Os IDs originais 074/075 não são as chaves Jira SIGAB-74/75 já atribuídas a outros registros. Nenhuma importação desse novo lote foi executada.
 
+A revisão de navegação de 12/11 está em [tarefas-12-11-26/tarefas.csv](tarefas-12-11-26/tarefas.csv): oito tarefas novas, IDs originais SIGAB-079 a SIGAB-086, e um épico com ID local 4001 (página inicial, cadastro de equipamentos, acervo com e sem registro, retirada/devolução e biometria facial). Ver o [guia do lote](tarefas-12-11-26/README.md). Nenhuma importação foi executada.
+
 ## Mapeamento
 
 A importação relatada em 09/11/2026 atribuiu as chaves Jira SIGAB-71–75 às tarefas originais SIGAB-047–051. As chaves reais não preservam o número entre colchetes da descrição. Consulte a [linha de base de 09/11](../validacao/linha-base-2026-11-09.md) e confira sempre o campo `ID original` antes de executar ou atualizar uma tarefa.

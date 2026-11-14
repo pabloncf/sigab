@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.3.0",
+  "matrix_version": "1.5.0",
   "decision": "SIGAB-004",
   "status": "approved_baseline",
   "approved_on": "2026-10-19",
@@ -8,7 +8,9 @@
     {"matrix_version": "1.0.0", "decision": "SIGAB-004", "date": "2026-10-19", "change": "Matriz inicial."},
     {"matrix_version": "1.1.0", "decision": "SIGAB-009", "date": "2026-10-19", "change": "Adiciona item.condition.set ao Operador de reserva e ao Gestor de acervo (DOC-0011, seção 3)."},
     {"matrix_version": "1.2.0", "decision": "SIGAB-022", "date": "2026-11-02", "change": "Esclarece que catalog.manage abrange unidades e locais de guarda; registra a implementação das permissões atômicas, da vigência e dos conflitos no_self_grant e independent_auditor."},
-    {"matrix_version": "1.3.0", "decision": "SIGAB-034", "date": "2026-11-02", "change": "Adiciona movement.reverse (estorno compensatório de saída, devolução e alteração de condição) ao Gestor de acervo."}
+    {"matrix_version": "1.3.0", "decision": "SIGAB-034", "date": "2026-11-02", "change": "Adiciona movement.reverse (estorno compensatório de saída, devolução e alteração de condição) ao Gestor de acervo."},
+    {"matrix_version": "1.4.0", "decision": "SIGAB-083", "date": "2026-11-13", "change": "Adiciona biometric.manage (cadastro, recadastro e exclusão da biometria facial) e movement.exception.approve (aprovação do termo assinado quando a biometria não for possível) ao Gestor de acervo; quem registrou a operação não aprova o próprio termo (ADR 0008)."},
+    {"matrix_version": "1.5.0", "decision": "SIGAB-083", "date": "2026-11-13", "change": "Adiciona movement.checkout e movement.return ao Gestor de acervo, na organização: o administrador também registra retirada e devolução de qualquer material, com e sem registro. Mantém a regra de que quem registrou a operação não aprova o próprio termo."}
   ],
   "default_effect": "deny",
   "role_inheritance": false,
@@ -29,6 +31,8 @@
     "movement.checkout",
     "movement.return",
     "movement.reverse",
+    "biometric.manage",
+    "movement.exception.approve",
     "inventory.adjust.request",
     "inventory.adjust.approve",
     "item.retire.request",
@@ -53,6 +57,7 @@
     "ajuste": ["inventory.adjust.request", "inventory.adjust.approve"],
     "baixa": ["item.retire.request", "item.retire.approve"],
     "restricao": ["restriction.view_decision", "restriction.manage", "restriction.exception.approve"],
+    "biometria": ["biometric.manage", "movement.exception.approve"],
     "auditoria": ["audit.view", "audit.export"],
     "suporte": ["support.diagnose", "support.session.request", "support.session.approve", "support.session.read"]
   },
@@ -85,11 +90,15 @@
         "catalog.manage",
         "item.create",
         "item.condition.set",
+        "movement.checkout",
+        "movement.return",
         "movement.reverse",
         "inventory.adjust.approve",
         "item.retire.approve",
         "restriction.view_decision",
         "restriction.exception.approve",
+        "biometric.manage",
+        "movement.exception.approve",
         "audit.view"
       ]
     },
@@ -144,6 +153,11 @@
     }
   ],
   "separation_of_duties": [
+    {
+      "key": "identity_exception_four_eyes",
+      "type": "different_actor_same_case",
+      "permissions": ["movement.checkout", "movement.return", "movement.exception.approve"]
+    },
     {
       "key": "adjustment_four_eyes",
       "type": "different_actor_same_case",

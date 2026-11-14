@@ -106,11 +106,11 @@ Coleções que crescem com o cadastro (`/items/`, `/people/`) aceitam `limit` (p
 
 ## 7. Recursos atuais
 
-Permissões da [matriz 0002](decisoes/0002-papeis-e-escopos.md) (versão 1.2.0). “Unidade” significa a unidade de lotação do objeto; concessão de organização alcança todas.
+Permissões da [matriz 0002](decisoes/0002-papeis-e-escopos.md) (versão 1.4.0). “Unidade” significa a unidade de lotação do objeto; concessão de organização alcança todas.
 
 | Método e rota | Permissão | Uso |
 |---|---|---|
-| `GET /session/` | autenticado | conta, organização e flags de interface (`can_manage_identity`, `can_manage_catalog`, `can_create_item`, `can_view_items`, `can_view_audit`) |
+| `GET /session/` | autenticado | conta, organização, flags de interface (`can_manage_identity`, `can_manage_catalog`, `can_create_item`, `can_view_items`, `can_view_audit`) e `item_scope` (`all_units` ou a lista de unidades com `item.view`, só da própria organização), usado para nomear o escopo consultado nas telas |
 | `POST /session/logout/` | autenticado | encerra a sessão |
 | `GET /items/` | `item.view` no escopo | itens visíveis, paginado; `?holder=<pessoa>` dá a posse atual (RF-51); aceita `q`, `availability`, `condition`, `unit`, `type` |
 | `POST /items/` | `item.create` na unidade | incorporação (T01) com condição declarada |
@@ -124,7 +124,7 @@ Permissões da [matriz 0002](decisoes/0002-papeis-e-escopos.md) (versão 1.2.0).
 | `POST /items/<id>/checkout/` | `movement.checkout` | saída (T02), [contrato](contratos/saida-individual.md) |
 | `POST /items/<id>/return/` | `movement.return` | devolução (T03/T04), [contrato](contratos/devolucao-individual.md) |
 | `POST /items/<id>/condition/` | `item.condition.set` | declarar inapto ou liberar (T05/T06) |
-| `GET`, `POST /people/` | `identity.manage` | listar e cadastrar pessoa, sem conta |
+| `GET`, `POST /people/` | `identity.manage` | listar e cadastrar pessoa, sem conta; o `POST` aceita `registration`, `main_unit_id` e `rank` opcionais para criar o primeiro vínculo na mesma transação |
 | `GET`, `PATCH /people/<id>/` | `identity.manage` | ficha, contas e concessões; edição cadastral |
 | `POST /people/<id>/status/` | `identity.manage` | desativar ou reativar pessoa |
 | `POST /people/<id>/memberships/` | `identity.manage` | novo vínculo |
@@ -139,6 +139,29 @@ Permissões da [matriz 0002](decisoes/0002-papeis-e-escopos.md) (versão 1.2.0).
 | `POST /units/<id>/locations/`, `POST /locations/<id>/status/` | `catalog.manage` | locais de guarda |
 | `GET /equipment-types/` | `catalog.manage` ou `item.create` | catálogo de tipos |
 | `POST /equipment-types/`, `PATCH /equipment-types/<id>/`, `POST /equipment-types/<id>/status/` | `catalog.manage` | cadastro, nome e descrição, situação; a classificação nunca muda (RN-03) |
+
+### Retirada, devolução e biometria (SIGAB-082, 085 e 086)
+
+| Método e rota | Permissão | Uso |
+|---|---|---|
+| `GET /overview/` | `item.view` | página Início: totais, pendências e últimas retiradas e devoluções |
+| `GET /stock/summary/`, `GET /stock/entries/` | `item.view` | acervo sem registro: posições e histórico do tipo |
+| `GET /return-batches/options/` | `movement.return` | pessoas com posse e, com `?person=`, os materiais; marca `awaiting_approval` |
+| `POST /return-batches/` | `movement.return` | devolução em lote atômica e idempotente; exige `face_verification_id` quando a biometria é obrigatória |
+| `POST /service-batches/` | `movement.checkout` | retirada; exige `face_verification_id` quando a biometria é obrigatória |
+| `GET /movements/`, `GET /movements/options/` | `item.view` | registro de retiradas, devoluções e consumos, com método de identificação |
+| `GET /biometrics/` | `biometric.manage` | pessoas ativas e se a biometria está cadastrada |
+| `GET`, `POST /people/<id>/biometric/` | `biometric.manage` | situação e cadastro (multipart `image`, `confirmed=true`) |
+| `POST /people/<id>/biometric/delete/` | `biometric.manage` | exclusão definitiva com motivo |
+| `GET /counter/identify/?registration=` ou `?person=<id>` | `movement.checkout` ou `movement.return` | entrada e saída no balcão: busca por matrícula **exata** com vínculo ativo (ou pelo id, para reabrir a pessoa já identificada); devolve só `id`, nome, matrícula, `biometric_enrolled`, `open_possessions` e as operações permitidas; matrícula parcial, inativa ou de outra organização: `404` |
+| `POST /face-verifications/<id>/cancel/` | operador que fez a verificação | desiste da operação depois da identidade confirmada (`confirmed: true`): a verificação deixa de valer; já usada: `409`; de outro operador ou organização: `404` |
+| `POST /face-verifications/` | `movement.checkout` ou `movement.return` | verificação 1:1 (multipart `person_id`, `operation`, `operator_confirmed=true`, `image`); devolve só `id`, `result` e `expires_at` |
+| `GET`, `POST /identity-exceptions/` | operador do balcão ou `movement.exception.approve` | termos visíveis; geração do termo com a operação solicitada |
+| `GET /identity-exceptions/<id>/` | quem registrou ou quem pode aprovar | termo para impressão |
+| `POST /identity-exceptions/<id>/signed/`, `/cancel/` | quem registrou | termo assinado recolhido; cancelamento com motivo |
+| `POST /identity-exceptions/<id>/decision/` | `movement.exception.approve` em todas as unidades, e diferente de quem registrou | aprova (executa a operação) ou recusa com motivo |
+
+Captura de rosto usa `multipart/form-data` (JPEG ou PNG, até 2 MB). Sem motor ou chave configurados, a resposta é 503. Fora da contingência em papel, `POST /items/<id>/checkout/` e `/return/` recusam a operação quando a biometria é obrigatória.
 
 Saída e devolução aceitam o objeto opcional `contingency` (`occurred_at` ISO 8601 com fuso e `paper_reference` de até 64 caracteres) para lançar fato do livro de contingência (SIGAB-046, ADR 0004). Os eventos do histórico e do feed trazem `movement.origin`, `movement.paper_reference` e `movement.recorded_at`; `occurred_at` é o instante do fato. Divergência com o estado atual responde 409 com mensagem iniciada por "Divergência".
 

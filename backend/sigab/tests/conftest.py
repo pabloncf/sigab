@@ -16,6 +16,15 @@ from sigab.permissions import MOVEMENT_CHECKOUT, MOVEMENT_RETURN, SET_ITEM_CONDI
 from sigab.services import CommandContext, record_incorporation
 
 
+@pytest.fixture(autouse=True)
+def identity_check_off_by_default(request, settings):
+    """Movement-rule tests run without the ADR 0008 identity requirement.
+
+    Tests of the requirement itself use the ``identity_check`` marker to turn it on.
+    """
+    settings.SIGAB_REQUIRE_IDENTITY_CHECK = bool(request.node.get_closest_marker("identity_check"))
+
+
 @pytest.fixture
 def api_world(db):
     organization = Organization.objects.create(name="Organização API")

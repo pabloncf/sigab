@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { ApiError, apiRequest, postJson } from "../api/client";
+import { apiRequest, postJson, describeError } from "../api/client";
 import type { EquipmentTypeInfo, ItemDetail, UnitInfo } from "../api/types";
 import { ActionDialog, text } from "./ActionDialog";
+import { Field } from "./Field";
 
-export function IncorporateItemDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (item: ItemDetail) => void }) {
+interface IncorporateItemDialogProps {
+  onClose: () => void;
+  onCreated: (item: ItemDetail) => void;
+  /** Tipo com registro pré-selecionado quando o cadastro parte do módulo Equipamentos. */
+  typeId?: string;
+}
+
+export function IncorporateItemDialog({ onClose, onCreated, typeId: initialTypeId = "" }: IncorporateItemDialogProps) {
   const [units, setUnits] = useState<UnitInfo[]>([]);
   const [types, setTypes] = useState<EquipmentTypeInfo[]>([]);
+  const [typeId, setTypeId] = useState(initialTypeId);
   const [unitId, setUnitId] = useState("");
   const [condition, setCondition] = useState("fit");
   const [loadError, setLoadError] = useState("");
@@ -16,7 +25,7 @@ export function IncorporateItemDialog({ onClose, onCreated }: { onClose: () => v
         setUnits(loadedUnits.filter((unit) => unit.is_active));
         setTypes(loadedTypes.filter((type) => type.is_active && type.classification === "individual"));
       })
-      .catch((requestError) => setLoadError(requestError instanceof ApiError ? requestError.message : "Erro inesperado."));
+      .catch((requestError) => setLoadError(describeError(requestError)));
   }, []);
 
   const locations = useMemo(
@@ -26,10 +35,11 @@ export function IncorporateItemDialog({ onClose, onCreated }: { onClose: () => v
 
   return (
     <ActionDialog
-      title="Incorporar item"
-      description={loadError || "O item entra na reserva com a condição declarada. Informe ao menos série ou patrimônio."}
+      title="Cadastrar item com registro"
+      description={loadError ? `Não foi possível carregar tipos e unidades: ${loadError}` : "O item entra na reserva com a condição declarada. Informe ao menos série ou patrimônio."}
       confirmation="Confirmo a incorporação após conferir o item e seus números."
       submitLabel="Incorporar"
+      size="wide"
       onClose={onClose}
       onSubmit={async (form) => {
         onCreated(await postJson<ItemDetail>("/items/", {
@@ -45,14 +55,14 @@ export function IncorporateItemDialog({ onClose, onCreated }: { onClose: () => v
         }));
       }}
     >
-      <label><span>Tipo de equipamento</span><select name="equipment_type_id" required defaultValue=""><option value="" disabled>Selecione</option>{types.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</select></label>
-      <label><span>Unidade</span><select name="unit_id" required value={unitId} onChange={(event) => setUnitId(event.target.value)}><option value="" disabled>Selecione</option>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.code} · {unit.name}</option>)}</select></label>
-      <label><span>Local de guarda</span><select name="storage_location_id" required defaultValue="" key={unitId} disabled={!unitId}><option value="" disabled>{unitId ? "Selecione" : "Escolha a unidade"}</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.code} · {location.name}</option>)}</select></label>
-      <label><span>Número de série</span><input name="serial_number" maxLength={100} autoComplete="off" /></label>
-      <label><span>Patrimônio</span><input name="asset_number" maxLength={100} autoComplete="off" /></label>
-      <label><span>Registro oficial (opcional)</span><input name="official_identifier" maxLength={100} autoComplete="off" /></label>
-      <label><span>Condição na incorporação</span><select name="condition" value={condition} onChange={(event) => setCondition(event.target.value)}><option value="fit">Apto</option><option value="unfit">Inapto</option></select></label>
-      {condition === "unfit" && <label><span>Motivo de inapto</span><textarea name="condition_reason" maxLength={200} required /></label>}
+      <Field label="Tipo de equipamento"><select name="equipment_type_id" required value={typeId} onChange={(event) => setTypeId(event.target.value)}><option value="" disabled>Selecione</option>{types.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</select></Field>
+      <Field label="Unidade"><select name="unit_id" required value={unitId} onChange={(event) => setUnitId(event.target.value)}><option value="" disabled>Selecione</option>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.code} · {unit.name}</option>)}</select></Field>
+      <Field label="Local de guarda"><select name="storage_location_id" required defaultValue="" key={unitId} disabled={!unitId}><option value="" disabled>{unitId ? "Selecione" : "Escolha a unidade"}</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.code} · {location.name}</option>)}</select></Field>
+      <Field label="Número de série" hint="Informe série, patrimônio ou ambos."><input name="serial_number" maxLength={100} autoComplete="off" /></Field>
+      <Field label="Patrimônio"><input name="asset_number" maxLength={100} autoComplete="off" /></Field>
+      <Field label="Registro oficial" optional><input name="official_identifier" maxLength={100} autoComplete="off" /></Field>
+      <Field label="Condição na incorporação"><select name="condition" value={condition} onChange={(event) => setCondition(event.target.value)}><option value="fit">Apto</option><option value="unfit">Inapto</option></select></Field>
+      {condition === "unfit" && <Field label="Motivo de inapto" name="condition_reason"><textarea name="condition_reason" maxLength={200} required /></Field>}
     </ActionDialog>
   );
 }

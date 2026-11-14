@@ -1,4 +1,4 @@
-"""Tenant role templates of decision 0002 (matrix 1.3.0).
+"""Tenant role templates of decision 0002 (matrix 1.5.0).
 
 Global roles (platform administrator, support analyst) are control-plane identities and are
 never created inside an organization. `test_roles.py` keeps this list equal to the matrix.
@@ -26,11 +26,15 @@ ROLE_TEMPLATES = [
             "catalog.manage",
             "item.create",
             "item.condition.set",
+            "movement.checkout",
+            "movement.return",
             "movement.reverse",
             "inventory.adjust.approve",
             "item.retire.approve",
             "restriction.view_decision",
             "restriction.exception.approve",
+            "biometric.manage",
+            "movement.exception.approve",
             "audit.view",
         ],
     },

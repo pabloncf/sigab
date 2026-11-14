@@ -1,0 +1,170 @@
+Work Type,Status,Summary,Description,Priority,Labels,Labels,Labels,Labels,Component,Work item ID,Parent,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By,Is Blocked By
+Epic,To Do,"SIGAB — Navegação, cadastro de equipamentos e identificação na entrega (2026-11-12)","Agrupa as lacunas de navegação e de módulos principais apontadas na revisão de 12/11/2026: página inicial, cadastro de equipamentos com e sem registro, separação do acervo, retirada/devolução visíveis no balcão e biometria facial do recebedor.",High,sigab,epic,revisao-navegacao,lote-2026-11-12,Operação de balcão,4001,,,,,,,
+Task,To Do,[SIGAB-079] Criar página inicial do sistema separada do acervo,"Hoje a rota / abre direto a lista de itens individuais (Acervo) e não há visão geral da reserva. Criar a página Início como entrada do sistema e mover a lista de itens para rota própria.
+
+ID original: SIGAB-079
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Revisão de navegação 12/11 (sem data comprometida)
+
+Responsável sugerido: Frontend/Backend/QA
+
+Entregável: Página Início com resumo da reserva, pendências, últimas movimentações e atalhos; Acervo em /acervo.
+
+Critério de aceite: Para quem opera a reserva, Início mostra: totais por situação (disponível, em posse, inapto) de itens com registro e saldos de material sem registro, conforme SIGAB-059; pendências abertas (RF-27, SIGAB-069); últimas retiradas e devoluções da unidade com quem entregou, quem retirou e quando; atalhos para Retirada, Devolução, Cadastrar equipamento e Estoque, exibidos apenas com a permissão correspondente. Usuário sem permissão operacional é levado à Minha posse. Agregados respeitam unidade e escopo do servidor; nenhum número é calculado só no navegador. Links existentes /items/<id> e /?holder= continuam funcionando ou redirecionam. Teste negativo de escopo e jornada de navegador para cada perfil.
+
+Requisitos relacionados: RF-27; RF-40; RF-51; RNF-06
+
+Dependências originais: SIGAB-059; SIGAB-069; SIGAB-054
+
+Evidências a revisar: frontend/src/app/modules.tsx; frontend/src/pages/ItemsPage.tsx
+
+Observações: Origem: docs/tarefas/tarefas-12-11-26/README.md (revisão de navegação e módulos de 12/11/2026). IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências de lotes anteriores devem ser vinculadas manualmente às chaves reais. Nenhum aceite de produto é presumido. SIGAB-059 entrega o agregado; esta tarefa entrega a página e a navegação. Se 059 não estiver pronta, o bloco de totais fica identificado como indisponível, sem números provisórios.",Highest,sigab,tipo-desenvolvimento,origem-revisao-2026-11-12,lote-2026-11-12,Consultas e documentos,79,4001,,,,,,
+Task,To Do,[SIGAB-080] Criar módulo de cadastro de equipamentos com e sem registro,"O cadastro de equipamento está espalhado: o tipo fica em Cadastros, junto de unidades e locais; o item com registro é incorporado por um botão dentro da lista do Acervo; a entrada de material sem registro fica no Estoque. Criar um módulo Equipamentos que reúna esse fluxo, como o menu Cadastrar do sistema de referência.
+
+ID original: SIGAB-080
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Revisão de navegação 12/11 (sem data comprometida)
+
+Responsável sugerido: Frontend/Backend/QA
+
+Entregável: Módulo Equipamentos com tipos, itens com registro e entrada de material sem registro, usando o vocabulário com registro / sem registro.
+
+Critério de aceite: O módulo lista os tipos separados em Com registro e Sem registro (estoque), com quantidade de itens ou saldo de cada um. Cadastrar tipo exige a classificação e avisa que ela não muda (RN-03). A partir de um tipo com registro, o usuário cadastra o item (número de série, patrimônio, unidade, local e condição), reaproveitando a incorporação existente. A partir de um tipo sem registro (ex.: munição calibre X), registra entrada de quantidade em unidade e local, reaproveitando a entrada de estoque existente, com confirmação explícita e idempotência. Rótulos Individual/Quantitativo passam a Com registro/Sem registro na interface, sem alterar os valores da API. Cadastros mantém unidades e locais. Permissões continuam no backend (catalog.manage, criação de item e entrada de estoque). Testes de permissão negada, tipo inativo, classificação errada no fluxo e jornada de navegador de ponta a ponta.
+
+Requisitos relacionados: RF-10; RF-12; RF-13; RF-16; RN-02; RN-03; RN-04
+
+Dependências originais: SIGAB-024; SIGAB-026; SIGAB-027; SIGAB-078; SIGAB-008
+
+Evidências a revisar: frontend/src/pages/CatalogPage.tsx; frontend/src/components/IncorporateItemDialog.tsx; frontend/src/features/operations/StockPage.tsx
+
+Observações: Origem: docs/tarefas/tarefas-12-11-26/README.md (revisão de navegação e módulos de 12/11/2026). IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências de lotes anteriores devem ser vinculadas manualmente às chaves reais. Nenhum aceite de produto é presumido. Não cria catálogo pré-carregado (RF-11 segue em SIGAB-071). Entrada sem registro segue as regras de SIGAB-008/041; lote não é acrescentado por inferência.",Highest,sigab,tipo-desenvolvimento,origem-revisao-2026-11-12,lote-2026-11-12,Acervo,80,4001,,,,,,
+Task,To Do,[SIGAB-081] Separar o acervo em material com registro e sem registro,"O módulo Acervo mostra apenas itens individuais. Material sem registro, como munição, só aparece no Estoque. O acervo deve mostrar as duas naturezas, separadas.
+
+ID original: SIGAB-081
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Revisão de navegação 12/11 (sem data comprometida)
+
+Responsável sugerido: Frontend/Backend/QA
+
+Entregável: Acervo com abas Com registro e Sem registro, com busca e filtros por aba.
+
+Critério de aceite: Aba Com registro mantém a lista, a busca e o detalhe atuais. Aba Sem registro lista, por tipo, unidade e local, o saldo em reserva, a quantidade em posse e o total (ex.: munição 9 mm: 1.200 em reserva, 300 em posse), com acesso ao histórico do tipo (RF-54) e às operações do Estoque conforme permissão. Itens com registro nunca aparecem como quantidade, e material sem registro nunca aparece como item individual. Totais conferem com o livro quantitativo e com o painel. Escopo por unidade aplicado no servidor; teste negativo de acesso cruzado.
+
+Requisitos relacionados: RF-13; RF-14; RF-40; RF-50; RF-54
+
+Dependências originais: SIGAB-008; SIGAB-041; SIGAB-069; SIGAB-078
+
+Evidências a revisar: frontend/src/pages/ItemsPage.tsx; frontend/src/features/operations/StockPage.tsx; backend/sigab/api/operations.py
+
+Observações: Origem: docs/tarefas/tarefas-12-11-26/README.md (revisão de navegação e módulos de 12/11/2026). IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências de lotes anteriores devem ser vinculadas manualmente às chaves reais. Nenhum aceite de produto é presumido. Estoque continua como área de operações quantitativas (entrada, devolução parcial, consumo); o acervo é a consulta. Disponível/inapto do material sem registro depende da decisão SIGAB-008.",High,sigab,tipo-desenvolvimento,origem-revisao-2026-11-12,lote-2026-11-12,Acervo,81,4001,,,,,,
+Task,To Do,[SIGAB-082] Tornar retirada e devolução visíveis e rastreáveis no balcão,"O backend já registra operador (quem entregou ou recebeu) e recebedor de cada movimentação. Na interface, a retirada fica em Atendimento, a devolução de item com registro só pode ser feita item a item dentro da ficha do item, e não há tela de registro de retiradas e entradas. Para quem usa o sistema, parece que o controle de quem retirou e quem devolveu não existe.
+
+ID original: SIGAB-082
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Revisão de navegação 12/11 (sem data comprometida)
+
+Responsável sugerido: Frontend/Backend/QA
+
+Entregável: Módulo Retirada e devolução com devolução por pessoa e registro de movimentações filtrável.
+
+Critério de aceite: Atendimento passa a se chamar Retirada e devolução, com duas entradas claras. Retirada: fluxo atual da cesta. Devolução: selecionar a pessoa, ver a posse atual (com e sem registro) e devolver vários itens com conferência item a item, marcando apto ou inapto (RF-22), com resumo e confirmação explícita (RF-21) e idempotência. Registro de movimentações lista retiradas e devoluções com material, quem retirou ou devolveu, operador que entregou ou recebeu, unidade e data/hora, filtrável por pessoa, operador, material, tipo de movimento e período (RF-52, RF-53, RF-55), com link para comprovante quando SIGAB-058 existir. Concorrência PostgreSQL: devolução em lote aceita uma única confirmação. Teste negativo de escopo e jornada de navegador da retirada até a devolução.
+
+Requisitos relacionados: RF-20; RF-21; RF-22; RF-23; RF-26; RF-52; RF-53; RF-55; RNF-06
+
+Dependências originais: SIGAB-058; SIGAB-060; SIGAB-067; SIGAB-076; SIGAB-077
+
+Evidências a revisar: frontend/src/features/operations/ServiceBatchPage.tsx; frontend/src/pages/ItemDetailPage.tsx; frontend/src/pages/ActivityPage.tsx; backend/sigab/models.py (Movement.operator, Movement.recipient)
+
+Observações: Origem: docs/tarefas/tarefas-12-11-26/README.md (revisão de navegação e módulos de 12/11/2026). IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências de lotes anteriores devem ser vinculadas manualmente às chaves reais. Nenhum aceite de produto é presumido. Retirada em nome de terceiro (RF-25) continua fora até o formulário de SIGAB-007. A confirmação da identidade de quem retira entra em SIGAB-086.",Highest,sigab,tipo-desenvolvimento,origem-revisao-2026-11-12,lote-2026-11-12,Operação de balcão,82,4001,,,,,,
+Task,To Do,[SIGAB-083] Registrar decisão de biometria facial na retirada e devolução,"A revisão de 12/11 informa que a identificação de quem retira e devolve será por biometria facial. Essa decisão não está registrada: DOC-0011 (RF-05) diz apenas biometria opcional com alternativa sem biometria, decisoes-pendentes.md lista biometria como futura e SIGAB-071 segue aberta. Biometria é dado pessoal sensível (LGPD, art. 11), e o CLAUDE.md proíbe implementação sem política aprovada.
+
+ID original: SIGAB-083
+
+Tipo original: decisao
+
+Sprint sugerida: Revisão de navegação 12/11 (sem data comprometida)
+
+Responsável sugerido: Produto/Segurança/Jurídico
+
+Entregável: ADR de biometria facial e atualização da política de dados pessoais.
+
+Critério de aceite: ADR em docs/adr/ registra fonte e data da decisão e define: obrigatória ou opcional por organização e por operação; verificação 1:1 (pessoa selecionada) ou identificação 1:N; prova de vida contra foto ou vídeo; equipamento no balcão; processamento local ou serviço externo, compatível com ADR 0004 (queda de rede) e com revenda (licença); o que é armazenado (modelo biométrico ou imagem), criptografia, retenção, descarte e exclusão a pedido; base legal, RIPD e responsável no cliente; alternativa quando a verificação falha ou a pessoa não tem cadastro, com motivo registrado; o que entra em auditoria (método e resultado, nunca imagem ou modelo). politica-de-dados-pessoais.md e decisoes-pendentes.md atualizados. SIGAB-071 registra o destino da biometria. Sem esta decisão, SIGAB-085 e SIGAB-086 não começam.
+
+Requisitos relacionados: RF-05; RNF-04; RN-06
+
+Dependências originais: SIGAB-071; SIGAB-039; SIGAB-072
+
+Evidências a revisar: docs/fontes/DOC-0011-analise-de-requisitos-v0.1.md; docs/decisoes-pendentes.md; docs/politica-de-dados-pessoais.md
+
+Observações: Origem: docs/tarefas/tarefas-12-11-26/README.md (revisão de navegação e módulos de 12/11/2026). IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências de lotes anteriores devem ser vinculadas manualmente às chaves reais. Nenhum aceite de produto é presumido. Os resultados da prova de conceito SIGAB-084 informam a escolha local/externo e as metas de erro.",Highest,sigab,tipo-decisao,origem-revisao-2026-11-12,lote-2026-11-12,Privacidade,83,4001,,,,,,
+Task,To Do,[SIGAB-084] Prova de conceito técnica de verificação facial no balcão,"Avaliar opções técnicas antes de implementar: bibliotecas locais e serviços externos de verificação facial e prova de vida, com webcam comum de balcão.
+
+ID original: SIGAB-084
+
+Tipo original: pesquisa
+
+Sprint sugerida: Revisão de navegação 12/11 (sem data comprometida)
+
+Responsável sugerido: Backend/Segurança
+
+Entregável: Relatório comparativo em docs/pesquisas/ com recomendação.
+
+Critério de aceite: Compara pelo menos duas opções em: taxa de falsa aceitação e falsa rejeição, prova de vida, tempo por verificação no balcão, funcionamento sem internet, custo por organização, licença compatível com revenda, local de processamento e retenção do fornecedor. Testes usam apenas imagens sintéticas ou de voluntários com consentimento registrado, apagadas ao final; nenhum dado de cliente. Nenhum código entra no produto. Recomendação entregue como insumo da SIGAB-083.
+
+Requisitos relacionados: RF-05; RNF-01; RNF-04; RNF-08
+
+Dependências originais: SIGAB-073
+
+Evidências a revisar: docs/adr/0004-conectividade-e-contingencia.md
+
+Observações: Origem: docs/tarefas/tarefas-12-11-26/README.md (revisão de navegação e módulos de 12/11/2026). IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências de lotes anteriores devem ser vinculadas manualmente às chaves reais. Nenhum aceite de produto é presumido. Pode ser feita em paralelo à SIGAB-083.",High,sigab,tipo-pesquisa,origem-revisao-2026-11-12,lote-2026-11-12,Privacidade,84,4001,,,,,,
+Task,To Do,[SIGAB-085] Cadastrar biometria facial da pessoa,"Permitir vincular a biometria facial a uma pessoa já cadastrada, conforme a decisão da SIGAB-083 (equivalente ao Cadastrar > Biometria do sistema de referência, OBS 03).
+
+ID original: SIGAB-085
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Revisão de navegação 12/11 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend/Segurança/QA
+
+Entregável: Cadastro, recadastro e exclusão de biometria facial na ficha da pessoa.
+
+Critério de aceite: Somente perfil autorizado cadastra, recadastra ou exclui, com permissão explícita negada por padrão. Registra base legal ou consentimento conforme a decisão. Armazena apenas o que a SIGAB-083 permitir, criptografado e isolado da organização; imagem nunca vai para log, evento, auditoria ou mensagem de erro. Ciclo de vida independente de Person, Membership e Account: suspender a conta não apaga histórico, e a exclusão da biometria fica auditada sem o dado. Ficha da pessoa mostra apenas cadastrada/não cadastrada e data. Testes de isolamento, permissão negada, recadastro, exclusão e ausência do dado em logs.
+
+Requisitos relacionados: RF-05; RNF-04
+
+Dependências originais: SIGAB-083; SIGAB-084; SIGAB-039
+
+Evidências a revisar: backend/sigab/models.py; frontend/src/pages/PersonDetailPage.tsx
+
+Observações: Origem: docs/tarefas/tarefas-12-11-26/README.md (revisão de navegação e módulos de 12/11/2026). IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências de lotes anteriores devem ser vinculadas manualmente às chaves reais. Nenhum aceite de produto é presumido. Exige nova migração e atualização do modelo de ameaças.",High,sigab,tipo-desenvolvimento,origem-revisao-2026-11-12,lote-2026-11-12,Identidade,85,4001,83,84,,,,
+Task,To Do,[SIGAB-086] Verificar identidade facial do recebedor na retirada e devolução,"Confirmar que quem retira ou devolve é a pessoa registrada na movimentação, usando a biometria facial da SIGAB-085. Decisão do produto de 13/11/2026: a validação biométrica é obrigatória na retirada e na devolução.
+
+ID original: SIGAB-086
+
+Tipo original: desenvolvimento
+
+Sprint sugerida: Revisão de navegação 12/11 (sem data comprometida)
+
+Responsável sugerido: Backend/Frontend/Segurança/QA
+
+Entregável: Etapa de verificação facial nos fluxos de retirada e devolução, com resultado registrado na movimentação.
+
+Critério de aceite: Retirada e devolução só são confirmadas com verificação facial aprovada da pessoa selecionada ou, quando a biometria não for possível (recusa, câmera indisponível ou pessoa sem cadastro), por termo gerado pelo sistema, assinado pelo servidor público e aprovado no sistema somente por quem tem a permissão de administrador do acervo (movement.exception.approve). Até a aprovação a operação não é confirmada: na retirada o material não sai; na devolução a posse continua com o servidor e aparece como aguardando aprovação. A aprovação revalida estado, restrição (RN-06) e escopo na mesma transação; a recusa encerra o pedido sem movimentação; cada termo é decidido uma única vez. A movimentação registra o método (facial, termo assinado com aprovador, ou contingência em papel no lançamento previsto no ADR 0004) e o resultado, nunca a imagem ou o modelo. Testes de termo aprovado, recusado, aprovação sem permissão, aprovação concorrente e estado alterado antes da aprovação. A verificação não substitui a permissão do operador. Idempotência e atomicidade preservadas: verificação aprovada e confirmação concorrente aceitam uma única operação. Comprovante e registro de movimentações exibem o método. Testes de verificação aceita, recusada, pessoa sem cadastro, rede indisponível e tentativa de usar verificação de outra pessoa ou organização.
+
+Requisitos relacionados: RF-05; RF-20; RF-21; RF-22; RF-26; RF-60; RNF-01; RNF-06
+
+Dependências originais: SIGAB-083; SIGAB-085; SIGAB-082; SIGAB-046
+
+Evidências a revisar: backend/sigab/services.py; frontend/src/features/operations/ServiceBatchPage.tsx
+
+Observações: Origem: docs/tarefas/tarefas-12-11-26/README.md (revisão de navegação e módulos de 12/11/2026). IDs originais são identificadores locais de planejamento, não chaves reais do Jira. Dependências de lotes anteriores devem ser vinculadas manualmente às chaves reais. Nenhum aceite de produto é presumido. Mudança transacional: executar a suíte PostgreSQL.",High,sigab,tipo-desenvolvimento,origem-revisao-2026-11-12,lote-2026-11-12,Operação de balcão,86,4001,85,82,,,,

@@ -41,6 +41,14 @@ Retenção “histórica” significa: enquanto existir o registro patrimonial d
 
 Dados **não** tratados: biometria, diagnóstico, laudo, decisão judicial, endereço, documentos anexos. Introduzir qualquer um deles exige revisão desta política e do modelo de ameaças antes do código.
 
+**Biometria facial: implementada, aguardando aprovação jurídica para produção.** O [ADR 0008](adr/0008-biometria-facial.md) define o tratamento. O código existe (SIGAB-085/086) e o modelo de ameaças foi revisto (seção 3.6). Nenhuma instalação deve entrar em produção com biometria antes de três passos: aprovação do Jurídico e do encarregado do cliente, RIPD e aviso ao titular.
+
+| Dado | Onde | Finalidade | Acesso | Retenção | Descarte | Responsável |
+|---|---|---|---|---|---|---|
+| modelo biométrico facial (vetor, sem imagem), criptografado com chave fora do banco | `BiometricTemplate` | confirmar a identidade de quem retira ou devolve; obrigatório nas duas operações (decisão de 13/11/2026) | cadastro e exclusão por `biometric.manage`; uso só pelo motor local de verificação 1:1; nunca exibido nem exportado | enquanto houver vínculo ativo | exclusão definitiva ao encerrar o último vínculo ou a pedido; auditoria sem o dado | cliente (controlador) |
+| resultado de verificação facial (aprovada ou recusada, sem pontuação), operador, operação e instante | `FaceVerification` | provar a identificação de quem retira ou devolve | operador que verificou; trilha `audit.view` | histórica, como a movimentação | não apagada; não contém dado biométrico | cliente (controlador) |
+| termo sem biometria (pessoa, matrícula, materiais, motivo, decisão) | `IdentityException` e termo em papel arquivado na reserva | alternativa quando a biometria não for possível | quem registrou e `movement.exception.approve` | histórica | conforme tabela de temporalidade | cliente (controlador) |
+
 ## 4. Regras de acesso e exibição
 
 - Telas operacionais mostram nome de exibição e matrícula; CPF e telefone ficam só na ficha da pessoa, para `identity.manage`.
@@ -67,3 +75,4 @@ Não existe exportação. Quando existir: permissão própria (`audit.export` pa
 - Tabela de temporalidade municipal e rotina auditável de eliminação ou anonimização.
 - Retenção do log técnico, definida com a implantação.
 - Contrato controlador–operador com o Município.
+- Biometria facial: aprovação do [ADR 0008](adr/0008-biometria-facial.md), base legal (proposta: art. 11, II, "g"), RIPD e aviso ao titular antes de qualquer ativação.

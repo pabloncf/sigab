@@ -1,5 +1,7 @@
 // Traços de 24px no estilo outline; herdam a cor do texto via currentColor.
 const paths = {
+  home: "M3 11l9-7 9 7M5 10v10h5v-6h4v6h5V10",
+  tag: "M3 12V4h8l10 10-8 8zM7.5 8.5h.01",
   archive: "M3 7h18M5 7v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7M4 4h16v3H4zM10 11h4",
   handoff: "M7 11V6a2 2 0 0 1 4 0v5M11 9V4a2 2 0 0 1 4 0v7M15 9a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-2.7L3 13.5a1.8 1.8 0 0 1 3-2L7 13",
   boxes: "M4 13h7v7H4zM13 13h7v7h-7zM8.5 4h7v7h-7z",

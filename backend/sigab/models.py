@@ -576,6 +576,141 @@ def audit_record_hash(event):
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
+class BiometricTemplate(TimestampedModel):
+    """Encrypted facial template of a person (ADR 0008). Never the image.
+
+    Unlike movements, this record is physically deleted on request or when the last
+    membership ends; the audit trail keeps the fact without the data.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="biometric_templates"
+    )
+    person = models.OneToOneField(Person, on_delete=models.PROTECT, related_name="biometric")
+    encrypted_template = models.BinaryField()
+    engine_version = models.CharField(max_length=64)
+    legal_basis = models.CharField(max_length=64)
+    enrolled_at = models.DateTimeField()
+    enrolled_by = models.ForeignKey(
+        Account, on_delete=models.PROTECT, related_name="enrolled_biometrics"
+    )
+
+    def clean(self):
+        if self.person.organization_id != self.organization_id:
+            raise ValidationError("Biometria contém referência de outra organização.")
+
+
+class IdentityOperation(models.TextChoices):
+    CHECKOUT = "checkout", "Retirada"
+    RETURN = "return", "Devolução"
+
+
+class FaceVerification(TimestampedModel):
+    """One verification attempt; an approved one is consumed by exactly one operation."""
+
+    class Result(models.TextChoices):
+        APPROVED = "approved", "Aprovada"
+        REJECTED = "rejected", "Recusada"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="face_verifications"
+    )
+    person = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="face_verifications")
+    operator = models.ForeignKey(
+        Account, on_delete=models.PROTECT, related_name="face_verifications"
+    )
+    operation = models.CharField(max_length=16, choices=IdentityOperation)
+    result = models.CharField(max_length=16, choices=Result)
+    operator_confirmed = models.BooleanField()
+    engine_version = models.CharField(max_length=64)
+    verified_at = models.DateTimeField()
+    expires_at = models.DateTimeField()
+    consumed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(consumed_at__isnull=True) | Q(result="approved"),
+                name="face_verification_consumed_only_if_approved",
+            )
+        ]
+
+
+class IdentityException(TimestampedModel):
+    """Signed term used when facial verification is not possible (ADR 0008, section 8).
+
+    The requested operation is stored as a versioned command (schema
+    ``identity_exception.request.v1``) and is executed only when an inventory administrator
+    approves it. Nothing moves before approval.
+    """
+
+    class Status(models.TextChoices):
+        PENDING_SIGNATURE = "pending_signature", "Aguardando assinatura"
+        PENDING_APPROVAL = "pending_approval", "Aguardando aprovação"
+        APPROVED = "approved", "Aprovado"
+        REJECTED = "rejected", "Recusado"
+        CANCELLED = "cancelled", "Cancelado"
+
+    class Reason(models.TextChoices):
+        VERIFICATION_FAILED = "verification_failed", "Verificação facial recusada"
+        CAMERA_UNAVAILABLE = "camera_unavailable", "Câmera ou verificação indisponível"
+        NOT_ENROLLED = "not_enrolled", "Pessoa sem biometria cadastrada"
+        OTHER = "other", "Outro motivo"
+
+    REQUEST_SCHEMA = "identity_exception.request.v1"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="identity_exceptions"
+    )
+    code = models.CharField(max_length=24)
+    operation = models.CharField(max_length=16, choices=IdentityOperation)
+    person = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="identity_exceptions")
+    requested_by = models.ForeignKey(
+        Account, on_delete=models.PROTECT, related_name="requested_identity_exceptions"
+    )
+    requested_at = models.DateTimeField()
+    reason_code = models.CharField(max_length=24, choices=Reason)
+    reason = models.CharField(max_length=500, blank=True)
+    request_schema = models.CharField(max_length=64, default=REQUEST_SCHEMA)
+    request = models.JSONField()
+    idempotency_key = models.UUIDField()
+    status = models.CharField(max_length=24, choices=Status, default=Status.PENDING_SIGNATURE)
+    signed_collected_at = models.DateTimeField(null=True, blank=True)
+    decided_by = models.ForeignKey(
+        Account,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="decided_identity_exceptions",
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decision_reason = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "idempotency_key"],
+                name="uniq_identity_exception_idempotency_org",
+            ),
+            models.UniqueConstraint(
+                fields=["organization", "code"], name="uniq_identity_exception_code_org"
+            ),
+            models.CheckConstraint(
+                condition=~Q(status="approved") | ~Q(decided_by=models.F("requested_by")),
+                name="identity_exception_four_eyes",
+            ),
+        ]
+
+
+class IdentityMethod(models.TextChoices):
+    FACIAL = "facial", "Biometria facial"
+    SIGNED_TERM = "signed_term", "Termo assinado e aprovado"
+    NOT_REQUIRED = "not_required", "Sem exigência (registro anterior ou ambiente de teste)"
+
+
 class ServiceBatch(TimestampedModel):
     """One confirmed counter service containing individual and quantitative materials."""
 
@@ -607,6 +742,23 @@ class ServiceBatch(TimestampedModel):
     request_hash = models.CharField(max_length=64)
     confirmed_at = models.DateTimeField()
     receipt_code = models.CharField(max_length=24)
+    identity_method = models.CharField(
+        max_length=16, choices=IdentityMethod, default=IdentityMethod.NOT_REQUIRED
+    )
+    face_verification = models.OneToOneField(
+        FaceVerification,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="service_batch",
+    )
+    identity_exception = models.OneToOneField(
+        IdentityException,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="service_batch",
+    )
 
     class Meta:
         constraints = [
@@ -637,6 +789,71 @@ class ServiceBatchItem(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["batch", "item"], name="uniq_item_per_service_batch")
         ]
+
+
+class ReturnBatch(TimestampedModel):
+    """One confirmed counter return of several materials held by one person (SIGAB-082).
+
+    Lines point to the immutable movements and ledger entries created by the return;
+    the batch itself is never edited after confirmation.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="return_batches"
+    )
+    person = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="return_batches")
+    operator = models.ForeignKey(
+        Account, on_delete=models.PROTECT, related_name="operated_return_batches"
+    )
+    idempotency_key = models.UUIDField()
+    request_hash = models.CharField(max_length=64)
+    confirmed_at = models.DateTimeField()
+    receipt_code = models.CharField(max_length=24)
+    identity_method = models.CharField(
+        max_length=16, choices=IdentityMethod, default=IdentityMethod.NOT_REQUIRED
+    )
+    face_verification = models.OneToOneField(
+        FaceVerification,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="return_batch",
+    )
+    identity_exception = models.OneToOneField(
+        IdentityException,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="return_batch",
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "idempotency_key"],
+                name="uniq_return_batch_idempotency_org",
+            ),
+            models.UniqueConstraint(
+                fields=["organization", "receipt_code"], name="uniq_return_receipt_org"
+            ),
+        ]
+
+
+class ReturnBatchItem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    batch = models.ForeignKey(ReturnBatch, on_delete=models.PROTECT, related_name="items")
+    movement = models.OneToOneField(
+        Movement, on_delete=models.PROTECT, related_name="return_batch_line"
+    )
+
+
+class ReturnBatchStock(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    batch = models.ForeignKey(ReturnBatch, on_delete=models.PROTECT, related_name="stock_lines")
+    entry = models.OneToOneField(
+        "StockLedgerEntry", on_delete=models.PROTECT, related_name="return_batch_line"
+    )
 
 
 class StockBalance(TimestampedModel):

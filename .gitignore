@@ -23,6 +23,10 @@ backups/
 *.dump
 *.dump.age
 *.agekey
+.agents
 
 # CI removido do repositório
 .github/
+
+# Modelos faciais locais (YuNet/SFace, OpenCV Zoo); baixados por instalação, não versionados.
+backend/.face-models/

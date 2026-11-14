@@ -14,7 +14,7 @@ from sigab.models import (
     Role,
     Unit,
 )
-from sigab.permissions import MANAGE_IDENTITY, MOVEMENT_CHECKOUT
+from sigab.permissions import MANAGE_IDENTITY, MOVEMENT_CHECKOUT, VIEW_ITEM
 from sigab.tests.legacy_organizations import legacy_organization
 
 PASSWORD = "Senha-forte-123"
@@ -419,6 +419,34 @@ def test_session_reports_identity_permission(identity, client, api_world):
     assert (
         client.get("/api/v1/session/").json()["data"]["permissions"]["can_manage_identity"] is False
     )
+
+
+@pytest.mark.django_db
+def test_session_names_item_scope(client, api_world):
+    """The UI names the consulted units instead of a vague "your scope"."""
+    client.force_login(api_world["account"])
+    scope = client.get("/api/v1/session/").json()["data"]["item_scope"]
+    assert scope == {"all_units": True, "units": []}
+
+    organization = api_world["organization"]
+    other = Unit.objects.create(organization=organization, name="Unidade Fora", code="U-FORA")
+    account = Account.objects.create_user(
+        username="leitor-unidade", password="Senha-forte-123", organization=organization
+    )
+    role = Role.objects.create(organization=organization, name="Leitor", permissions=[VIEW_ITEM])
+    Grant.objects.create(
+        organization=organization,
+        account=account,
+        role=role,
+        scope_type=Grant.Scope.UNIT,
+        unit=api_world["unit"],
+        granted_by=api_world["account"],
+    )
+    client.force_login(account)
+    scope = client.get("/api/v1/session/").json()["data"]["item_scope"]
+    assert scope["all_units"] is False
+    assert [unit["code"] for unit in scope["units"]] == ["U-API"]
+    assert str(other.id) not in {unit["id"] for unit in scope["units"]}
 
 
 @pytest.mark.django_db

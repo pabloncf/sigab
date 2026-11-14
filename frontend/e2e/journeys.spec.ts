@@ -1,3 +1,4 @@
+import { addRegistered, mockIdentify } from "./counter-helpers";
 import { expect, test, type Page } from "@playwright/test";
 
 const ids = {
@@ -98,16 +99,16 @@ test("gestor cadastra, altera e encerra restrição com confirmação", async ({
   await page.getByLabel("Fonte", { exact: true }).fill("Comando");
   await page.getByLabel("Início", { exact: true }).fill("2026-11-09T08:00");
   await page.getByText("Confirmo os dados e o escopo desta restrição.").click();
-  await page.getByRole("button", { name: "Confirmar", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Cadastrar restrição" }).click();
   await expect(page.getByRole("button", { name: "Alterar", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Alterar", exact: true }).click();
   await page.getByLabel("Motivo da alteração ou encerramento").fill("Prorrogação autorizada");
   await page.getByText("Confirmo os dados e o escopo desta restrição.").click();
-  await page.getByRole("button", { name: "Confirmar", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Salvar alteração" }).click();
   await page.getByRole("button", { name: "Encerrar", exact: true }).click();
   await page.getByLabel("Motivo da alteração ou encerramento").fill("Impedimento encerrado");
   await page.getByText("Confirmo os dados e o escopo desta restrição.").click();
-  await page.getByRole("button", { name: "Confirmar", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Encerrar restrição" }).click();
   await expect(page.getByText(/Encerrada · desde/)).toBeVisible();
   expect(actions).toEqual(["change", "close"]);
 });
@@ -115,8 +116,8 @@ test("gestor cadastra, altera e encerra restrição com confirmação", async ({
 test("operador não recebe navegação de gestão de restrições", async ({ page }) => {
   await session(page, { can_manage_restrictions: false });
   await page.route("**/api/v1/items/**", (route) => route.fulfill({ json: { success: true, data: [], meta: { count: 0 } } }));
-  await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Organização E2E" })).toBeVisible();
+  await page.goto("/acervo");
+  await expect(page.getByRole("heading", { name: "Acervo", level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: "Restrições", exact: true })).toHaveCount(0);
 });
 test("incorporação percorre o formulário React e abre o item criado", async ({ page }) => {
@@ -145,9 +146,10 @@ test("incorporação percorre o formulário React e abre o item criado", async (
   await page.route(`**/api/v1/items/${ids.item}/`, (route) => route.fulfill({ json: { success: true, data: availableItem } }));
   await page.route(`**/api/v1/items/${ids.item}/events/**`, (route) => route.fulfill({ json: { success: true, data: [], meta: { count: 0, limit: 20, offset: 0 } } }));
 
-  await page.goto("/");
-  await page.getByRole("button", { name: "Incorporar item" }).click();
-  await page.getByLabel("Tipo de equipamento").selectOption("90000000-0000-4000-8000-000000000001");
+  // SIGAB-080: o item com registro é cadastrado a partir do tipo, no módulo Equipamentos.
+  await page.goto("/equipamentos");
+  await page.getByRole("button", { name: "Cadastrar item" }).click();
+  await expect(page.getByLabel("Tipo de equipamento")).toHaveValue("90000000-0000-4000-8000-000000000001");
   await page.locator('select[name="unit_id"]').selectOption(availableItem.unit.id);
   await page.locator('select[name="storage_location_id"]').selectOption(availableItem.storage_location.id);
   await page.getByLabel("Número de série").fill("E2E-001");
@@ -177,8 +179,8 @@ test("navegação respeita permissões e autosserviço mostra apenas a própria 
       possessions: [{ kind: "individual", id: ids.item, equipment_type: "Pistola de teste", identifier: "E2E-001", unit: "Unidade" }]
     }
   }}));
-  await page.goto("/");
-  await expect(page.getByRole("link", { name: "Atendimento" })).toBeVisible();
+  await page.goto("/acervo");
+  await expect(page.getByRole("link", { name: "Retirada e devolução" })).toBeVisible();
   await page.getByRole("link", { name: "Minha posse" }).click();
   await expect(page.getByRole("heading", { name: "Minha posse" })).toBeVisible();
   await expect(page.getByText("E2E-001")).toBeVisible();
@@ -209,11 +211,17 @@ test("atendimento envia uma cesta confirmada uma única vez e exibe comprovante"
       data: { id: ids.batch, receipt_code: "AT-E2E", custody_mode: "indefinite", due_at: null }
     }});
   });
+  await mockIdentify(page, ids.person, { name: "Pessoa E2E" });
   await page.goto("/atendimento");
-  await page.getByLabel("Pessoa destinatária").selectOption(ids.person);
-  await page.getByText(/E2E-001 · Pistola/).click();
-  await page.getByText("Confirmo destinatário").click();
-  await page.getByRole("button", { name: "Confirmar atendimento" }).click();
+  const entry = page.getByRole("region", { name: "Identificação" });
+  await entry.getByLabel("Matrícula de quem retira ou devolve").fill("MAT-1");
+  await entry.getByRole("button", { name: "Identificar" }).click();
+  await entry.getByRole("link", { name: "Seguir para a saída (retirada)" }).click();
+  await expect(page.getByRole("region", { name: "Pessoa identificada" })).toContainText("Pessoa E2E");
+  await addRegistered(page, "E2E-001");
+  await expect(page.getByRole("list", { name: "Com registro selecionados" })).toContainText("E2E-001 · Pistola de teste");
+  await page.getByText("Confirmo pessoa, materiais e modalidade.").click();
+  await page.getByRole("button", { name: "Confirmar retirada" }).click();
   await expect(page.getByText(/Comprovante AT-E2E/)).toBeVisible();
   expect(requests).toBe(1);
 });
@@ -243,15 +251,16 @@ test("jornada individual cobre saída, contingência, devolução e estorno", as
   await page.getByLabel(/Data e hora do fato/).fill("2026-11-09T10:00");
   await page.getByLabel("Folha/linha do livro").fill("F03/L07");
   await page.getByText(/Confirmo a operação/).click();
-  await page.getByRole("button", { name: "Confirmar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Registrar saída" }).click();
   await expect(page.getByRole("button", { name: "Registrar devolução" })).toBeVisible();
 
   await page.getByRole("button", { name: "Registrar devolução" }).click();
   await page.getByText(/Confirmo a operação/).click();
-  await page.getByRole("button", { name: "Confirmar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Registrar devolução" }).click();
   await page.getByRole("button", { name: "Estornar último registro" }).click();
+  await expect(page.getByRole("dialog")).toContainText("O registro original continua no histórico");
   await page.getByLabel("Motivo do estorno").fill("Correção E2E");
   await page.getByText(/Confirmo a operação/).click();
-  await page.getByRole("button", { name: "Confirmar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Estornar registro" }).click();
   await expect(page.getByText("Operação registrada com sucesso.")).toBeVisible();
 });

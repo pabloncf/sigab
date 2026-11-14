@@ -77,8 +77,15 @@ def _tenant(name, code, with_movement=False):
     )
     movement = None
     if with_movement:
+        # The counter never serves its own operator: another account registers the checkout.
+        operator = Account.objects.create_user(
+            username=f"operador-{code}", password=PASSWORD, organization=organization
+        )
+        Grant.objects.create(
+            organization=organization, account=operator, role=role, scope_type="organization"
+        )
         movement, _ = checkout_item(
-            CommandContext(account, organization, f"setup-{code}"),
+            CommandContext(operator, organization, f"setup-{code}"),
             item_id=item.id,
             recipient_id=person.id,
             idempotency_key=uuid.uuid4(),
@@ -402,6 +409,24 @@ COLLECTION_CASES = {
     "stock-position-list",
     "stock-options",
     "stock-loans",
+    "stock-summary",
+    "stock-history",
+    "overview",
+    "return-batch-create",
+    "return-options",
+    "counter-identify",
+    "movement-register",
+    "movement-register-options",
+    "person-biometric",
+    "biometric-list",
+    "person-biometric-delete",
+    "face-verification-create",
+    "face-verification-cancel",
+    "identity-exception-list",
+    "identity-exception-detail",
+    "identity-exception-signed",
+    "identity-exception-cancel",
+    "identity-exception-decision",
     "inventory-open",
     "possession-list",
     "possession-export",
@@ -504,6 +529,46 @@ def test_listings_and_search_never_return_foreign_rows(tenants):
 
 
 @pytest.mark.django_db
+def test_home_and_unregistered_collection_never_return_foreign_rows(tenants):
+    """SIGAB-079/081: aggregates, stock positions and ledger history stay in the installation."""
+    client, foreign = tenants["client"], tenants["foreign"]
+    loan = foreign["loan"]
+    foreign_type = loan.balance.equipment_type_id
+    foreign_ids = {
+        str(value)
+        for value in (
+            foreign["item"].id,
+            foreign["person"].id,
+            foreign["unit"].id,
+            foreign["movement"].id,
+            foreign["stock_entry"].id,
+            loan.id,
+            loan.balance_id,
+            foreign_type,
+        )
+    }
+    for path in (
+        "overview/",
+        "stock/summary/",
+        f"stock/summary/?type={foreign_type}",
+        f"stock/summary/?unit={foreign['unit'].id}",
+        "stock/entries/",
+        f"stock/entries/?type={foreign_type}",
+        "movements/",
+        f"movements/?person={foreign['person'].id}",
+        f"movements/?equipment_type={foreign_type}",
+        "movements/options/",
+        "return-batches/options/",
+        f"return-batches/options/?person={foreign['person'].id}",
+    ):
+        response = client.get(f"/api/v1/{path}")
+        assert response.status_code == 200, path
+        body = response.content.decode()
+        assert not any(foreign_id in body for foreign_id in foreign_ids), path
+        assert "SER-B" not in body and str(foreign["person"]) not in body, path
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "path, payload, field",
     [
@@ -583,6 +648,48 @@ def test_creation_with_foreign_reference_fails(tenants, path, payload, field):
     assert field in response.json()["details"]
     assert str(foreign["unit"].code) not in response.content.decode()
     assert _snapshot(foreign) == before
+
+
+@pytest.mark.django_db
+def test_counter_identify_never_finds_foreign_registration(tenants):
+    foreign = tenants["foreign"]
+    response = tenants["client"].get(
+        f"/api/v1/counter/identify/?registration={foreign['membership'].registration}"
+    )
+    assert response.status_code == 404
+    assert str(foreign["person"]) not in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_foreign_face_verification_cannot_be_cancelled(tenants):
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from sigab.models import FaceVerification
+
+    foreign = tenants["foreign"]
+    now = timezone.now()
+    verification = FaceVerification.objects.create(
+        organization=foreign["organization"],
+        person=foreign["person"],
+        operator=foreign["account"],
+        operation="checkout",
+        result="approved",
+        operator_confirmed=True,
+        engine_version="synthetic",
+        verified_at=now,
+        expires_at=now + timedelta(minutes=10),
+    )
+    response = _call(
+        tenants["client"],
+        "post",
+        f"face-verifications/{verification.id}/cancel/",
+        {"confirmed": True},
+    )
+    assert response.status_code == 404
+    verification.refresh_from_db()
+    assert verification.expires_at > timezone.now()
 
 
 @pytest.mark.django_db

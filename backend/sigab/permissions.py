@@ -20,6 +20,9 @@ MOVEMENT_RETURN = "movement.return"
 MOVEMENT_REVERSE = "movement.reverse"
 AUDIT_VIEW = "audit.view"
 AUDIT_EXPORT = "audit.export"
+# Facial biometrics (ADR 0008): enrollment and approval of the signed-term exception.
+BIOMETRIC_MANAGE = "biometric.manage"
+MOVEMENT_EXCEPTION_APPROVE = "movement.exception.approve"
 
 # Backwards-compatible names used across views and services.
 MANAGE_IDENTITY = IDENTITY_MANAGE
@@ -39,6 +42,8 @@ TENANT_PERMISSIONS = frozenset(
         MOVEMENT_CHECKOUT,
         MOVEMENT_RETURN,
         MOVEMENT_REVERSE,
+        BIOMETRIC_MANAGE,
+        MOVEMENT_EXCEPTION_APPROVE,
         "inventory.adjust.request",
         "inventory.adjust.approve",
         "item.retire.request",
@@ -63,6 +68,8 @@ MUTATING_PERMISSIONS = frozenset(
         MOVEMENT_CHECKOUT,
         MOVEMENT_RETURN,
         MOVEMENT_REVERSE,
+        BIOMETRIC_MANAGE,
+        MOVEMENT_EXCEPTION_APPROVE,
         "inventory.adjust.request",
         "inventory.adjust.approve",
         "item.retire.request",

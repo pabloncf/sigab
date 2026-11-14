@@ -52,6 +52,8 @@ Ocultar um módulo é apenas apresentação: permissões continuam decididas pel
 
 `brand.json` e `public/brand/` não são versionados.
 
+A página de login Django também consome a marca e a preferência claro/escuro por `public/login-theme.js`, copiado para a raiz de `dist/` pelo build. Sirva esse arquivo na mesma origem do login, como os demais arquivos públicos. Sem configuração ou JavaScript, o login mantém a identidade padrão. Cores claras de marca recebem texto escuro nos botões para manter a leitura.
+
 ## Estrutura de tema e navegação
 
 - `src/theme/` — configuração da marca, carregamento de `brand.json` e preferência claro/escuro/sistema do usuário.

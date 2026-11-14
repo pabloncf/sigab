@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { BrandConfig, defaultBrand } from "./brand";
+import { readableForeground } from "./contrast";
 
 export type ColorScheme = "light" | "dark" | "system";
 
@@ -18,6 +19,7 @@ export function applyBrand(brand: BrandConfig) {
   const root = document.documentElement;
   root.style.setProperty("--brand-primary", brand.colors.primary);
   root.style.setProperty("--brand-accent", brand.colors.accent);
+  root.style.setProperty("--brand-on-primary", readableForeground(brand.colors.primary));
   if (brand.colors.sidebar) root.style.setProperty("--brand-sidebar", brand.colors.sidebar);
   root.style.setProperty("--radius", `${brand.radius}px`);
   root.style.setProperty("--font-sans", brand.fontFamily);

@@ -5,7 +5,7 @@
 - Estado: aprovada para a linha de base
 - Responsáveis pela decisão: Produto/Segurança
 - Dependências: SIGAB-002 e SIGAB-003 concluídas
-- Matriz canônica: [`0002-papeis-e-escopos.json`](0002-papeis-e-escopos.json), versão 1.1.0
+- Matriz canônica: [`0002-papeis-e-escopos.json`](0002-papeis-e-escopos.json), versão 1.5.0
 
 ## Decisão
 
@@ -39,7 +39,7 @@ organização apropriada.
 | Administrador da plataforma | global | criar/suspender organizações e administrar configurações globais, sem ler dados de negócio |
 | Analista de suporte | global | consultar telemetria sem conteúdo e solicitar sessão temporária de suporte |
 | Administrador de acesso | organização | gerir contas, papéis e concessões da organização |
-| Gestor de acervo | organização | gerir cadastro do acervo e aprovar ajustes, baixas e exceções operacionais |
+| Gestor de acervo | organização | gerir cadastro do acervo, aprovar ajustes, baixas e exceções operacionais e executar saída e devolução de qualquer material (1.5.0) |
 | Gestor de restrições | organização | registrar, encerrar e consultar restrições operacionais com dados minimizados |
 | Auditor | organização ou unidade | consultar acervo e trilhas imutáveis, sem mutação |
 | Operador de reserva | unidade | consultar/cadastrar itens e executar saída, devolução e solicitações corretivas |
@@ -63,7 +63,7 @@ temporária autorizada. `—` significa negado.
 | Administrador da plataforma | — | organização | — | — | — | — | — | metadados globais | — |
 | Analista de suporte | — | — | — | — | — | — | — | próprias sessões | D/J |
 | Administrador de acesso | L mínima | I | — | — | — | — | — | acessos | autoriza J |
-| Gestor de acervo | L | C | — | — | A | A | aprova exceção | T operacional | — |
+| Gestor de acervo | L | C | E | E | A | A | aprova exceção | T operacional | — |
 | Gestor de restrições | L mínima | — | — | — | — | — | G | T de restrições | — |
 | Auditor | L | — | — | — | — | — | L minimizada | T | — |
 | Operador de reserva | L | C | E | E | S | S | consulta decisão | T própria | — |
@@ -219,3 +219,31 @@ O estorno corrige erro de registro e é um ato de supervisão; por isso fica
 com o Gestor de acervo, e não com quem opera o balcão. Estender ao Operador de
 reserva, ou exigir dupla aprovação, é decisão de produto pendente. Papéis
 criados antes desta revisão não recebem a permissão automaticamente.
+
+## Revisão 1.4.0 — SIGAB-083
+
+Data: 2026-11-13. Acompanha o [ADR 0008](../adr/0008-biometria-facial.md): retirada e devolução exigem verificação facial aprovada ou, quando a biometria não for possível, termo assinado pelo servidor e aprovado pelo administrador do acervo.
+
+| Papel | `biometric.manage` | `movement.exception.approve` |
+|---|---|---|
+| Gestor de acervo | sim, na organização | sim, na organização |
+| demais papéis | não | não |
+
+- `biometric.manage` permite cadastrar, recadastrar e excluir a biometria facial de uma pessoa. A permissão não dá acesso ao modelo biométrico, que nunca é exibido.
+- `movement.exception.approve` permite aprovar ou recusar o termo de retirada ou devolução sem biometria.
+- Regra nova `identity_exception_four_eyes` (`different_actor_same_case`): quem registrou a operação e gerou o termo não aprova o próprio termo.
+- Papéis criados antes desta revisão não recebem as permissões automaticamente.
+
+## Revisão 1.5.0 — administrador opera o balcão
+
+Data: 2026-11-13. Decisão de produto: o administrador também faz a retirada e a devolução de qualquer material.
+
+| Papel | `movement.checkout` | `movement.return` |
+|---|---|---|
+| Gestor de acervo | sim, na organização | sim, na organização |
+| Operador de reserva | sim, na unidade (sem mudança) | sim, na unidade (sem mudança) |
+
+- O escopo de organização alcança todas as unidades e vale para material com registro (item individual) e sem registro (estoque quantitativo), que usam as mesmas permissões.
+- Substitui a frase da revisão 1.2.0 segundo a qual o primeiro administrador “não executa saída nem devolução”: com o papel Gestor de acervo, ele passa a executá-las.
+- Continuam valendo a verificação facial ou o termo assinado (ADR 0008), a proibição de registrar a própria retirada ou devolução e a regra `identity_exception_four_eyes`. Quando o administrador registra a operação e gera o termo, outro administrador precisa aprová-lo. Uma instalação com um único administrador fica sem quem aprove esses termos, então convém ter ao menos dois.
+- Papéis “Gestor de acervo” existentes recebem os dois códigos pela migração `0016_inventory_manager_movements`.

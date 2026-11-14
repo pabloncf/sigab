@@ -12,7 +12,8 @@ ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
     PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
 COPY pyproject.toml uv.lock .python-version ./
-RUN uv sync --frozen --dev --no-install-project
+# The optional face extra (OpenCV) runs the facial verification of ADR 0008 locally.
+RUN uv sync --frozen --dev --extra face --no-install-project
 COPY . .
 EXPOSE 8000
 CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"]

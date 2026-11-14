@@ -129,8 +129,8 @@ O primeiro administrador recebe os papéis “Administrador de acesso” e “Ge
 
 1. **Cadastros:** crie unidades, locais de guarda e tipos de equipamento.
 2. **Acervo → Incorporar item:** registre os itens individuais.
-3. **Pessoas:** cadastre pessoas e vínculos; crie a conta de quem vai operar e conceda o papel “Operador de reserva” na unidade. Ninguém concede papel a si mesmo, por isso a saída e a devolução são feitas pela conta do operador.
-4. **Acervo:** com a conta do operador, registre saída, devolução e condição.
+3. **Pessoas:** cadastre pessoas e vínculos; crie a conta de quem vai operar e conceda o papel “Operador de reserva” na unidade.
+4. **Atendimento:** o próprio administrador (Gestor de acervo, matriz 1.5.0) ou o operador registra retirada, devolução e condição de qualquer material. Quem registra uma operação por termo assinado não aprova o próprio termo; para isso, é preciso outro administrador.
 
 O Django Admin (`http://127.0.0.1:8000/admin/`) continua disponível como mecanismo administrativo transitório, e os templates Django em `http://127.0.0.1:8000/` como fallback.
 
@@ -198,6 +198,13 @@ Depois de mudanças no código, execute `graphify update .`. A lista de arquivos
 - Migrações: em `backend/`, aplique `uv run python manage.py migrate` antes de iniciar a nova versão; mantenha backup anterior à implantação.
 - Timestamps são persistidos em UTC; a organização carrega seu fuso para apresentação futura.
 - Configure `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=false`, `DJANGO_ALLOWED_HOSTS` e TLS no proxy em qualquer ambiente não local.
+- **Biometria facial ([ADR 0008](docs/adr/0008-biometria-facial.md)).** Retirada e devolução exigem verificação facial aprovada ou termo assinado aprovado pelo administrador do acervo. Variáveis:
+  - `SIGAB_REQUIRE_IDENTITY_CHECK`: padrão `true`, e deve ficar `true` em produção. `false` serve só para desenvolvimento.
+  - `SIGAB_BIOMETRIC_KEY`: chave Fernet que criptografa os modelos biométricos. Gere com `uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` e guarde fora do banco e dos backups do banco.
+  - `SIGAB_FACE_ENGINE=sigab.biometrics.OpenCVFaceEngine`, com `SIGAB_FACE_DETECTOR_MODEL` e `SIGAB_FACE_RECOGNIZER_MODEL` apontando para os arquivos ONNX do YuNet e do SFace (OpenCV Zoo, Apache 2.0). O motor exige `uv sync --extra face`.
+  - `SIGAB_FACE_VERIFICATION_TTL_SECONDS`: validade da verificação aprovada, padrão `600` (a pessoa é identificada antes da escolha dos materiais).
+  - `SIGAB_FACE_THRESHOLD`: limiar de similaridade, padrão `0.363`. Deve ser ajustado pela medição da [pesquisa 0002](docs/pesquisas/0002-verificacao-facial-no-balcao.md).
+  - Sem motor ou sem chave, a verificação responde 503 e o balcão usa o termo.
 
 Consulte também a [decisão do segmento inicial](docs/decisoes/0001-segmento-inicial.md), a [nota regulatória preliminar](docs/notas-regulatorias/0001-guardas-municipais.md), as [decisões pendentes](docs/decisoes-pendentes.md), o [modelo de domínio](docs/modelo-de-dominio.md) e a documentação de [segurança](docs/seguranca-e-privacidade.md). O backlog preparado para importação no Jira está em [tarefas.csv](docs/tarefas/tarefas-15-10-26/tarefas.csv).
 

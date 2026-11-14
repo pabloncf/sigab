@@ -110,6 +110,19 @@ Responsáveis por papel: **Backend** (Tech Lead/Backend), **Implantação** (que
 | V-04 | P1 | backup do banco vazado | criptografia do backup e armazenamento restrito fora do host | restauração periódica controlada | ausente (ADR 0004: retenção e criptografia abertas) | Implantação | previsto no roteiro de backup |
 | V-05 | P1 | resposta da API expõe campos além do necessário | contratos JSON explícitos, sem serializar modelos (ADR 0005) | — | impl. | Backend | previsto: teste de contrato da listagem de destinatários sem CPF e telefone |
 
+### 3.6 Biometria facial (ADR 0008, SIGAB-085/086)
+
+| ID | P | Ameaça | Preventivo | Detectivo | Estado | Resp. | Teste |
+|---|---|---|---|---|---|---|---|
+| B-01 | P0 | vazamento do modelo biométrico pelo banco ou por backup | só o vetor é guardado, criptografado com Fernet e chave `SIGAB_BIOMETRIC_KEY` fora do banco; imagem nunca persistida | — | impl. (gestão da chave depende da implantação) | Backend, Implantação | `test_enrollment_is_encrypted_audited_without_data_and_reenrollable` |
+| B-02 | P0 | imagem, modelo ou pontuação em log, evento, auditoria, erro ou resposta | captura lida em memória e descartada; auditoria só com pessoa, versão do motor e base legal; respostas sem pontuação | — | impl. | Backend | `test_enrollment_is_encrypted_audited_without_data_and_reenrollable`, `test_checkout_requires_an_approved_single_use_verification` |
+| B-03 | P0 | ataque de apresentação (foto ou tela) | conferência visual obrigatória do operador registrada na verificação; motor certificado ISO/IEC 30107-3 se a medição exigir | trilha `face.verification` | parcial: o motor aberto não tem prova de vida certificada | Produto, Backend | `test_verification_demands_visual_check_and_enrollment` |
+| B-04 | P0 | reaproveitar a verificação de outra pessoa, operador, operação ou organização, ou reutilizá-la | verificação de uso único, curta validade, vinculada a pessoa, operador, operação e organização, consumida com bloqueio na transação da movimentação | — | impl. | Backend | `test_verification_is_bound_to_person_operator_operation_and_time`, `test_one_approved_face_verification_authorizes_exactly_one_checkout`, `test_identity_first_verification_survives_material_selection`; validade de 10 min (revisão de 13/11) |
+| B-08 | P0 | operador registrar a própria retirada ou devolução, sem conferência de terceiro | a pessoa atendida nunca pode ser a da conta do operador: recusa na retirada, devolução, verificação facial, termo e contingência | — | impl. | Backend | `test_operator_never_registers_own_checkout_or_return` |
+| B-05 | P0 | contornar a biometria pelo termo | termo exige assinatura recolhida e aprovação por `movement.exception.approve`; quem registrou não aprova (restrição de banco e serviço); aprovação revalida estado, restrição e escopo | trilha `identity_exception.*` | impl. | Backend | `test_signed_return_term_waits_for_the_administrator_and_then_returns`, `test_two_administrators_approving_the_same_term_execute_once` |
+| B-06 | P1 | cadastro biométrico indevido ou sem vínculo | `biometric.manage` negada por padrão; só pessoa ativa com vínculo ativo; exclusão automática ao encerrar o último vínculo | trilha `biometric.*` | impl. | Backend | `test_enrollment_requires_permission_active_membership_and_a_face`, `test_deletion_is_physical_audited_and_follows_last_membership` |
+| B-07 | P1 | saída avulsa pela ficha do item sem identidade | fora da contingência em papel, as rotas de item recusam saída e devolução quando a exigência está ligada | — | impl. | Backend | `test_checkout_requires_an_approved_single_use_verification` |
+
 ## 4. Lacunas P0 a tratar
 
 Ameaças P0 cujo controle está ausente ou parcial, em ordem sugerida:
@@ -130,7 +143,7 @@ V-01 só passa a exigir ação quando houver tarefa de exportação.
 
 Este modelo deve ser revisto antes de implementar qualquer um destes itens, que mudam ativos ou fronteiras:
 
-- biometria, laudos ou restrições médicas, judiciais ou administrativas (dados sensíveis);
+- laudos ou restrições médicas, judiciais ou administrativas (dados sensíveis); a biometria facial foi revista na seção 3.6;
 - anexos e assinatura;
 - operação offline ou sincronização;
 - exportação ou relatórios (V-01);
